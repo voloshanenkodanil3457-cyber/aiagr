@@ -1,0 +1,962 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Flows · Magic</title><link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect x=%273%27 y=%273%27 width=%2726%27 height=%2726%27 rx=%278%27 fill=%27%2317171b%27 stroke=%27%235a5a66%27/%3E%3Cpath d=%27M8 22V10h3.2l4.8 6.4 4.8-6.4H24v12h-3.4v-6.6L16 21l-4.6-5.6V22z%27 fill=%27white%27/%3E%3Cpath d=%27M25 5l.8 2.2L28 8l-2.2.8L25 11l-.8-2.2L22 8l2.2-.8z%27 fill=%27%238ab8ff%27/%3E%3C/svg%3E"><style>/* Magic universal aggregator — application shell + dark/light theme */
+:root{
+  color-scheme:dark;
+  --sidebar-w:232px;--topbar-h:50px;
+  --bg:#09090a;--bg-soft:#0d0d0f;--sidebar:#101012;--panel:#1b1b1e;--panel-2:#202024;--panel-3:#26262b;
+  --line:#2d2d32;--line-strong:#3a3a41;--text:#f6f6f7;--muted:#898992;--muted-2:#64646d;
+  --blue:#1493ff;--blue-soft:#0d2b43;--green:#25c66a;--red:#ff455d;--yellow:#ffd62f;--purple:#a451ff;--orange:#ff9d16;
+  --shadow:0 18px 50px rgba(0,0,0,.34);--radius:14px;
+  font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;font-size:14px;
+}
+:root[data-theme="light"]{
+  color-scheme:light;--bg:#f6f7f9;--bg-soft:#eef1f4;--sidebar:#ffffff;--panel:#ffffff;--panel-2:#f6f7f9;--panel-3:#eef1f4;
+  --line:#dedfe3;--line-strong:#c9cbd1;--text:#17181b;--muted:#70747d;--muted-2:#969aa2;--blue:#087fe7;--blue-soft:#e6f2ff;
+  --shadow:0 18px 50px rgba(35,42,51,.12)
+}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:var(--bg);color:var(--text)}body{min-height:100vh}body,button,input,textarea,select{font:inherit}button,input,textarea,select{color:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.55}a{color:inherit;text-decoration:none}[hidden]{display:none!important}h1,h2,h3,p{margin:0}small{color:var(--muted)}
+::selection{background:#148fff45}.muted{color:var(--muted)}
+
+/* App shell */
+.app-sidebar{position:fixed;left:0;top:0;bottom:0;width:var(--sidebar-w);z-index:90;background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:18px 10px 12px}
+.brand{display:flex;align-items:center;gap:10px;padding:5px 12px 22px}.brand-logo{width:26px;height:26px;border:1px solid var(--line-strong);border-radius:8px;position:relative;flex:none;display:grid;place-items:center;background:linear-gradient(145deg,#17171b,#24242b);box-shadow:inset 0 0 0 1px #ffffff08,0 4px 12px #0004}.brand-logo:before{content:"M";font-size:15px;font-weight:900;letter-spacing:-1px;color:#fff;transform:translateX(-1px)}.brand-logo:after{content:"✦";position:absolute;right:-4px;top:-6px;font-size:11px;color:#8ab8ff;text-shadow:0 0 8px #6da8ff}.brand strong{display:block;font-size:14px}.brand small{display:block;font-size:11px;margin-top:1px}
+.nav-group{margin-bottom:17px}.nav-label{display:block;padding:0 12px 7px;font-size:9px;letter-spacing:.8px;font-weight:700;color:var(--muted-2)}
+.app-nav{display:grid;gap:3px}.app-nav a{display:flex;align-items:center;gap:11px;min-height:36px;padding:8px 12px;border-radius:11px;color:#9a9aa3;font-size:13px}.app-nav a:hover{background:var(--panel);color:var(--text)}.app-nav a[aria-current="page"]{background:#0d2940;color:#14a0ff}.nav-icon{width:17px;text-align:center;font-size:15px;opacity:.95}.nav-spacer{flex:1}.sidebar-user{margin-top:auto;border-top:1px solid var(--line);padding:14px 11px 0;min-width:0}.sidebar-user small{font-size:9px;display:block}.sidebar-user span{font-size:10px;color:#8f8f98;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:4px}
+.app-topbar{position:fixed;left:var(--sidebar-w);right:0;top:0;height:var(--topbar-h);z-index:85;background:color-mix(in srgb,var(--sidebar) 96%,transparent);border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 15px;gap:10px}.topbar-spacer{flex:1}.topbar-actions{display:flex;align-items:center;gap:9px}.theme-button,.avatar-button,.icon-button,.ui-button{border:1px solid var(--line-strong);background:var(--panel-2);border-radius:9px}.theme-button{height:34px;display:flex;align-items:center;padding:0 9px;gap:7px;color:var(--muted)}.theme-button:hover,.icon-button:hover{background:var(--panel-3);color:var(--text)}.avatar-button{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(145deg,#b94cff,#6758ea);border:0;font-weight:800;color:white}.topbar-breadcrumb{display:flex;align-items:center;gap:10px;color:var(--muted);white-space:nowrap;font-size:12px}.topbar-breadcrumb strong{color:var(--text)}.topbar-breadcrumb .slash{color:#37373d}.autosave-state{font-size:10px;color:var(--muted)}
+.app-content{margin-left:var(--sidebar-w);padding-top:var(--topbar-h);min-height:100vh}.page-wrap{padding:32px 30px 70px;max-width:1600px;margin:0 auto}.page-titlebar{display:flex;align-items:flex-start;gap:18px;margin-bottom:27px}.page-titlebar h1{font-size:27px;letter-spacing:-.7px}.page-titlebar p{color:var(--muted);margin-top:5px}.page-titlebar .right{margin-left:auto;display:flex;align-items:center;gap:10px}.eyebrow{font-size:10px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.ui-button{min-height:34px;padding:7px 13px;color:var(--text);font-weight:600}.ui-button:hover{background:var(--panel-3)}.ui-button.primary{background:var(--blue);border-color:var(--blue);color:white}.ui-button.primary:hover{filter:brightness(1.07)}.ui-button.danger{color:#ff6678;border-color:#7b343e;background:#2a171b}.ui-button.ghost{background:transparent}.ui-button.small{min-height:28px;padding:5px 9px;font-size:11px}.icon-button{width:32px;height:32px;padding:0;display:grid;place-items:center}.segmented{display:flex;align-items:center;padding:3px;border:1px solid var(--line);background:var(--panel);border-radius:11px;width:max-content}.segmented button{border:0;background:transparent;color:var(--muted);border-radius:8px;padding:8px 15px}.segmented button.active,.segmented button[aria-pressed="true"]{background:var(--blue);color:white}.search-input,input,textarea,select{background:var(--panel-2);border:1px solid var(--line-strong);border-radius:9px;color:var(--text)}input,select{height:38px;padding:0 11px}textarea{padding:10px 11px;resize:vertical}input::placeholder,textarea::placeholder{color:#686872}
+
+/* Auth */
+.auth-page{min-height:100vh;display:grid;place-items:center;background:radial-gradient(circle at 30% 10%,#0c3d6428,transparent 35%),var(--bg);padding:25px}.auth-card{width:min(440px,100%);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:28px;box-shadow:var(--shadow)}.auth-brand{justify-content:center;padding:0 0 22px}.auth-card h1{text-align:center;font-size:27px}.auth-card>p{text-align:center;margin:7px 0 22px;color:var(--muted)}.auth-tabs{margin:0 auto 20px}.stack{display:grid;gap:13px}.stack label{display:grid;gap:7px;color:var(--muted);font-size:12px}.stack input,.stack textarea,.stack select{width:100%}.form-error{min-height:18px;color:#ff6475;font-size:12px}.password-row{display:flex;gap:7px}.password-row input{flex:1}.password-row button{width:76px}.auth-card .primary{width:100%;height:42px}
+
+/* Dashboard */
+.dashboard-greeting{margin-bottom:28px}.dashboard-greeting h1{font-size:28px}.dashboard-greeting p{margin-top:4px;color:var(--muted)}.stat-grid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:11px;margin-bottom:24px}.stat-card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:18px;min-height:112px}.stat-icon{width:31px;height:31px;display:grid;place-items:center;border-radius:8px;background:#0d2940;color:#16a0ff;margin-bottom:12px}.stat-card strong{font-size:25px;display:block;letter-spacing:-.6px}.stat-card small{font-size:11px;margin-top:4px;display:block}.dashboard-grid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(340px,.75fr);gap:14px}.panel-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}.panel-card h2{font-size:16px;margin-bottom:16px}.chart-summary{display:flex;gap:20px;margin-bottom:18px}.chart-summary div{display:grid;gap:2px}.chart-summary strong{font-size:20px}.generation-chart{height:205px;display:flex;align-items:flex-end;gap:12px;border-bottom:1px solid var(--line);padding:10px 5px 0}.chart-col{height:100%;flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px}.chart-bar{width:min(36px,70%);min-height:5px;border-radius:6px 6px 2px 2px;background:linear-gradient(#1da3ff,#0f73da)}.chart-col small{font-size:10px}.recent-list{display:grid;gap:7px}.recent-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px;border-radius:9px;background:var(--panel-2);border:1px solid transparent}.recent-row:hover{border-color:var(--line-strong)}.recent-row div{min-width:0}.recent-row strong{display:block;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.recent-row small{display:block;margin-top:5px;font-size:10px}.status-pill{padding:5px 7px;border-radius:6px;font-size:9px;font-weight:800;background:#303036;color:#c8c8cf}.status-pill.completed{background:#153721;color:#4be17c}.status-pill.failed{background:#3b181f;color:#ff5c70}.status-pill.running,.status-pill.processing{background:#322d16;color:#ffe057}.status-pill.queued{background:#153044;color:#4ab9ff}
+
+/* Spaces */
+.spaces-shell{max-width:800px;margin:0 auto}.spaces-list{display:grid;gap:8px}.space-row{display:flex;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:14px;min-height:66px;padding:8px 12px 8px 15px}.space-main{flex:1;min-width:0;padding:6px 0}.space-main strong{display:block;font-size:13px}.space-main small{display:block;font-size:10px;margin-top:4px}.space-actions{display:flex;align-items:center;gap:3px}.space-actions button,.space-actions a{width:30px;height:30px;border:0;border-radius:7px;background:transparent;color:#696971;display:grid;place-items:center}.space-actions button:hover,.space-actions a:hover{background:var(--panel-3);color:var(--text)}.empty-card{padding:24px;text-align:center;color:var(--muted);border:1px dashed var(--line-strong);border-radius:12px}
+
+/* Assets */
+.assets-toolbar{display:flex;align-items:center;gap:9px;margin-bottom:22px}.assets-toolbar .segmented{margin-right:auto}.assets-toolbar input{width:260px}.assets-grid{display:grid;grid-template-columns:repeat(4,minmax(220px,1fr));gap:14px}.asset-card{background:var(--panel);border:1px solid var(--line);border-radius:13px;overflow:hidden;min-width:0}.asset-media{aspect-ratio:16/10;background:#2a2a2e;position:relative;display:grid;place-items:center;overflow:hidden}.asset-media video,.asset-media img{width:100%;height:100%;object-fit:cover}.asset-placeholder{font-size:11px;font-weight:800;color:#a6a6ad}.asset-placeholder.failed{color:#ff4c60}.asset-cost,.asset-duration{position:absolute;top:10px;padding:4px 6px;background:#0a0a0dcc;border-radius:5px;font-size:9px}.asset-cost{left:10px;color:#f2ff38;font-weight:800}.asset-duration{right:10px;color:#fff}.asset-body{padding:11px}.asset-body>p{font-size:11px;line-height:1.45;height:34px;overflow:hidden}.asset-body>small{font-size:9px;display:block;margin-top:7px}.asset-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px}.asset-tags span{font-size:8px;padding:3px 5px;border-radius:4px;background:var(--panel-3);color:#b1b1b8}.asset-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+
+/* Templates */
+.library-actions{display:flex;gap:8px;margin-bottom:13px}.library-search{display:block;width:min(960px,100%);height:40px;margin-bottom:12px}.folder-tree{display:grid;gap:14px;margin-top:18px}.template-folder{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:14px}.template-folder-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}.template-folder-head>div:first-child{font-weight:700}.template-folder-head>small{background:var(--panel-3);padding:3px 6px;border-radius:5px}.folder-actions{margin-left:auto;display:flex;gap:5px}.folder-actions button{border:0;background:transparent;color:var(--muted);padding:5px 7px}.folder-actions button:hover{color:var(--text)}.template-grid{display:grid;grid-template-columns:repeat(3,minmax(200px,1fr));gap:9px}.template-card{background:var(--panel-2);border:1px solid var(--line);border-radius:10px;padding:13px}.template-card>small{font-size:8px;color:#15a1ff}.template-card h3{font-size:13px;margin-top:6px}.template-card p{font-size:11px;line-height:1.5;color:#aaaab2;margin-top:7px;min-height:49px;white-space:pre-wrap;overflow:hidden}.template-card-actions{display:flex;gap:6px;margin-top:12px}.library-empty{display:grid;gap:6px;padding:35px;text-align:center;color:var(--muted)}
+
+/* Integrations */
+.integrations-wrap{max-width:760px}.integration-intro{color:var(--muted);font-size:11px;line-height:1.6;margin-bottom:16px}.integration-card{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:15px;margin-bottom:10px}.integration-head{display:flex;align-items:center;gap:12px}.provider-logo{width:36px;height:36px;border:1px solid #1471aa;background:#102635;border-radius:50%;display:grid;place-items:center;font-weight:900}.provider-logo.s{background:#12352f;border-color:#157964}.provider-logo.o{background:#2b1734;border-color:#763b8d}.provider-logo.c{background:#132940;border-color:#315d88}.integration-copy{flex:1}.integration-copy strong{display:block}.integration-copy small{display:block;margin-top:3px;font-size:10px}.integration-state{display:block;font-size:10px;color:#d99115;margin-top:4px}.integration-state.ok{color:#30d270}.integration-state.bad{color:#ff5669}.integration-actions{display:flex;gap:8px}.integration-key{display:flex;gap:7px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}.integration-key input{flex:1}.integration-credentials{display:grid;grid-template-columns:minmax(170px,.75fr) minmax(250px,1.6fr) auto auto;gap:8px;align-items:end;margin-top:12px;padding-top:12px;border-top:1px solid var(--line)}.integration-credentials.one-key{grid-template-columns:minmax(320px,1fr) auto auto}.integration-credentials.one-key .credential-field.grow{min-width:0}.credential-field{display:grid;gap:6px}.credential-field span{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.credential-field input{width:100%;height:38px}.integration-help{font-size:10px;color:var(--muted);margin:8px 0 0 48px;line-height:1.55}.integration-help a{color:#1b9cff}.integration-future{opacity:.75}
+
+/* Profile drawer */
+.drawer-backdrop{position:fixed;inset:0;background:#0007;z-index:110;opacity:0;pointer-events:none;transition:.18s}.drawer-backdrop.show{opacity:1;pointer-events:auto}.profile-drawer{position:fixed;z-index:111;right:0;top:0;bottom:0;width:min(430px,92vw);background:var(--panel);border-left:1px solid var(--line);transform:translateX(102%);transition:.2s ease;box-shadow:var(--shadow);padding:26px 28px;overflow:auto}.profile-drawer.open{transform:none}.drawer-title{display:flex;align-items:center}.drawer-title h2{font-size:20px}.drawer-title button{margin-left:auto}.profile-photo{display:flex;align-items:center;gap:14px;margin:26px 0 22px}.profile-photo-view{width:72px;height:72px;border-radius:50%;overflow:hidden;display:grid;place-items:center;background:linear-gradient(145deg,#b64cff,#6657ea);font-size:26px;font-weight:800;color:white}.profile-photo-img{width:100%;height:100%;object-fit:cover}.upload-photo{display:grid;gap:5px}.upload-photo label{width:max-content}.upload-photo small{font-size:10px}.profile-email{display:flex;justify-content:space-between;gap:15px;align-items:center;background:#08080a;border:1px solid var(--line-strong);border-radius:10px;padding:14px;margin-bottom:15px}.profile-email span{color:var(--muted)}:root[data-theme=light] .profile-email{background:#f4f5f7}.drawer-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:5px}.drawer-admin{border-top:1px solid var(--line);margin-top:24px;padding-top:20px}.drawer-admin h3{font-size:14px;margin-bottom:12px}.drawer-logout{margin-top:24px;width:100%}
+
+/* Modal */
+dialog.studio-dialog{width:min(530px,calc(100vw - 30px));border:1px solid var(--line-strong);background:var(--panel);color:var(--text);border-radius:14px;padding:0;box-shadow:var(--shadow)}dialog::backdrop{background:#0009}.studio-dialog header{display:flex;align-items:center;padding:16px 18px;border-bottom:1px solid var(--line)}.studio-dialog header h2{font-size:16px}.studio-dialog header button{margin-left:auto}.studio-dialog form,.studio-dialog>div{padding:18px}.app-notice{position:fixed;z-index:200;left:50%;bottom:24px;transform:translateX(-50%);background:#242429;border:1px solid #404047;border-radius:9px;padding:10px 14px;color:#fff;box-shadow:var(--shadow);font-size:12px}.app-notice[data-type=error]{border-color:#83313c;background:#321a1f}
+
+/* Placeholder */
+.placeholder-card{max-width:780px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:30px}.placeholder-card p{color:var(--muted);line-height:1.6;margin-top:8px}
+
+/* Canvas shell overrides */
+.canvas-page{--bg:#0c0c0d;--surface:#19191c;--line:#303034;--text:#efeff1;--muted:#84848b;overflow:hidden;background:var(--bg)}
+:root[data-theme=light] .canvas-page{--bg:#f2f3f5;--surface:#fff;--line:#d7d9dd;--text:#18191c;--muted:#767b83}
+.canvas-page .viewport{inset:var(--topbar-h) 0 0 var(--sidebar-w);background-color:var(--bg);background-image:radial-gradient(color-mix(in srgb,var(--line) 85%,transparent) .65px,transparent .65px);background-size:18px 18px}
+.canvas-page .project-bar{display:none}.canvas-page .side-rail-wrap{position:fixed;z-index:40;left:calc(var(--sidebar-w) + 15px);right:auto;top:calc(var(--topbar-h) + 14px);transform:none}.canvas-page .side-rail{background:#171719e8;border:1px solid #2d2d31;border-radius:10px;padding:5px;display:flex;flex-direction:column;gap:3px;box-shadow:0 10px 28px #0004}.canvas-page .side-rail .tool{width:34px;height:34px;color:#8b8b92;border-radius:7px}.canvas-page .side-rail .tool:hover,.canvas-page .side-rail .tool.active{background:#29292e;color:white}.canvas-page .rail-grip{width:28px;height:15px;display:grid;place-items:center;cursor:grab;color:#666672;touch-action:none;user-select:none;margin:-1px auto 1px}.canvas-page .rail-grip:before{content:"⠿";font-size:15px;line-height:1}.canvas-page .rail-grip:active{cursor:grabbing;color:#aaaab2}.canvas-page .side-rail-wrap.dragging{z-index:80}.canvas-page .side-rail-wrap.dragging .side-rail{box-shadow:0 14px 36px #0008;border-color:#4c4c54}.canvas-page .side-rail .avatar{display:none}.canvas-page .rail-divider{width:24px;height:1px;background:#303035;margin:2px auto}.canvas-page .add-menu{position:absolute;left:45px;right:auto;top:0;bottom:auto;width:235px;background:#1b1b1e;border:1px solid #34343a}.canvas-page .profile-popover{display:none!important}.canvas-page .side-panel{position:fixed;left:calc(var(--sidebar-w) + 62px);right:auto;top:calc(var(--topbar-h) + 14px);width:350px;max-height:calc(100vh - var(--topbar-h) - 30px);background:#18181b;border:1px solid #333338;z-index:45}.canvas-page .navigator{right:16px;bottom:15px}.canvas-page .canvas-tools{left:calc(var(--sidebar-w) + 15px);bottom:15px}.canvas-page .selection-status{left:calc(var(--sidebar-w) + 16px);bottom:63px}.canvas-page .notice{bottom:72px}.canvas-page .generation-composer{left:calc(var(--sidebar-w) + 50%);transform:translateX(-50%);bottom:14px;max-width:min(850px,calc(100vw - var(--sidebar-w) - 180px))}.canvas-page .node-body{background:#171719;border-color:#323237}.canvas-page .node.selected .node-body{border-color:#5e9bc6}.canvas-page .node-header{color:#a3a3aa}.canvas-page .output-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#09090b}.canvas-page .output-preview:has(.output-video:not([hidden])){padding:0}.canvas-page .output-preview:has(.output-video:not([hidden])) .output-message,.canvas-page .output-preview:has(.output-video:not([hidden])) .play-mark{display:none}.canvas-page .empty-state{left:50%;top:47%}.canvas-page .empty-state .quiet-button{pointer-events:auto;margin-top:16px}.canvas-page .empty-state h1{font-size:19px}.canvas-page .empty-state p{font-size:12px}.canvas-page .topbar-legend{display:flex;gap:16px;font-size:9px;color:var(--muted)}.legend-dot:before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px}.legend-dot.creation:before{background:#1c9cff}.legend-dot.output:before{background:#ff3659}.legend-dot.variable:before{background:#35cb6d}.legend-dot.modifier:before{background:#ffd424}.share-button{border-left:1px solid var(--line);margin-left:4px;padding-left:12px;color:var(--muted);font-size:11px}.canvas-meta{display:flex;align-items:center;gap:10px}.canvas-meta strong{font-size:12px}.canvas-meta small{font-size:9px}
+
+/* Responsive */
+@media(max-width:1150px){.assets-grid{grid-template-columns:repeat(3,minmax(200px,1fr))}.template-grid{grid-template-columns:repeat(2,minmax(200px,1fr))}.stat-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:780px){:root{--sidebar-w:68px}.brand-copy,.nav-label,.app-nav a span:not(.nav-icon),.sidebar-user{display:none}.brand{padding-left:12px}.app-nav a{justify-content:center;padding:8px}.nav-icon{font-size:17px}.page-wrap{padding:24px 16px 60px}.assets-grid{grid-template-columns:1fr 1fr}.dashboard-grid{grid-template-columns:1fr}.topbar-legend{display:none!important}.canvas-page .generation-composer{max-width:calc(100vw - var(--sidebar-w) - 30px)}}
+@media(max-width:540px){.assets-grid,.template-grid,.stat-grid{grid-template-columns:1fr}.page-titlebar{display:block}.page-titlebar .right{margin:14px 0 0}.assets-toolbar{align-items:stretch;flex-direction:column}.assets-toolbar input{width:100%}.profile-drawer{padding:22px 18px}}
+.empty-card.error-card{border-color:rgba(255,82,82,.42);background:rgba(255,82,82,.06);color:#ff8c8c}.new-space-dialog{width:min(440px,calc(100vw - 32px))}.new-space-dialog .drawer-actions{justify-content:flex-end;margin-top:6px}
+
+@media(max-width:900px){.integration-credentials{grid-template-columns:1fr}.integration-credentials .ui-button{width:100%}}
+
+/* Private workspaces, team reports and the generation composer */
+[hidden]{display:none!important}
+.muted{color:var(--muted);line-height:1.6;font-size:12px}
+.report-panel{margin-top:18px}.report-panel>p{margin:-7px 0 15px}.table-scroll{overflow:auto}.report-table{width:100%;border-collapse:collapse;text-align:left;font-size:12px}.report-table th{color:var(--muted);font-size:10px;font-weight:500;padding:12px}.report-table td{padding:15px 12px;border-top:1px solid var(--line);font-variant-numeric:tabular-nums}.report-table td:first-child{font-weight:600}.report-table td small{display:block;margin-top:5px;font-size:9px;color:var(--muted)}#cost-note{max-width:160px;font-size:9px;font-weight:400}.team-grid{display:grid;grid-template-columns:minmax(240px,340px) minmax(320px,1fr);gap:20px}.team-list{display:grid;gap:12px}.team-row{display:flex;align-items:center;gap:15px;padding:12px 0;border-bottom:1px solid var(--line)}.team-row>div{flex:1;min-width:0}.team-row strong,.team-row small{display:block;overflow-wrap:anywhere}.team-row small{margin-top:5px;font-size:10px;color:var(--muted)}.team-row select{max-width:165px;font-size:11px}.drawer-admin>a{display:block;text-align:center;margin-top:12px}.auth-card .auth-access-note{font-size:11px}.winners-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.ranking-card{position:relative;overflow:hidden;padding:25px}.ranking-icon{font-size:34px;line-height:1;color:#ffcd73;margin-bottom:20px;display:block}.error-crown{color:#a699fa}.ranking-card h2{font-size:20px;margin-bottom:6px}.ranking-list{list-style:none;margin:25px 0 0;padding:0;display:grid;gap:7px;max-height:390px;overflow:auto}.rank-row{display:flex;align-items:center;gap:12px;padding:12px;border-radius:9px;background:var(--panel-2)}.rank-row.first{background:linear-gradient(100deg,#4e391d55,transparent);border:1px solid #bf98543b}.rank-position{width:22px;color:var(--muted);font-size:12px}.rank-row>div{flex:1;min-width:0}.rank-row strong{font-size:13px;display:block;overflow:hidden;text-overflow:ellipsis}.rank-row small{display:block;font-size:9px;margin-top:3px}.rank-row b{font-size:13px;color:#d9c3fc;font-variant-numeric:tabular-nums}.xp-calculator{display:grid;grid-template-columns:1fr 1.1fr;gap:35px;margin-top:20px;padding:28px}.xp-calculator h2{font-size:21px;margin:8px 0}.xp-result{display:flex;align-items:baseline;gap:12px;margin-top:35px}.xp-result output{font-size:56px;font-weight:600;letter-spacing:-2px;color:#87beff;font-variant-numeric:tabular-nums}.xp-result span{font-size:11px;color:var(--muted)}.calculator-controls{display:grid;gap:10px}.calculator-controls label{display:grid;grid-template-columns:1fr auto;gap:10px;font-size:12px}.calculator-controls label input,.calculator-controls label select{grid-column:1/-1;width:100%}.calculator-controls input[type=range]{height:25px;padding:0;accent-color:var(--blue)}.calculator-controls .range-ends{margin-top:-8px}.calculator-controls select{margin-bottom:8px}.calculator-controls small{color:var(--muted);font-size:10px}.winners-note{font-size:11px;color:var(--muted);max-width:720px;line-height:1.7;margin-top:18px}.asset-warning{color:#eaa260!important;line-height:1.5}.asset-body>p{overflow-wrap:anywhere}.canvas-page .node[data-type=generation]{width:360px!important}.canvas-page .prompt-node-body{padding:14px}.canvas-page .prompt-node-body textarea{display:block;min-height:120px;max-height:320px;width:100%;border:0;background:transparent;font-size:13px;line-height:1.65;padding:0;resize:vertical}.prompt-node-hint{display:block;font-size:9px;color:var(--muted);margin-top:13px}.canvas-page .node[data-type=generation] .port{top:110px}.canvas-page .node[data-type=preset] .port{top:110px}.canvas-page .preset-node-body{padding:18px}.preset-heading{font-size:14px;font-weight:500;line-height:1.4;overflow-wrap:anywhere;margin-bottom:11px}.preset-excerpt{font-size:12px;line-height:1.65;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;cursor:text;max-height:100px}.preset-excerpt:focus-visible{outline:1px solid var(--blue);outline-offset:4px}.canvas-page .generation-composer{width:650px;max-width:calc(100vw - var(--sidebar-w) - 28px);padding:14px;background:var(--panel);border:1px solid var(--line-strong);gap:10px;max-height:calc(100vh - 140px);box-shadow:0 12px 45px #0007}.generation-composer.expanded{width:820px}.generation-composer.expanded textarea{min-height:150px}.generation-composer textarea{background:var(--bg-soft);border-color:var(--line);font-size:12px;min-height:60px}.generation-composer .composer-node-name{display:none}.composer-bottom .demo-label{display:none}.composer-bottom{gap:6px}.composer-bottom select{min-width:0;max-width:170px;background:var(--panel-2);font-size:10px;border-color:var(--line-strong)}.composer-bottom .batch-choice{width:52px}.composer-bottom .reference-mode{width:115px}.composer-bottom .model-choice select{width:113px}.composer-settings>summary{background:var(--panel-2);border-color:var(--line-strong);padding:0 8px}.settings-popover{width:350px;background:var(--panel);border-color:var(--line-strong);padding:17px;gap:13px;z-index:2}.settings-popover label{font-size:11px;display:block;color:var(--muted)}.settings-popover input[type=range]{padding:0;width:100%;height:24px;accent-color:var(--blue);display:block;margin-top:10px}.settings-popover #duration-label{float:right;color:var(--text)}.settings-segments{grid-template-columns:repeat(3,1fr)}.settings-segments.ratios{grid-template-columns:repeat(6,1fr)}.settings-segments button{font-size:10px;padding:9px 3px;background:var(--panel-2)}.settings-popover .audio-setting{display:flex;justify-content:space-between;align-items:center}.settings-popover select{height:30px;font-size:10px}.composer-references{max-height:138px;overflow:auto}.ref-upload,.composer-reference{width:56px;height:56px;flex-shrink:0}.compiled-details pre{background:var(--bg-soft);max-height:100px}.resume-generation{font-size:10px;border:1px solid var(--line);padding:7px 10px;border-radius:6px}.canvas-page .output-preview{height:245px}.canvas-page .node[data-type=output] .port{top:156px}.canvas-page .port-menu{z-index:80}.canvas-page .port-menu button{font-size:12px}.canvas-page .autosave-state{max-width:190px}.canvas-page .topbar-legend{display:none!important}
+@media(max-width:900px){.team-grid,.winners-grid,.xp-calculator{grid-template-columns:1fr}.xp-result{margin-top:20px}.settings-popover{right:auto;left:0;width:min(350px,calc(100vw - var(--sidebar-w) - 40px))}.canvas-page .generation-composer{max-width:calc(100vw - var(--sidebar-w) - 24px)}.composer-bottom{gap:7px}.composer-bottom .composer-spacer{display:none}.share-button{display:none}}
+.canvas-page .port-menu{position:fixed;width:230px;display:grid;gap:3px;background:var(--panel);border:1px solid var(--line-strong);border-radius:11px;padding:8px;box-shadow:0 16px 40px #0007}.port-menu small{padding:6px 9px;color:var(--muted);font-size:10px}.port-menu button{display:block;width:100%;text-align:left;padding:10px;border-radius:7px;background:transparent;border:0;color:var(--text)}.port-menu button:hover,.port-menu button:focus-visible{background:var(--panel-3);outline:1px solid var(--blue)}
+#composer-presets{display:flex;gap:6px;flex-wrap:wrap}.linked-preset{display:flex;align-items:center;gap:4px;border:1px solid var(--line-strong);border-radius:6px;background:var(--panel-2);padding:4px 7px;font-size:10px;color:var(--muted)}.linked-preset>span{max-width:200px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.linked-preset.disabled{opacity:.45}.linked-preset button{font-size:10px;padding:2px}.canvas-page .prompt-node-body textarea:focus{outline:0;box-shadow:none}
+.range-ends{display:flex;justify-content:space-between;gap:15px;color:var(--muted);font-size:10px}.composer-bottom .reference-mode{width:128px}
+
+.output-download{position:absolute;z-index:3;bottom:8px;left:0;right:0;border-radius:5px;padding:5px;background:#111b;color:#fff;display:block;margin:8px 12px;color:var(--text);font-size:12px;text-align:center}.output-download[hidden]{display:none}
+
+/* Glass blue/violet cursor set based on the supplied visual reference. */
+@media (pointer: fine) {
+:root {
+--cursor-normal: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M5%204%20L26%2018%20L17%2019.5%20L12.2%2027%20Z%22%20fill%3D%22%236070ff%22%20stroke%3D%22%23587fff%22%20stroke-width%3D%223.6%22%20filter%3D%22url%28%23glow%29%22%20opacity%3D%22.62%22%2F%3E%3Cpath%20d%3D%22M5%204%20L26%2018%20L17%2019.5%20L12.2%2027%20Z%22%20fill%3D%22%2311152d%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%222.1%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M6%205%20L17%2019.5%20L12.2%2025.7%20Z%22%20fill%3D%22url%28%23glass%29%22%2F%3E%3Cpath%20d%3D%22M6%205%20L24%2017.4%20L17%2019.5%20Z%22%20fill%3D%22%23d9d9ff%22%20opacity%3D%22.15%22%2F%3E%3C%2Fsvg%3E") 5 4, default;
+--cursor-hover: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M5%204%20L26%2018%20L17%2019.5%20L12.2%2027%20Z%22%20fill%3D%22%2349a8ff%22%20stroke%3D%22%234295ff%22%20stroke-width%3D%225%22%20filter%3D%22url%28%23glow%29%22%20opacity%3D%22.6%22%2F%3E%3Cpath%20d%3D%22M5%204%20L26%2018%20L17%2019.5%20L12.2%2027%20Z%22%20fill%3D%22%236070ff%22%20stroke%3D%22%23587fff%22%20stroke-width%3D%223.6%22%20filter%3D%22url%28%23glow%29%22%20opacity%3D%22.62%22%2F%3E%3Cpath%20d%3D%22M5%204%20L26%2018%20L17%2019.5%20L12.2%2027%20Z%22%20fill%3D%22%2311152d%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%222.1%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M6%205%20L17%2019.5%20L12.2%2025.7%20Z%22%20fill%3D%22url%28%23glass%29%22%2F%3E%3Cpath%20d%3D%22M6%205%20L24%2017.4%20L17%2019.5%20Z%22%20fill%3D%22%23d9d9ff%22%20opacity%3D%22.15%22%2F%3E%3C%2Fsvg%3E") 5 4, pointer;
+--cursor-click: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Ccircle%20cx%3D%2214%22%20cy%3D%2216%22%20r%3D%2213%22%20fill%3D%22%23353cc1%22%20opacity%3D%22.17%22%2F%3E%3Ccircle%20cx%3D%2214%22%20cy%3D%2216%22%20r%3D%2212%22%20fill%3D%22none%22%20stroke%3D%22%235f75ff%22%20stroke-width%3D%221.5%22%2F%3E%3Cpath%20d%3D%22M5%204%20L26%2018%20L17%2019.5%20L12.2%2027%20Z%22%20fill%3D%22%236070ff%22%20stroke%3D%22%23587fff%22%20stroke-width%3D%223.6%22%20filter%3D%22url%28%23glow%29%22%20opacity%3D%22.62%22%2F%3E%3Cpath%20d%3D%22M5%204%20L26%2018%20L17%2019.5%20L12.2%2027%20Z%22%20fill%3D%22%2311152d%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%222.1%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M6%205%20L17%2019.5%20L12.2%2025.7%20Z%22%20fill%3D%22url%28%23glass%29%22%2F%3E%3Cpath%20d%3D%22M6%205%20L24%2017.4%20L17%2019.5%20Z%22%20fill%3D%22%23d9d9ff%22%20opacity%3D%22.15%22%2F%3E%3C%2Fsvg%3E") 5 4, pointer;
+--cursor-disabled: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M5%204%20L26%2018%20L17%2019.5%20L12.2%2027%20Z%22%20fill%3D%22%23303443%22%20stroke%3D%22%23848ca0%22%20stroke-width%3D%221.8%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M6%205%20L17%2019.5%20L12.2%2025.7%20Z%22%20fill%3D%22%23818898%22%20opacity%3D%22.6%22%2F%3E%3C%2Fsvg%3E") 5 4, not-allowed;
+--cursor-busy: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20transform%3D%22scale%28.73%29%22%3E%3Cpath%20d%3D%22M5%204%20L26%2018%20L17%2019.5%20L12.2%2027%20Z%22%20fill%3D%22%236070ff%22%20stroke%3D%22%23587fff%22%20stroke-width%3D%223.6%22%20filter%3D%22url%28%23glow%29%22%20opacity%3D%22.62%22%2F%3E%3Cpath%20d%3D%22M5%204%20L26%2018%20L17%2019.5%20L12.2%2027%20Z%22%20fill%3D%22%2311152d%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%222.1%22%20stroke-linejoin%3D%22round%22%2F%3E%3Cpath%20d%3D%22M6%205%20L17%2019.5%20L12.2%2025.7%20Z%22%20fill%3D%22url%28%23glass%29%22%2F%3E%3Cpath%20d%3D%22M6%205%20L24%2017.4%20L17%2019.5%20Z%22%20fill%3D%22%23d9d9ff%22%20opacity%3D%22.15%22%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%22M23%2018a6%206%200%201%201-5%203%22%20fill%3D%22none%22%20stroke%3D%22%236174ff%22%20stroke-width%3D%222.5%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22m16.4%2021%201.2-4%203.4%202%22%20fill%3D%22none%22%20stroke%3D%22%23d2d4ff%22%20stroke-width%3D%221.7%22%2F%3E%3C%2Fsvg%3E") 4 3, progress;
+--cursor-hand: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M10%2016V6a2%202%200%200%201%204%200v8-3a2%202%200%200%201%204%200v4-2a2%202%200%200%201%204%200v3-1a2%202%200%200%201%204%200v6c0%204-2%207-5%208H13c-2-1-4-4-5-6l-3-5c-1-2%201-4%203-2l2%202%22%20fill%3D%22url%28%23glass%29%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%221.8%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E") 12 4, pointer;
+--cursor-grab: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M7%2019%204%2013c-1-3%202-4%203-1l3%205V7c0-3%204-3%204%200v8-10c0-3%204-3%204%200v10-8c0-3%204-3%204%200v10-5c0-3%204-3%204%200v9c0%203-2%207-5%208h-9c-2-2-4-6-5-10Z%22%20fill%3D%22url%28%23glass%29%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%221.6%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E") 15 15, grab;
+--cursor-grabbing: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M7%2019v-8c0-3%204-3%204%200v4-8c0-3%204-3%204%200v7-7c0-3%204-3%204%200v8-5c0-3%204-3%204%200v5-2c0-3%204-3%204%200v8c0%204-3%207-6%208H13c-3-2-5-5-6-10Z%22%20fill%3D%22url%28%23glass%29%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%221.6%22%20stroke-linejoin%3D%22round%22%2F%3E%3C%2Fsvg%3E") 16 16, grabbing;
+--cursor-text: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M11%204h10M16%204v24M11%2028h10%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 16 16, text;
+--cursor-help: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M10%2010c0-8%2013-8%2013%200%200%205-7%204-7%2010%22%2F%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2226%22%20r%3D%221.4%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 16 16, help;
+--cursor-crosshair: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M16%204v9H7v6h9v9h3v-9h9v-6h-9V4Z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 17 16, crosshair;
+--cursor-move: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M16%204v24M4%2016h24M12%208l4-4%204%204M12%2024l4%204%204-4M8%2012l-4%204%204%204M24%2012l4%204-4%204%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 16 16, move;
+--cursor-resize-ns: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M16%204v24M11%209l5-5%205%205M11%2023l5%205%205-5%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 16 16, ns-resize;
+--cursor-resize-ew: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M4%2016h24M9%2011l-5%205%205%205M23%2011l5%205-5%205%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 16 16, ew-resize;
+--cursor-resize-nwse: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M6%206l20%2020M6%2013V6h7M19%2026h7v-7%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 16 16, nwse-resize;
+--cursor-resize-nesw: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M26%206%206%2026M19%206h7v7M6%2019v7h7%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 16 16, nesw-resize;
+--cursor-unavailable: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Ccircle%20cx%3D%2216%22%20cy%3D%2216%22%20r%3D%2211%22%2F%3E%3Cpath%20d%3D%22m8%208%2016%2016%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 16 16, not-allowed;
+--cursor-wait: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M9%204h14M9%2028h14M11%204v7l10%2010v7M21%204v7L11%2021v7%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 16 16, wait;
+--cursor-drop: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2032%2032%22%3E%3Cdefs%3E%3ClinearGradient%20id%3D%22glass%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.42%22%20stop-color%3D%22%23babaff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2334365b%22%2F%3E%3C%2FlinearGradient%3E%3ClinearGradient%20id%3D%22rim%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%3Cstop%20stop-color%3D%22%23fff%22%2F%3E%3Cstop%20offset%3D%22.55%22%20stop-color%3D%22%23bab2ff%22%2F%3E%3Cstop%20offset%3D%221%22%20stop-color%3D%22%2343b5ff%22%2F%3E%3C%2FlinearGradient%3E%3Cfilter%20id%3D%22glow%22%20x%3D%22-60%25%22%20y%3D%22-60%25%22%20width%3D%22220%25%22%20height%3D%22220%25%22%3E%3CfeGaussianBlur%20stdDeviation%3D%221.3%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22url%28%23rim%29%22%20stroke-width%3D%222.4%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpath%20d%3D%22M13%204v13H8l8%209%208-9h-5V4Z%22%2F%3E%3C%2Fg%3E%3C%2Fsvg%3E") 16 23, copy;
+}
+* { cursor: inherit !important; }
+html, body, .viewport { cursor: var(--cursor-normal) !important; }
+.asset-media:hover, .asset-preview img:hover { cursor: var(--cursor-hover) !important; }
+a, button, summary, select, label[for], [role="button"], input[type="checkbox"], input[type="radio"], input[type="range"], .dropzone, .ref-upload, .preset-excerpt { cursor: var(--cursor-hand) !important; }
+a:active, button:active:not(:disabled), summary:active, [role="button"]:active { cursor: var(--cursor-click) !important; }
+textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]), [contenteditable="true"] { cursor: var(--cursor-text) !important; }
+button:disabled, input:disabled, select:disabled, textarea:disabled, [aria-disabled="true"] { cursor: var(--cursor-disabled) !important; }
+[aria-busy="true"], [aria-busy="true"]:disabled, .is-loading { cursor: var(--cursor-busy) !important; }
+[aria-busy="true"] .cancel-generation { cursor: var(--cursor-hand) !important; }
+.node-header, .node-header *, .rail-grip, .viewport.pan-mode, .viewport.space-pan { cursor: var(--cursor-grab) !important; }
+.node-header button, .node-header input { cursor: var(--cursor-hand) !important; }
+.node-header input { cursor: var(--cursor-text) !important; }
+.node.dragging, .node.dragging *, .rail-grip:active, .side-rail-wrap.dragging *, .viewport.is-panning, .viewport.is-panning *, .viewport.is-node-dragging, .viewport.is-node-dragging * { cursor: var(--cursor-grabbing) !important; }
+.port, .port *, #minimap, .viewport.is-selecting, .viewport.is-selecting *, .viewport.is-wiring, .viewport.is-wiring * { cursor: var(--cursor-crosshair) !important; }
+.edge-hit { cursor: var(--cursor-move) !important; }
+[data-resize="ns"] { cursor: var(--cursor-resize-ns) !important; }
+[data-resize="ew"] { cursor: var(--cursor-resize-ew) !important; }
+[data-resize="nwse"] { cursor: var(--cursor-resize-nwse) !important; }
+[data-resize="nesw"] { cursor: var(--cursor-resize-nesw) !important; }
+[data-cursor="help"] { cursor: var(--cursor-help) !important; }
+[data-cursor="wait"] { cursor: var(--cursor-wait) !important; }
+[data-cursor="unavailable"] { cursor: var(--cursor-unavailable) !important; }
+.file-over { cursor: var(--cursor-drop) !important; }
+}
+</style></head><body data-page="placeholder" data-module="Flows"><aside class="app-sidebar">
+      <a class="brand" href="index.html"><span class="brand-logo"></span><span class="brand-copy"><strong>Magic</strong><small>AI Ad Creatives</small></span></a>
+      <section class="nav-group"><span class="nav-label">CREATE</span><nav class="app-nav"><a href="index.html"><span class="nav-icon">▦</span><span>Dashboard</span></a><a href="spaces.html"><span class="nav-icon">⌘</span><span>Canvas</span></a><a href="flows.html" aria-current="page"><span class="nav-icon">✣</span><span>Flows</span></a><a href="assets.html"><span class="nav-icon">▧</span><span>Assets</span></a></nav></section><section class="nav-group"><span class="nav-label">ORGANIZE</span><nav class="app-nav"><a href="projects.html"><span class="nav-icon">□</span><span>Projects</span></a><a href="presets.html"><span class="nav-icon">▤</span><span>Templates</span></a><a href="modifiers.html"><span class="nav-icon">☷</span><span>Modifiers</span></a></nav></section><section class="nav-group"><span class="nav-label">RESULTS</span><nav class="app-nav"><a href="winners.html"><span class="nav-icon">♕</span><span>Winners</span></a></nav></section><section class="nav-group"><span class="nav-label">ACCOUNT</span><nav class="app-nav"><a href="integrations.html"><span class="nav-icon">⚙</span><span>My settings</span></a><a href="users.html" data-superuser-only hidden><span class="nav-icon">♙</span><span>Users</span></a></nav></section>
+      <div class="sidebar-user"><small>USER</small><span data-user-email>—</span></div>
+    </aside><header class="app-topbar"><span></span><span class="topbar-spacer"></span><div class="topbar-actions"><button class="theme-button" data-theme-toggle title="Сменить тему">★ <span data-theme-state>Dark</span></button><button id="shell-avatar" class="avatar-button" data-user-avatar aria-label="Профиль">M</button></div></header><div id="drawer-backdrop" class="drawer-backdrop"></div>
+    <aside id="profile-drawer" class="profile-drawer" aria-label="Профиль">
+      <div class="drawer-title"><h2>Профиль</h2><button id="profile-close" class="icon-button" aria-label="Закрыть">×</button></div>
+      <div class="profile-photo"><div class="profile-photo-view"><img class="profile-photo-img" hidden alt=""><span class="profile-photo-letters">M</span></div><div class="upload-photo"><label class="ui-button">⇧ Загрузить фото<input id="profile-photo-input" type="file" accept="image/png,image/jpeg,image/webp" hidden></label><small>PNG / JPG / WebP, до 5 MB</small></div></div>
+      <div class="profile-email"><span>Email</span><strong data-profile-email>—</strong></div>
+      <form id="profile-form" class="stack"><label>ИМЯ<input name="displayName" required maxlength="80"></label><label>TELEGRAM<input name="telegram" maxlength="120" placeholder="@username"></label><div class="drawer-actions"><button type="button" class="ui-button" id="profile-cancel">Отмена</button><button class="ui-button primary" type="submit">Сохранить</button></div></form>
+      <section id="drawer-admin" class="drawer-admin" hidden><h3>Суперадмин · пользователи</h3><form class="stack"><label>Email<input name="email" type="email" required></label><label>Имя<input name="name" required maxlength="80"></label><label>Временный пароль<input name="password" type="password" minlength="6" required></label><label>Роль<select name="role"><option value="user">Пользователь</option><option value="superuser">Суперадмин</option></select></label><button type="submit" class="ui-button primary">Создать пользователя</button></form><a href="users.html" class="ui-button">Управлять ролями →</a></section>
+      <button data-logout class="ui-button danger ghost drawer-logout">Выйти</button>
+    </aside><main class="app-content"><div class="page-wrap"><div class="page-titlebar"><div><h1 id="placeholder-title">Flows</h1><p>Раздел заложен в универсальную структуру Magic</p></div></div><section class="placeholder-card"><h2>Flows</h2><p>Эта страница уже подключена к общей навигации, Firebase auth, профилю и теме. Бизнес-логику можно развивать отдельно, не меняя архитектуру Canvas / Assets.</p></section></div></main><script>'use strict';
+// Firebase Web App config for the NEW Magic / media-node-canvas project.
+// Firebase web config is public client configuration; provider API keys must never go here.
+window.MAGIC_FIREBASE_CONFIG = {
+  apiKey: "AIzaSyB9C9XCtnH0xfdTLSIYRz8DGAKPEc5ejLk",
+  authDomain: "aiagr-80390.firebaseapp.com",
+  projectId: "aiagr-80390",
+  storageBucket: "aiagr-80390.firebasestorage.app",
+  messagingSenderId: "897305382064",
+  appId: "1:897305382064:web:d5c61c0ed86bd5c583ff75"
+};
+window.MAGIC_APP_CONFIG = {
+  appName: 'Magic',
+  firebaseSdkVersion: '10.12.0',
+  defaultProvider: 'byteplus',
+  defaultVideoModel: 'dreamina-seedance-2-5-260628',
+  // Optional Cloudflare Worker gateway. Leave empty for Direct browser test mode.
+  // Set it in My settings after deploying cloudflare-worker/.
+  apiGatewayUrl: '',
+  byteplusBaseUrl: 'https://ark.ap-southeast.bytepluses.com/api/v3'
+};
+
+// Backward-compatible aliases for older cached HTML builds.
+window.PICASSO_FIREBASE_CONFIG = window.MAGIC_FIREBASE_CONFIG;
+window.PICASSO_APP_CONFIG = window.MAGIC_APP_CONFIG;
+
+'use strict';
+// Shared, side-effect-free generation rules. Also used by the tests.
+window.MagicDomain = (() => {
+  const resolutions = { '480p': 1, '720p': 1.5, '1080p': 2 };
+  const terminal = status => ['completed', 'failed', 'cancelled'].includes(status);
+  function xp({ seconds = 4, resolution = '480p', referenceCount = 1 } = {}) {
+    const duration = Math.max(4, Math.min(30, Number(seconds) || 4));
+    // Text-only generations use the base reference multiplier, not a penalty.
+    const refs = Math.max(1, Math.min(15, Number(referenceCount) || 1));
+    return Math.round(10 * (duration / 4) * (resolutions[resolution] || 1) * (1 + .15 * (refs - 1)));
+  }
+  function totals(videos) {
+    return videos.reduce((out, v) => {
+      out.total++;
+      if (v.status === 'completed') { out.completed++; out.xp += xp(v); }
+      if (v.status === 'failed') out.failed++;
+      if (!terminal(v.status)) out.running++;
+      if (v.cost != null && Number.isFinite(Number(v.cost))) out.cost += Number(v.cost);
+      else if (terminal(v.status)) out.unknownCost++;
+      return out;
+    }, { total: 0, completed: 0, failed: 0, running: 0, cost: 0, unknownCost: 0, xp: 0 });
+  }
+  function compatible(type, direction) {
+    if (direction === 'in') return { generation: ['media', 'preset'], text: ['preset'], output: ['generation'] }[type] || [];
+    return { generation: ['output'], media: ['generation'], preset: ['generation', 'text'], text: ['generation'] }[type] || [];
+  }
+  return { xp, totals, terminal, compatible, resolutions };
+})();
+
+'use strict';
+// Binary media stays in IndexedDB; small snapshots and the outbox stay in localStorage.
+// All keys include the authenticated UID. Blob URLs are recreated after a reload.
+window.MagicLocal = (() => {
+  let dbPromise;
+  function db() {
+    return dbPromise ||= new Promise((resolve, reject) => {
+      const request = indexedDB.open('magic-local-media-v1', 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('media', { keyPath: 'key' });
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => { dbPromise = null; reject(request.error); };
+    });
+  }
+  async function run(mode, action) {
+    const database = await db();
+    return new Promise((resolve, reject) => {
+      const tx = database.transaction('media', mode);
+      const request = action(tx.objectStore('media'));
+      tx.oncomplete = () => resolve(request.result);
+      tx.onerror = () => reject(tx.error);
+      tx.onabort = () => reject(tx.error || new Error('Локальное сохранение прервано.'));
+    });
+  }
+  const key = (uid, id) => `${uid}/${id}`;
+  const get = (uid, id) => run('readonly', store => store.get(key(uid, id)));
+  const put = (uid, id, value) => run('readwrite', store => store.put({ ...value, key: key(uid, id), uid, id }));
+  const remove = (uid, id) => run('readwrite', store => store.delete(key(uid, id)));
+  return { get, put, remove };
+})();
+
+'use strict';
+window.Studio=(()=>{
+  const CFG=window.MAGIC_APP_CONFIG||window.PICASSO_APP_CONFIG||{firebaseSdkVersion:'10.12.0',apiGatewayUrl:''};
+  const FBCFG=window.MAGIC_FIREBASE_CONFIG||window.PICASSO_FIREBASE_CONFIG;
+  const sdk=CFG.firebaseSdkVersion||'10.12.0';
+  const cache={user:null,profile:null,folders:[],presets:[],integrations:new Map(),firebaseError:null};
+  let api=null,readyResolve;
+  const readyPromise=new Promise(r=>readyResolve=r);
+  const el=(tag,text,className)=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;if(className)node.className=className;return node;};
+  const uid=()=>crypto.randomUUID?crypto.randomUUID():`${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const now=()=>Date.now();
+  const safeName=value=>String(value||'').trim().replace(/[\\/:*?"<>|]+/g,'-').slice(0,120)||'file';
+  const read=(key,fallback,storage=localStorage)=>{try{return JSON.parse(storage.getItem(key)||'null')??fallback;}catch{return fallback;}};
+  const write=(key,value,storage=localStorage)=>{storage.setItem(key,JSON.stringify(value));};
+  const isAdmin=()=>cache.profile?.role==='superuser';
+  const current=()=>cache.profile?{id:cache.user?.uid,uid:cache.user?.uid,email:cache.user?.email||cache.profile.email,name:cache.profile.displayName||cache.user?.displayName||cache.user?.email?.split('@')[0]||'User',role:cache.profile.role||'user',telegram:cache.profile.telegram||'',photoURL:cache.localPhotoURL||cache.profile.photoURL||''}:null;
+  function notify(message,type='info'){
+    let box=document.querySelector('#app-notice');
+    if(!box){box=el('div',undefined,'app-notice');box.id='app-notice';box.setAttribute('role','status');document.body.append(box);}
+    box.dataset.type=type;box.textContent=message;box.hidden=false;clearTimeout(notify.timer);notify.timer=setTimeout(()=>box.hidden=true,4800);
+  }
+  function download(name,text,type='application/json'){const url=URL.createObjectURL(new Blob([text],{type})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
+  function timestamp(value){if(value==null)return 0;if(typeof value==='number')return value;if(typeof value==='string'){const n=Date.parse(value);return Number.isFinite(n)?n:0;}if(typeof value?.toMillis==='function')return value.toMillis();return 0;}
+
+  async function init(){
+    try{
+      if(!FBCFG?.apiKey)throw new Error('Firebase config не задан.');
+      const [appM,authM,fsM]=await Promise.all([
+        import(`https://www.gstatic.com/firebasejs/${sdk}/firebase-app.js`),
+        import(`https://www.gstatic.com/firebasejs/${sdk}/firebase-auth.js`),
+        import(`https://www.gstatic.com/firebasejs/${sdk}/firebase-firestore.js`)
+      ]);
+      const app=appM.initializeApp(FBCFG);
+      const auth=authM.getAuth(app);await authM.setPersistence(auth,authM.browserLocalPersistence);
+      const db=fsM.getFirestore(app);
+      api={appM,authM,fsM,app,auth,db};
+      await new Promise(resolve=>{const off=authM.onAuthStateChanged(auth,async user=>{off();cache.user=user;try{if(user)await hydrateProfile(user);}catch(e){cache.firebaseError=e;}resolve();});});
+      if(cache.user&&cache.profile){
+        await migrateLegacyCredentials();
+        if(apiGatewayBase())await gatewaySession().catch(e=>notify(e.message,'error'));
+        // Replay durable work from the preceding page/reload, never on each canvas edit.
+        await flushPendingWork();
+      }
+    }catch(e){cache.firebaseError=e;console.error('Firebase init failed',e);}
+    readyResolve();
+  }
+  init();
+  async function ready(){await readyPromise;return !cache.firebaseError;}
+  function assertFirebase(){if(cache.firebaseError)throw cache.firebaseError;if(!api)throw new Error('Firebase ещё не готов.');}
+  async function hydrateProfile(user){
+    assertFirebase();const {doc,getDoc,setDoc}=api.fsM;const ref=doc(api.db,'users',user.uid),snap=await getDoc(ref);
+    if(snap.exists()){if(!['user','superuser'].includes(snap.data().role))throw new Error('В профиле должна быть роль user или superuser.');cache.profile={...snap.data(),uid:user.uid};cache.localPhotoURL=null;try{const avatar=await MagicLocal.get(user.uid,'profile-avatar');if(avatar?.file)cache.localPhotoURL=URL.createObjectURL(avatar.file);}catch{}return;}
+    throw new Error('Аккаунт не добавлен в команду. Суперадмин должен создать профиль в users с твоим UID.');
+  }
+  async function requireUser(){await ready();if(cache.user&&cache.profile)return true;if(cache.firebaseError){notify('Не удалось загрузить профиль: '+cache.firebaseError.message,'error');return false;}const here=(location.pathname.split('/').pop()||'index.html')+location.search;location.replace('signin.html?next='+encodeURIComponent(here));return false;}
+  async function signIn(email,password){if(!api)throw new Error('Firebase не загрузился. Обнови страницу.');cache.firebaseError=null;cache.profile=null;const cred=await api.authM.signInWithEmailAndPassword(api.auth,String(email).trim(),password);cache.user=cred.user;await hydrateProfile(cred.user);await migrateLegacyCredentials();return current();}
+  async function signUp(){throw new Error('Аккаунты создаёт суперадмин команды.');}
+  async function logout(){if(api)await api.authM.signOut(api.auth);cache.user=cache.profile=null;location.href='signin.html';}
+  async function updateProfile(patch){assertFirebase();if(!cache.user)throw new Error('Нет активной сессии.');const allowed={};for(const k of ['displayName','telegram','photoURL'])if(k in patch)allowed[k]=String(patch[k]||'').slice(0,k==='displayName'?80:500);allowed.updatedAt=now();await api.fsM.updateDoc(api.fsM.doc(api.db,'users',cache.user.uid),allowed);cache.profile={...cache.profile,...allowed};return current();}
+  async function uploadProfilePhoto(file){
+    if(!file?.type?.startsWith('image/'))throw new Error('Выбери PNG/JPG/WebP.');
+    if(file.size>5*1024*1024)throw new Error('Фото профиля — максимум 5 МБ.');
+    await MagicLocal.put(cache.user.uid,'profile-avatar',{file});
+    if(cache.localPhotoURL)URL.revokeObjectURL(cache.localPhotoURL);
+    cache.localPhotoURL=URL.createObjectURL(file);return cache.localPhotoURL;
+  }
+  async function listUsers(){assertFirebase();if(!isAdmin())return [current()];const snap=await api.fsM.getDocs(api.fsM.collection(api.db,'users'));return snap.docs.map(d=>({id:d.id,uid:d.id,...d.data(),name:d.data().displayName||d.data().email})).sort((a,b)=>(a.name||'').localeCompare(b.name||''));}
+  async function createUser({email,password,name,role='user'}) {
+    assertFirebase();
+    if(!isAdmin())throw new Error('Только суперадмин может создавать пользователей.');
+    if(!['user','superuser'].includes(role))throw new Error('Недопустимая роль.');
+    const secondary=api.appM.initializeApp(FBCFG,'invite-'+uid());
+    const auth2=api.authM.getAuth(secondary);let created;
+    try {
+      await api.authM.setPersistence(auth2,api.authM.inMemoryPersistence);
+      created=(await api.authM.createUserWithEmailAndPassword(auth2,String(email).trim().toLowerCase(),password)).user;
+      await api.fsM.setDoc(api.fsM.doc(api.db,'users',created.uid),{
+        email:created.email,displayName:String(name||'').trim().slice(0,80)||created.email.split('@')[0],
+        telegram:'',photoURL:'',role,createdAt:now(),updatedAt:now()
+      });
+      return created.uid;
+    }catch(error){
+      // Avoid an orphan Auth account if creating its profile is denied by old rules.
+      if(created)try{await api.authM.deleteUser(created);}catch{error.message+=' Аккаунт создан в Authentication, но профиль не сохранён; проверь его в Firebase.';}
+      throw error;
+    }finally{try{await api.authM.signOut(auth2);await api.appM.deleteApp(secondary);}catch{}}
+  }
+  async function updateUserRole(id,role){
+    assertFirebase();if(!isAdmin())throw new Error('Только суперадмин может менять роли.');
+    if(!['user','superuser'].includes(role))throw new Error('Недопустимая роль.');
+    if(id===cache.user.uid&&role!=='superuser')throw new Error('Свою роль суперадмина понизить нельзя.');
+    await api.fsM.updateDoc(api.fsM.doc(api.db,'users',id),{role,updatedAt:now()});
+  }
+
+  let templatesPromise;
+  function ensureTemplates(){return templatesPromise ||= loadTemplates().catch(e=>{templatesPromise=null;throw e;});}
+
+  async function loadTemplates(){
+    assertFirebase();if(!cache.user)return;
+    const {collection,getDocs,query,where}=api.fsM;
+    const loadCollection=async name=>{
+      const col=collection(api.db,name);
+      if(isAdmin())return (await getDocs(col)).docs;
+      const [common,mine]=await Promise.all([
+        getDocs(query(col,where('scope','==','common'))),
+        getDocs(query(col,where('ownerUid','==',cache.user.uid)))
+      ]);
+      const byId=new Map();for(const d of [...common.docs,...mine.docs])byId.set(d.id,d);return [...byId.values()];
+    };
+    const [f,p]=await Promise.all([loadCollection('templateFolders'),loadCollection('templates')]);
+    cache.folders=f.map(d=>({id:d.id,...d.data()}));cache.presets=p.map(d=>({id:d.id,...d.data()}));
+    const defaults=['Character','Scene','Item','Style','Sound Effect','Others'];
+    for(const name of defaults){const id='builtin-'+name.toLowerCase().replace(/\s+/g,'-');if(!cache.folders.some(x=>x.id===id))cache.folders.push({id,name,scope:'common',ownerUid:null,builtin:true});}
+  }
+  const listFolders=()=>cache.folders.slice();const listPresets=()=>cache.presets.slice();
+  const canEdit=item=>isAdmin()||item.scope!=='common'&&item.ownerUid===cache.user?.uid;
+  async function saveFolder(data){assertFirebase();const scope=data.scope==='common'?'common':'mine';if(scope==='common'&&!isAdmin())throw new Error('Общие папки создаёт администратор.');const name=String(data.name||'').trim().slice(0,60);if(!name)throw new Error('Укажи название папки.');const id=data.id&&!String(data.id).startsWith('builtin-')?data.id:uid();const row={name,scope,ownerUid:scope==='common'?cache.user.uid:cache.user.uid,updatedAt:now(),createdAt:data.createdAt||now()};await api.fsM.setDoc(api.fsM.doc(api.db,'templateFolders',id),row,{merge:true});await loadTemplates();return {id,...row};}
+  async function deleteFolder(id){const f=cache.folders.find(x=>x.id===id);if(!f||f.builtin)throw new Error('Системную папку удалить нельзя.');if(!canEdit(f))throw new Error('Нет доступа.');if(cache.presets.some(p=>p.folder===id))throw new Error('Сначала удали или перемести шаблоны из папки.');await api.fsM.deleteDoc(api.fsM.doc(api.db,'templateFolders',id));await loadTemplates();}
+  async function savePreset(data){assertFirebase();const scope=data.scope==='common'?'common':'mine';if(scope==='common'&&!isAdmin())throw new Error('Общие шаблоны создаёт администратор.');const name=String(data.name||'').trim().slice(0,80),text=String(data.text||'').trim();if(!name||!text)throw new Error('Заполни название и текст.');const id=data.id||uid(),old=cache.presets.find(x=>x.id===id);if(old&&!canEdit(old))throw new Error('Нет доступа к этому шаблону.');const folder=data.folder||cache.folders[0]?.id||'builtin-others';const row={name,text,folder,scope,ownerUid:old?.ownerUid||cache.user.uid,createdAt:old?.createdAt||now(),updatedAt:now()};await api.fsM.setDoc(api.fsM.doc(api.db,'templates',id),row,{merge:true});await loadTemplates();return {id,...row};}
+  async function deletePreset(id){const p=cache.presets.find(x=>x.id===id);if(!p||!canEdit(p))throw new Error('Нет доступа.');await api.fsM.deleteDoc(api.fsM.doc(api.db,'templates',id));await loadTemplates();}
+
+  const credentialKey=field=>`magic.credentials.${cache.user?.uid||'signed-out'}.${field}`;
+  async function migrateLegacyCredentials(){
+    const key=localStorage.getItem('magic.byteplus.apiKey'),gateway=localStorage.getItem('magic.apiGatewayUrl');
+    if(!key&&!gateway)return;
+    // Old credentials had no UID. Adopt them only when this user's metadata matches.
+    try{
+      const snap=await api.fsM.getDoc(api.fsM.doc(api.db,'integrations',`${cache.user.uid}_byteplus`));
+      if(!snap.exists())return;
+      const row=snap.data(),hint=row.credentialHint||'';
+      const matches=(key&&hint===key.slice(0,10)+'…')||(gateway&&hint===gateway.replace(/^https?:\/\//,'').slice(0,40));
+      if(row.ownerUid!==cache.user.uid||!matches)return;
+      if(key&&!localStorage.getItem(credentialKey('apiKey')))localStorage.setItem(credentialKey('apiKey'),key);
+      if(gateway&&!localStorage.getItem(credentialKey('gateway')))localStorage.setItem(credentialKey('gateway'),gateway);
+      for(const k of ['magic.byteplus.apiKey','magic.apiGatewayUrl','magic.byteplus.mode'])localStorage.removeItem(k);
+    }catch{ /* Existing credentials stay untouched until their owner can be verified. */ }
+  }
+  async function loadIntegrations(){
+    if(!cache.user)return;cache.integrations.clear();
+    try{
+      const snap=await api.fsM.getDocs(api.fsM.query(api.fsM.collection(api.db,'integrations'),api.fsM.where('ownerUid','==',cache.user.uid)));
+      snap.forEach(d=>cache.integrations.set(d.data().provider,{id:d.id,...d.data()}));
+    }catch(err){console.warn('Integration metadata unavailable; local credentials still work.',err);}
+    const localKey=String(localStorage.getItem(credentialKey('apiKey'))||'').trim();
+    if(localKey&&!cache.integrations.has('byteplus'))cache.integrations.set('byteplus',{id:`${cache.user.uid}_byteplus`,ownerUid:cache.user.uid,provider:'byteplus',label:'BytePlus ModelArk',connected:true,credentialHint:localKey.slice(0,10)+'…',localOnly:true});
+  }
+  async function getIntegration(provider){await ready();if(!cache.integrations.size&&cache.user)await loadIntegrations();return cache.integrations.get(provider)||null;}
+  async function saveIntegration(provider,data){
+    assertFirebase();if(provider!=='byteplus')throw new Error('Этот provider пока не подключён.');
+    const apiKey=String(data.apiKey||'').trim();
+    const workerUrl=String(data.workerUrl||'').trim().replace(/\/$/,'');
+    if(!apiKey&&!workerUrl)throw new Error('Вставь ARK API Key для Direct mode или Cloudflare Worker URL.');
+    if(apiKey)localStorage.setItem(credentialKey('apiKey'),apiKey);else if(workerUrl)localStorage.removeItem(credentialKey('apiKey'));
+    if(workerUrl)localStorage.setItem(credentialKey('gateway'),workerUrl);else localStorage.removeItem(credentialKey('gateway'));localStorage.removeItem(credentialKey('session'));
+    
+    const id=`${cache.user.uid}_${provider}`,old=cache.integrations.get(provider)||{};
+    const hint=workerUrl?workerUrl.replace(/^https?:\/\//,'').slice(0,40):(apiKey.slice(0,10)+'…');
+    const row={ownerUid:cache.user.uid,provider,label:String(data.label||'BytePlus ModelArk'),connected:true,connectionMode:workerUrl?'worker':'direct',credentialHint:hint,updatedAt:now(),createdAt:old.createdAt||now()};
+    try{await api.fsM.setDoc(api.fsM.doc(api.db,'integrations',id),row);}catch(err){console.warn('Could not save integration metadata to Firestore; using local-only mode.',err);row.localOnly=true;}
+    cache.integrations.set(provider,{id,...row});if(workerUrl)await gatewaySession();return {id,...row};
+  }
+  async function removeIntegration(provider){
+    if(provider==='byteplus'){
+      localStorage.removeItem(credentialKey('apiKey'));
+      localStorage.removeItem(credentialKey('gateway'));localStorage.removeItem(credentialKey('session'));
+      
+    }
+    const item=cache.integrations.get(provider);if(item){try{await api.fsM.deleteDoc(api.fsM.doc(api.db,'integrations',item.id));}catch(err){console.warn('Integration metadata delete skipped',err);}}
+    cache.integrations.delete(provider);
+  }
+  function apiGatewayBase(){return String(localStorage.getItem(credentialKey('gateway'))||CFG.apiGatewayUrl||'').replace(/\/$/,'');}
+  function byteplusBase(){return String(CFG.byteplusBaseUrl||'https://ark.ap-southeast.bytepluses.com/api/v3').replace(/\/$/,'');}
+  function byteplusMode(){return apiGatewayBase()?'worker':'direct';}
+  async function providerCredentials(provider){
+    if(provider==='byteplus'){
+      const workerUrl=apiGatewayBase();
+      if(workerUrl)return {workerUrl,connected:true,mode:'worker'};
+      const apiKey=String(localStorage.getItem(credentialKey('apiKey'))||'').trim();
+      return apiKey?{apiKey,connected:true,mode:'direct'}:null;
+    }
+    return null;
+  }
+  async function providerKey(provider){return (await providerCredentials(provider))?.apiKey||'';}
+
+  function buildBytePlusRequest(payload={}){
+    const content=[{type:'text',text:String(payload.prompt||'')}];
+    if(payload.first_frame_url)content.push({type:'image_url',image_url:{url:payload.first_frame_url},role:'first_frame'});
+    if(payload.last_frame_url)content.push({type:'image_url',image_url:{url:payload.last_frame_url},role:'last_frame'});
+    for(const url of payload.reference_images||[])content.push({type:'image_url',image_url:{url},role:'reference_image'});
+    for(const url of payload.reference_videos||[])content.push({type:'video_url',video_url:{url},role:'reference_video'});
+    const body={model:payload.model||CFG.defaultVideoModel||'dreamina-seedance-2-5-260628',content,generate_audio:payload.generate_audio!==false,watermark:false,output_format:payload.output_format||'mp4'};
+    if(payload.ratio)body.ratio=payload.ratio;
+    if(payload.resolution)body.resolution=payload.resolution;
+    if(payload.duration!==undefined&&payload.duration!==null&&payload.duration!=='')body.duration=Number(payload.duration);
+    if(Number.isFinite(Number(payload.seed))&&Number(payload.seed)>=0)body.seed=Number(payload.seed);
+    return body;
+  }
+
+  async function responseOrError(r,label='API'){
+    const type=r.headers.get('content-type')||'';let data;
+    try{data=type.includes('json')?await r.json():await r.text();}catch{data='';}
+    if(!r.ok){const detail=typeof data==='string'?data:(data?.error?.message||data?.error||data?.message||JSON.stringify(data));const err=new Error(`${label} ${r.status}${detail?`: ${String(detail).slice(0,500)}`:''}`);err.httpStatus=r.status;throw err;}
+    return data;
+  }
+
+  async function directBytePlus(path,{body}={}){
+    const credentials=await providerCredentials('byteplus');
+    const apiKey=credentials?.apiKey||String(localStorage.getItem(credentialKey('apiKey'))||'').trim();
+    if(!apiKey)throw new Error('Вставь ARK API Key в My settings.');
+    const headers={'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json'};let r;
+    try{
+      if(path==='/byteplus/test')r=await fetch(byteplusBase()+'/contents/generations/tasks?page_num=1&page_size=1',{method:'GET',headers});
+      else if(path==='/byteplus/submit')r=await fetch(byteplusBase()+'/contents/generations/tasks',{method:'POST',headers,body:JSON.stringify(buildBytePlusRequest(body?.payload||body||{}))});
+      else if(path==='/byteplus/status')r=await fetch(byteplusBase()+'/contents/generations/tasks/'+encodeURIComponent(body?.taskId||''),{method:'GET',headers});
+      else throw new Error('Неизвестный BytePlus route.');
+    }catch(e){
+      if(e instanceof TypeError)throw new Error('Браузер не смог вызвать BytePlus напрямую. Обычно это CORS. Для GitHub Pages используй Cloudflare Worker URL в My settings.');
+      throw e;
+    }
+    const data=await responseOrError(r,'BytePlus');
+    return new Response(JSON.stringify(data),{status:200,headers:{'Content-Type':'application/json'}});
+  }
+
+  async function proxy(path,{method='GET',body,headers={}}={}){
+    if(!cache.user)throw new Error('Нужна авторизация.');
+    const base=apiGatewayBase();
+    if(!base&&path.startsWith('/byteplus/'))return directBytePlus(path,{method,body,headers});
+    if(!base)throw new Error('Cloudflare Worker URL не настроен.');
+    const h={...await gatewayHeaders(),...headers};if(body!==undefined){h['Content-Type']='application/json';body=JSON.stringify(body);}let r;
+    try{r=await fetch(base+path,{method,headers:h,body});}
+    catch(e){throw new Error('Не удалось связаться с Cloudflare Worker. Проверь Worker URL и deploy.');}
+    if(!r.ok){const type=r.headers.get('content-type')||'';let detail;try{const data=type.includes('json')?await r.json():await r.text();detail=typeof data==='string'?data:(data?.detail?.message||data?.detail||data?.error||JSON.stringify(data));}catch{detail='';}const err=new Error(`Worker ${r.status}${detail?`: ${String(detail).slice(0,500)}`:''}`);err.httpStatus=r.status;throw err;}
+    return r;
+  }
+  async function testIntegration(provider){
+    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Сначала настрой Direct ARK API Key или Cloudflare Worker URL.');
+    if(provider==='byteplus'){localStorage.removeItem(credentialKey('session'));const r=await proxy('/byteplus/test',{method:'POST',body:{}});return r.json();}
+    throw new Error('Тест для этого провайдера пока не реализован.');
+  }
+
+  const ownerCache=new Map(),syncingSpaces=new Map(),syncingVideos=new Map();
+  const sessionKey=id=>`magic.canvas.cache.v1.${cache.user.uid}.${id}`;
+  const pendingKey=id=>`magic.space.pending.${cache.user.uid}.${id}`;
+  const jobsPrefix=()=>`magic.job.v3.${cache.user.uid}.`;
+  function localVideos(){const rows={},prefix=jobsPrefix();for(const key of Object.keys(localStorage))if(key.startsWith(prefix)){const row=read(key,null);if(row?.uid===cache.user.uid)rows[row.id]=row;}return rows;}
+  function rememberVideo(row){write(jobsPrefix()+row.id,row);return row;}
+  function own(row){if(!row||row.ownerUid!==cache.user.uid)throw new Error('Этот Space доступен только его владельцу.');return row;}
+  async function ownedSpace(id){return ownerCache.get(id)||own(await getSpace(id));}
+  async function listSpaces(){
+    assertFirebase();const {collection,getDocs,query,where}=api.fsM;
+    const snap=await getDocs(query(collection(api.db,'spaces'),where('ownerUid','==',cache.user.uid)));
+    return snap.docs.map(d=>{const s={...d.data(),id:d.id};ownerCache.set(s.id,s);return s;}).sort((a,b)=>timestamp(b.updatedAt)-timestamp(a.updatedAt));
+  }
+  async function createSpace(name='Untitled space'){
+    assertFirebase();const ref=api.fsM.doc(api.fsM.collection(api.db,'spaces'));
+    const row={ownerUid:cache.user.uid,name:String(name||'').trim().slice(0,80)||'Untitled space',nodeCount:0,edgeCount:0,canvasState:null,createdAt:now(),updatedAt:now()};
+    await api.fsM.setDoc(ref,row);const result={id:ref.id,...row};ownerCache.set(result.id,result);return result;
+  }
+  async function getSpace(id){
+    assertFirebase();const snap=await api.fsM.getDoc(api.fsM.doc(api.db,'spaces',id));
+    if(!snap.exists())return null;const row=own({...snap.data(),id:snap.id});ownerCache.set(id,row);return row;
+  }
+  async function renameSpace(id,name){await ownedSpace(id);name=String(name||'').trim().slice(0,80);if(!name)throw new Error('Укажи название.');await api.fsM.updateDoc(api.fsM.doc(api.db,'spaces',id),{name,updatedAt:now()});ownerCache.get(id).name=name;}
+  async function duplicateSpace(id){
+    const source=await ownedSpace(id),local=read(sessionKey(id),null);
+    const copy=await createSpace((source.name||'Space')+' copy');
+    const state=local&&local.savedAt>(source.canvasState?.savedAt||0)?local:source.canvasState;
+    if(state)await saveSpaceState(copy.id,state);return copy;
+  }
+  async function deleteSpace(id){
+    await ownedSpace(id);await api.fsM.deleteDoc(api.fsM.doc(api.db,'spaces',id));
+    ownerCache.delete(id);localStorage.removeItem(sessionKey(id));localStorage.removeItem(pendingKey(id));
+  }
+  function cleanSpacePayload(payload){
+    const {version,savedAt,session,state,counters,edgeSequence,camera,mapVisible,assets=[]}=payload;
+    // Undo history never travels to Firestore. Do not persist browser-only Blob URLs.
+    return JSON.parse(JSON.stringify({version,savedAt,session,state,counters,edgeSequence,camera,mapVisible,
+      assets:assets.map(a=>({...a,url:a.url?.startsWith('blob:')?null:a.url,uploading:false}))}));
+  }
+  function queueSpaceState(id,payload){
+    write(sessionKey(id),payload);write(pendingKey(id),{savedAt:payload.savedAt});
+  }
+  async function storeLocalAsset(file,spaceId,assetId=uid()){
+    if(!file.type.startsWith('image/')&&!file.type.startsWith('video/'))throw new Error('Поддерживаются изображения и видео.');
+    if(file.size>250*1024*1024)throw new Error('Файл больше 250 МБ.');
+    const meta={id:assetId,uid:cache.user.uid,spaceId,name:file.name,kind:file.type.startsWith('video/')?'video':'image',mediaType:file.type,size:file.size,createdAt:now(),updatedAt:now(),url:null,storagePath:null};
+    await MagicLocal.put(cache.user.uid,assetId,{file,meta,cloudSaved:false});return {...meta,url:URL.createObjectURL(file),local:true};
+  }
+  async function hydrateLocalAssets(items){
+    return Promise.all(items.map(async item=>{
+      try{const stored=await MagicLocal.get(cache.user.uid,item.id);if(stored){const meta={...item,...stored.meta};return {...meta,url:meta.url||(stored.file?URL.createObjectURL(stored.file):null),local:!meta.storagePath};}}
+      catch(e){console.warn('Local media unavailable',e.name);}
+      return {...item,url:item.url?.startsWith('blob:')?null:item.url};
+    }));
+  }
+  function fileDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file);});}
+  async function storeReferenceUrl(url,spaceId,assetId=uid()){
+    const parsed=new URL(url);if(parsed.protocol!=='https:')throw new Error('Нужна публичная HTTPS-ссылка на медиа.');
+    const name=decodeURIComponent(parsed.pathname.split('/').pop())||'Reference';
+    const kind=/\.(mp4|mov|webm|m4v|avi)$/i.test(parsed.pathname)?'video':'image';
+    const meta={id:assetId,uid:cache.user.uid,spaceId,name,kind,size:0,url:parsed.href,storagePath:null,createdAt:now(),updatedAt:now()};
+    await MagicLocal.put(cache.user.uid,assetId,{meta,cloudSaved:false});return meta;
+  }
+  async function ensureRemoteAsset(item){
+    // Only the API request carries image bytes. The graph and Firestore keep metadata.
+    if(/^https:\/\//.test(item.url||''))return {...item,referenceUrl:item.url};
+    const stored=await MagicLocal.get(cache.user.uid,item.id);
+    if(!stored?.file)throw new Error(`Добавь файл «${item.name}» повторно: локальная копия недоступна.`);
+    if(item.kind==='video')throw new Error('Видеореференс требует публичную HTTPS-ссылку. Добавь его кнопкой «По ссылке»; локальное видео остаётся на этом компьютере.');
+    if(!/^image\/(jpeg|png|webp|bmp|tiff|gif|heic|heif)$/.test(stored.file.type))throw new Error('Для API выбери JPG, PNG, WebP, BMP, TIFF, GIF, HEIC или HEIF.');
+    if(stored.file.size>=30*1024*1024)throw new Error('Изображение для API должно быть меньше 30 МБ.');
+    return {...item,referenceUrl:await fileDataUrl(stored.file)};
+  }
+  async function uploadAsset(file,spaceId,assetId=uid()) {return ensureRemoteAsset(await storeLocalAsset(file,spaceId,assetId));}
+  async function saveSpaceState(id,payload){
+    queueSpaceState(id,payload);return flushSpaceState(id);
+  }
+  async function flushSpaceState(id){
+    if(syncingSpaces.has(id))return syncingSpaces.get(id);
+    const task=(async()=>{
+      const marker=read(pendingKey(id),null),local=read(sessionKey(id),null);if(!marker||!local)return;
+      const payload=cleanSpacePayload(local),cloudAssets=[],used=new Set(payload.state.nodes.flatMap(n=>n.assets||[]));
+      payload.assets=await Promise.all(payload.assets.filter(a=>used.has(a.id)).map(async a=>{
+        const stored=await MagicLocal.get(cache.user.uid,a.id).catch(()=>null);
+        if(stored?.meta&&!stored.cloudSaved)cloudAssets.push(stored);
+        return {...a,url:/^https:\/\//.test(a.url||'')?a.url:null,uploading:false};
+      }));
+      if(new Blob([JSON.stringify(payload)]).size>850000)throw new Error('Схема больше лимита Firestore. Уменьши число нод или объём промптов; локальная копия сохранена.');
+      // Each asset is registered once; one graph write at this explicit checkpoint.
+      const batch=api.fsM.writeBatch(api.db);
+      for(const stored of cloudAssets){const {id,...row}=stored.meta;batch.set(api.fsM.doc(api.db,'assets',id),row,{merge:true});}
+      batch.update(api.fsM.doc(api.db,'spaces',id),{canvasState:payload,nodeCount:payload.state.nodes.length,edgeCount:payload.state.edges.length,updatedAt:now()});
+      await batch.commit();
+      for(const stored of cloudAssets)await MagicLocal.put(cache.user.uid,stored.id,{...stored,cloudSaved:true});
+      if(read(pendingKey(id),null)?.savedAt===marker.savedAt)localStorage.removeItem(pendingKey(id));
+      return payload;
+    })();syncingSpaces.set(id,task);
+    try{return await task;}finally{syncingSpaces.delete(id);}
+  }
+  async function listInputAssets(){
+    const snap=await api.fsM.getDocs(api.fsM.query(api.fsM.collection(api.db,'assets'),api.fsM.where('uid','==',cache.user.uid)));
+    return hydrateLocalAssets(snap.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>timestamp(b.createdAt)-timestamp(a.createdAt)));
+  }
+  async function createVideoRecord(data){
+    assertFirebase();const me=current();
+    const row={id:uid(),uid:me.uid,user:me.name,spaceId:data.spaceId||null,spaceName:data.spaceName||'',sourceNodeId:data.sourceNodeId||null,outputNodeId:data.outputNodeId||null,
+      prompt:data.prompt||'',provider:data.provider||'byteplus',model:data.model||CFG.defaultVideoModel||'dreamina-seedance-2-5-260628',resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
+      seconds:Math.max(4,Math.min(30,Number(data.seconds)||8)),referenceCount:Math.max(0,Math.min(15,Number(data.referenceCount)||0)),hasRef:Boolean(data.hasRef),refMode:'reference',generateAudio:data.generateAudio!==false,
+      status:'queued',pct:0,cost:null,error:null,requestId:null,videoUrl:null,remoteUrl:null,storagePath:null,createdAt:now(),updatedAt:now(),cloudSaved:false};
+    return rememberVideo(row);
+  }
+  async function getVideo(id){
+    const local=localVideos()[id];if(local)return local;
+    const snap=await api.fsM.getDoc(api.fsM.doc(api.db,'videos',id));
+    return snap.exists()?{...snap.data(),id:snap.id,cloudSaved:true}:null;
+  }
+  async function updateVideo(id,patch){
+    const old=await getVideo(id);if(!old||old.uid!==cache.user.uid)throw new Error('Нет доступа к этой генерации.');
+    const row=rememberVideo({...old,...patch,updatedAt:now(),cloudSaved:false});
+    if(MagicDomain.terminal(row.status)){
+      try{return await persistVideo(row);}catch(e){notify('Результат сохранён локально; отправка в базу ожидает повторения: '+e.message,'error');}
+    }
+    return row;
+  }
+  async function persistVideo(row){
+    if(!MagicDomain.terminal(row.status)||row.cloudSaved)return row;
+    if(syncingVideos.has(row.id))return syncingVideos.get(row.id);
+    const task=(async()=>{
+      const videoRef=api.fsM.doc(api.db,'videos',row.id),scoreRef=api.fsM.doc(api.db,'leaderboard',row.uid);
+      const {id,cloudSaved,trackingWarning,...data}=row;
+      data.schemaVersion=2;data.referenceCount=Math.max(0,Math.min(15,Number(data.referenceCount)||0));data.seconds=Math.max(4,Math.min(30,Number(data.seconds)||8));data.resolution=normalizeResolution(data.resolution);
+      await api.fsM.runTransaction(api.db,async tx=>{
+        const [previous,score]=await Promise.all([tx.get(videoRef),tx.get(scoreRef)]);
+        // The same terminal task can be observed by several tabs. Count it only once.
+        if(previous.exists()&&MagicDomain.terminal(previous.data().status))return;
+        const before=score.exists()?score.data():{};
+        tx.set(videoRef,data);
+        tx.set(scoreRef,{uid:row.uid,nickname:current().name,xp:(before.xp||0)+(row.status==='completed'?MagicDomain.xp(data):0),
+          completed:(before.completed||0)+(row.status==='completed'?1:0),failed:(before.failed||0)+(row.status==='failed'?1:0),lastVideoId:row.id,updatedAt:now()});
+      });
+      return rememberVideo({...row,cloudSaved:true});
+    })();syncingVideos.set(row.id,task);
+    try{return await task;}finally{syncingVideos.delete(row.id);}
+  }
+  async function listVideos(){
+    const col=api.fsM.collection(api.db,'videos');
+    const snap=await api.fsM.getDocs(isAdmin()?col:api.fsM.query(col,api.fsM.where('uid','==',cache.user.uid)));
+    const byId=new Map(snap.docs.map(d=>[d.id,{...d.data(),id:d.id,cloudSaved:true}]));
+    for(const row of Object.values(localVideos()))if(row.uid===cache.user.uid&&!row.cloudSaved)byId.set(row.id,row);
+    return [...byId.values()].sort((a,b)=>timestamp(b.createdAt)-timestamp(a.createdAt));
+  }
+  function pendingVideos(spaceId){return Object.values(localVideos()).filter(v=>v.uid===cache.user.uid&&(!spaceId||v.spaceId===spaceId)&&!MagicDomain.terminal(v.status));}
+  async function deleteVideo(id){
+    // Keep the generation in the accounting history; only hide its card.
+    const row=await getVideo(id);if(!row||row.uid!==cache.user.uid)throw new Error('Скрыть можно только свою генерацию.');
+    if(!MagicDomain.terminal(row.status))throw new Error('Дождись завершения задачи.');
+    await api.fsM.updateDoc(api.fsM.doc(api.db,'videos',id),{archived:true});
+    const local=localVideos()[id];if(local)rememberVideo({...local,archived:true});
+  }
+  async function listLeaderboard(){const snap=await api.fsM.getDocs(api.fsM.collection(api.db,'leaderboard'));return snap.docs.map(d=>({...d.data(),uid:d.id}));}
+  async function rebuildLeaderboard(){
+    if(!isAdmin())throw new Error('Только суперадмин может пересчитать рейтинг.');
+    const users=await listUsers();
+    for(const user of users){
+      const ref=api.fsM.doc(api.db,'leaderboard',user.uid);
+      await api.fsM.runTransaction(api.db,async tx=>{
+        // Read the summary BEFORE the query. A concurrent result changes this document
+        // and makes the transaction retry with a fresh query, preventing lost points.
+        await tx.get(ref);
+        const snap=await api.fsM.getDocs(api.fsM.query(api.fsM.collection(api.db,'videos'),api.fsM.where('uid','==',user.uid)));
+        const stats=MagicDomain.totals(snap.docs.map(d=>d.data()));
+        tx.set(ref,{uid:user.uid,nickname:user.name||user.displayName||'User',xp:stats.xp,completed:stats.completed,failed:stats.failed,lastVideoId:'rebuild',updatedAt:now()});
+      });
+    }
+  }
+  async function flushPendingWork(){
+    const tasks=[];
+    for(const row of Object.values(localVideos()))if(MagicDomain.terminal(row.status)&&!row.cloudSaved)tasks.push(persistVideo(row));
+    const prefix=`magic.space.pending.${cache.user.uid}.`;
+    for(const key of Object.keys(localStorage))if(key.startsWith(prefix))tasks.push(flushSpaceState(key.slice(prefix.length)));
+    const work=Promise.allSettled(tasks).then(results=>{for(const r of results)if(r.status==='rejected')notify('Локальные изменения ждут синхронизации: '+r.reason.message,'error');});
+    // A missing network must not leave the sign-in/canvas screen blocked forever.
+    await Promise.race([work,new Promise(resolve=>setTimeout(resolve,6000))]);
+  }
+  function normalizeResolution(v){return ['480p','720p','1080p'].includes(v)?v:'720p';}
+  function normalizeRatio(v){return ['adaptive','21:9','16:9','4:3','1:1','3:4','9:16'].includes(v)?v:'16:9';}
+  function extractMediaUrl(value){
+    if(!value)return null;if(typeof value==='string'){if(/^https?:\/\//.test(value))return value;try{return extractMediaUrl(JSON.parse(value));}catch{return null;}}
+    if(Array.isArray(value)){for(const x of value){const u=extractMediaUrl(x);if(u)return u;}return null;}
+    const preferred=['video_url','videoUrl','url','output_url','output'];for(const k of preferred)if(k in value){const u=extractMediaUrl(value[k]);if(u)return u;}
+    for(const k of ['video','videos','content','data','result','results','outputs'])if(k in value){const u=extractMediaUrl(value[k]);if(u)return u;}return null;
+  }
+  function statusName(raw){const s=String(raw||'').toUpperCase();if(['COMPLETED','SUCCEEDED','SUCCESS'].includes(s))return'completed';if(['FAILED','ERROR','CANCELLED','CANCELED'].includes(s))return'failed';if(['QUEUED','PENDING'].includes(s))return'queued';return'running';}
+  async function submitGeneration(videoId,payload,provider='byteplus'){
+    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи BytePlus в My settings → Integrations.');
+    if(provider!=='byteplus')throw new Error('Провайдер пока не подключён к генератору.');
+    const body={payload:{...payload,prompt:String(payload.prompt||''),duration:Math.max(4,Math.min(30,Number(payload.duration)||8)),resolution:normalizeResolution(payload.resolution),ratio:normalizeRatio(payload.aspect_ratio||payload.ratio),generate_audio:payload.generate_audio!==false,output_format:'mp4'}};
+    if(new Blob([JSON.stringify(body)]).size>60*1024*1024)throw new Error('Референсы превышают размер запроса API. Уменьши изображения или используй HTTPS-ссылки.');
+    const response=await proxy('/byteplus/submit',{method:'POST',body});const data=await response.json();
+    const requestId=data.id||data.request_id;
+    if(!requestId)throw new Error('API не вернул ID задачи. Проверь историю BytePlus перед повторным запуском.');
+    return updateVideo(videoId,{requestId,taskToken:data.taskToken||null,status:'queued',pct:0});
+  }
+  async function persistRemoteVideo(record,result){
+    const remote=extractMediaUrl(result)||record.remoteUrl;
+    if(!remote)throw new Error('API завершил задачу, но URL видео пока не найден.');
+    const videoUrl=remote,storagePath=null,archiveWarning=null;
+    const providerTime=Number(result?.updated_at||result?.finished_at);
+    const providerUrlExpiresAt=(providerTime>0?(providerTime<1e12?providerTime*1000:providerTime):now())+24*60*60*1000;
+    const metrics=result?.metrics||result?.usage||result?.data?.metrics||{},rawCost=result?.cost??metrics.cost??record.cost;
+    const actualDuration=Number(result?.duration??result?.content?.duration??metrics.duration);
+    const patch={status:'completed',pct:100,remoteUrl:remote,videoUrl,storagePath,providerUrlExpiresAt,
+      cost:rawCost!=null&&Number.isFinite(Number(rawCost))?Number(rawCost):null,finishedAt:now(),error:null,archiveWarning};
+    if(actualDuration>=4&&actualDuration<=30)patch.seconds=actualDuration;
+    if(['480p','720p','1080p'].includes(result?.resolution))patch.resolution=result.resolution;
+    return updateVideo(record.id,patch);
+  }
+  async function refreshGeneration(record){
+    record=record?.id?record:await getVideo(record);
+    if(!record||record.uid!==cache.user.uid)throw new Error('Продолжить можно только свою генерацию.');
+    if(MagicDomain.terminal(record.status)||!record.requestId)return record;
+    if(!await providerCredentials(record.provider||'byteplus'))throw new Error('Настрой BytePlus для продолжения задачи.');
+    const response=await proxy('/byteplus/status',{method:'POST',body:{taskId:record.requestId,taskToken:record.taskToken||null}});
+    const data=await response.json(),status=statusName(data.status||data.state);
+    if(status==='failed'){
+      const error=data.error?.message||data.error||data.message||'API сообщил об ошибке генерации';
+      return updateVideo(record.id,{status:'failed',error:typeof error==='string'?error:JSON.stringify(error),finishedAt:now()});
+    }
+    if(status==='completed')return persistRemoteVideo(record,data);
+    return updateVideo(record.id,{status,pct:Number(data.progress??data.pct??record.pct)||0,trackingWarning:null});
+  }
+  function pause(ms,signal){return new Promise(resolve=>{
+    if(signal?.aborted){resolve();return;}
+    const finish=()=>{clearTimeout(timer);signal?.removeEventListener('abort',finish);resolve();};
+    const timer=setTimeout(finish,ms);signal?.addEventListener('abort',finish,{once:true});
+  });}
+  async function watchGeneration(record,onUpdate,{interval=4500,signal}={}){
+    let item=record,errors=0;
+    while(!signal?.aborted&&!MagicDomain.terminal(item.status)){
+      await pause(Math.min(30000,interval*2**errors),signal);if(signal?.aborted)break;
+      try{item=await refreshGeneration(item);errors=0;onUpdate?.(item);}
+      catch(error){
+        errors++;onUpdate?.({...item,trackingWarning:error.message});
+        // A disconnected browser is not a failed remote generation. Keep its task ID.
+        if(errors>=5||[401,403].includes(error.httpStatus))throw error;
+      }
+    }
+    return item;
+  }
+  let sessionRequest;
+  async function gatewaySession(){
+    const gateway=apiGatewayBase();if(!gateway)return null;
+    const stored=read(credentialKey('session'),null);
+    if(stored?.gateway===gateway&&stored.expiresAt>Date.now()+60000)return stored.token;
+    if(sessionRequest)return sessionRequest;
+    sessionRequest=(async()=>{
+      const response=await fetch(gateway+'/byteplus/session',{method:'POST',headers:{Authorization:'Bearer '+await api.auth.currentUser.getIdToken()},signal:AbortSignal.timeout(8000)});
+      // Compatibility with the already-deployed, older Worker. Replace its code before
+      // inviting the team; the new Worker always requires the membership receipt.
+      if(response.status===404){write(credentialKey('session'),{gateway,token:null,expiresAt:Date.now()+300000});return null;}
+      const data=await responseOrError(response,'Worker');
+      write(credentialKey('session'),{gateway,token:data.sessionToken,expiresAt:data.expiresAt});return data.sessionToken;
+    })();
+    try{return await sessionRequest;}finally{sessionRequest=null;}
+  }
+  async function gatewayHeaders(taskToken){
+    const headers={Authorization:'Bearer '+await api.auth.currentUser.getIdToken()};
+    const session=await gatewaySession();if(session)headers['X-Magic-Session']=session;
+    if(taskToken)headers['X-Task-Token']=taskToken;return headers;
+  }
+
+  function getTheme(){return localStorage.getItem('magic.theme')||localStorage.getItem('picasso.theme')||'dark';}
+  function applyTheme(theme=getTheme()){theme=theme==='light'?'light':'dark';document.documentElement.dataset.theme=theme;localStorage.setItem('magic.theme',theme);return theme;}
+  function toggleTheme(){return applyTheme(getTheme()==='dark'?'light':'dark');}
+  applyTheme();
+
+  async function mountProfileDrawer(){const drawer=document.querySelector('#profile-drawer');if(!drawer)return;const u=current();if(!u)return;const avatar=document.querySelectorAll('[data-user-avatar]');avatar.forEach(x=>{if(x.tagName==='IMG'){x.src=u.photoURL||'';}else x.textContent=u.name.slice(0,2).toUpperCase();});drawer.querySelector('[data-profile-email]').textContent=u.email||'';drawer.querySelector('[name=displayName]').value=u.name||'';drawer.querySelector('[name=telegram]').value=u.telegram||'';const img=drawer.querySelector('.profile-photo-img'),letters=drawer.querySelector('.profile-photo-letters');if(u.photoURL){img.src=u.photoURL;img.hidden=false;letters.hidden=true;}else{img.hidden=true;letters.hidden=false;letters.textContent=u.name.slice(0,2).toUpperCase();}
+    const form=drawer.querySelector('#profile-form');if(form&&!form.dataset.bound){form.dataset.bound='1';form.onsubmit=async e=>{e.preventDefault();const b=form.querySelector('[type=submit]');b.disabled=true;try{await updateProfile({displayName:form.displayName.value,telegram:form.telegram.value});notify('Профиль сохранён');await mountProfileDrawer();}catch(err){notify(err.message,'error');}finally{b.disabled=false;}};}
+    const photo=drawer.querySelector('#profile-photo-input');if(photo&&!photo.dataset.bound){photo.dataset.bound='1';photo.onchange=async()=>{try{if(photo.files[0]){await uploadProfilePhoto(photo.files[0]);notify('Фото сохранено в этом браузере');await mountProfileDrawer();}}catch(e){notify(e.message,'error');}photo.value='';};}
+    const admin=drawer.querySelector('#drawer-admin');if(admin){admin.hidden=!isAdmin();if(isAdmin()&&!admin.dataset.bound){admin.dataset.bound='1';admin.querySelector('form').onsubmit=async e=>{e.preventDefault();const f=e.currentTarget,b=f.querySelector('[type=submit]');b.disabled=true;try{await createUser({email:f.email.value,password:f.password.value,name:f.elements.namedItem('name').value,role:f.elements.namedItem('role').value});f.reset();notify('Пользователь создан');}catch(err){notify(err.message,'error');}finally{b.disabled=false;}};}}
+  }
+
+  function profileMenu(root){if(!root)return;root.replaceChildren();const u=current();if(!u)return;root.append(el('strong',u.name),el('small',u.email));}
+  function recordUsage(){/* compatibility: real generation records live in Firestore /videos */}
+  function interruptRuns(){/* remote jobs survive navigation; task IDs are kept locally */}
+
+  function bindShell(){
+    document.querySelectorAll('[data-superuser-only]').forEach(node=>node.hidden=!isAdmin());
+    const person=current();document.querySelectorAll('[data-user-email]').forEach(node=>node.textContent=person?.email||'');document.querySelectorAll('[data-user-name]').forEach(node=>node.textContent=person?.name||'');
+    const avatar=document.querySelector('#shell-avatar'),drawer=document.querySelector('#profile-drawer'),backdrop=document.querySelector('#drawer-backdrop');const close=()=>{drawer?.classList.remove('open');backdrop?.classList.remove('show');};avatar?.addEventListener('click',async()=>{await mountProfileDrawer();drawer?.classList.add('open');backdrop?.classList.add('show');});document.querySelector('#profile-close')?.addEventListener('click',close);document.querySelector('#profile-cancel')?.addEventListener('click',close);backdrop?.addEventListener('click',close);document.querySelector('[data-logout]')?.addEventListener('click',logout);
+    document.querySelectorAll('[data-theme-state]').forEach(x=>x.textContent=getTheme()==='dark'?'Dark':'Light');
+    document.querySelectorAll('[data-theme-toggle]').forEach(b=>b.onclick=()=>{const t=toggleTheme();document.querySelectorAll('[data-theme-state]').forEach(x=>x.textContent=t==='dark'?'Dark':'Light');});
+    document.querySelectorAll('[data-coming]').forEach(a=>a.onclick=e=>{e.preventDefault();notify('Раздел уже заложен в структуру, функциональность добавим следующим этапом.');});
+  }
+
+  return {ready,requireUser,current,isAdmin,signIn,signUp,logout,updateProfile,uploadProfilePhoto,listUsers,createUser,updateUserRole,uid,read,write,notify,download,element:el,timestamp,
+    listFolders,listPresets,canEdit,saveFolder,deleteFolder,savePreset,deletePreset,loadTemplates,ensureTemplates,
+    getIntegration,saveIntegration,removeIntegration,testIntegration,providerKey,providerCredentials,apiGatewayBase,
+    listSpaces,createSpace,getSpace,renameSpace,duplicateSpace,deleteSpace,saveSpaceState,queueSpaceState,flushSpaceState,flushPendingWork,
+    uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,submitGeneration,refreshGeneration,watchGeneration,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
+    getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
+})();
+
+'use strict';
+window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
+  const S=Studio,E=S.element;let scope='all',folderFilter=null;root.replaceChildren();
+  const top=E('div',undefined,'library-actions'),newFolder=E('button','+ New folder','ui-button'),newPreset=E('button','+ New Template','ui-button primary');top.append(newFolder,newPreset);
+  const search=E('input');search.type='search';search.placeholder='Search templates...';search.className='library-search';
+  const tabs=E('div',undefined,'segmented');for(const [id,label]of [['all','Все'],['common','Общие'],['mine','Мои']]){const b=E('button',label);b.dataset.scope=id;b.setAttribute('aria-pressed',String(id===scope));b.onclick=()=>{scope=id;folderFilter=null;render();};tabs.append(b);}root.append(top,search,tabs,E('div',undefined,'folder-tree'));const tree=root.querySelector('.folder-tree');if(compact){const a=E('a','Открыть библиотеку','library-route');a.href='presets.html';root.append(a);}search.oninput=render;
+  function modal(title,content){const d=E('dialog',undefined,'studio-dialog');const h=E('header');h.append(E('h2',title));const x=E('button','×','icon-button');x.onclick=()=>d.close();h.append(x);d.append(h,content);document.body.append(d);d.onclose=()=>d.remove();d.onclick=e=>{if(e.target===d)d.close();};d.showModal();return d;}
+  const field=(label,input)=>{const l=E('label',label);l.append(input);return l;};
+  function visibility(value='mine'){const s=E('select');s.add(new Option('Мой шаблон','mine'));if(S.isAdmin())s.add(new Option('Общий для всех','common'));s.value=value;return s;}
+  function presetEditor(p=null){const form=E('form',undefined,'stack'),name=E('input'),text=E('textarea'),folder=E('select'),access=visibility(p?.scope);name.required=true;name.maxLength=80;name.value=p?.name||'';text.required=true;text.rows=7;text.value=p?.text||'';for(const f of S.listFolders())folder.add(new Option(f.name+(f.scope==='mine'?' · моя':''),f.id));if(p)folder.value=p.folder;else if(folderFilter)folder.value=folderFilter;const error=E('p','','form-error'),save=E('button','Сохранить','ui-button primary');save.type='submit';form.append(field('Название',name),field('Текст шаблона',text),field('Папка',folder),field('Доступ',access),error,save);const d=modal(p?'Редактировать шаблон':'Новый шаблон',form);form.onsubmit=async e=>{e.preventDefault();save.disabled=true;error.textContent='';try{await S.savePreset({id:p?.id,name:name.value,text:text.value,folder:folder.value,scope:access.value});d.close();render();S.notify('Шаблон сохранён');}catch(err){error.textContent=err.message;}finally{save.disabled=false;}};}
+  function folderEditor(f=null){const form=E('form',undefined,'stack'),name=E('input'),access=visibility(f?.scope);name.required=true;name.maxLength=60;name.value=f?.name||'';const error=E('p','','form-error'),save=E('button','Сохранить папку','ui-button primary');save.type='submit';form.append(field('Название',name),field('Доступ',access),error,save);const d=modal(f?'Редактировать папку':'New folder',form);form.onsubmit=async e=>{e.preventDefault();save.disabled=true;try{await S.saveFolder({id:f?.id,name:name.value,scope:access.value});d.close();render();}catch(err){error.textContent=err.message;}finally{save.disabled=false;}};}
+  function confirmDelete(title,action){const box=E('div',undefined,'stack');box.append(E('p','Удаление не изменит уже добавленные в Canvas ноды.'));const b=E('button','Удалить','ui-button danger'),d=modal(title,box);box.append(b);b.onclick=async()=>{b.disabled=true;try{await action();d.close();render();}catch(err){S.notify(err.message,'error');}finally{b.disabled=false;}};}
+  function render(){tree.replaceChildren();for(const b of tabs.children)b.setAttribute('aria-pressed',String(b.dataset.scope===scope));const q=search.value.trim().toLowerCase(),items=S.listPresets().filter(p=>(scope==='all'||p.scope===scope)&&(`${p.name} ${p.text}`).toLowerCase().includes(q));for(const f of S.listFolders()){const content=items.filter(p=>p.folder===f.id);if(scope==='common'&&f.scope!=='common')continue;if(q&&!content.length)continue;const group=E('section',undefined,'template-folder');const head=E('div',undefined,'template-folder-head');head.append(E('div',f.name),E('small',String(content.length)));const actions=E('div',undefined,'folder-actions');const add=E('button','+ Template');add.onclick=()=>{folderFilter=f.id;presetEditor();};actions.append(add);if(S.canEdit(f)&&!f.builtin){const edit=E('button','Rename');edit.onclick=()=>folderEditor(f);const del=E('button','Delete');del.onclick=()=>confirmDelete('Удалить папку?',()=>S.deleteFolder(f.id));actions.append(edit,del);}head.append(actions);group.append(head);const grid=E('div',undefined,'template-grid');if(!content.length)grid.append(E('div','Папка пуста','empty-card'));for(const p of content){const card=E('article',undefined,'template-card');card.append(E('small',p.scope==='common'?'COMMON':'PRIVATE'),E('h3',p.name),E('p',p.text));const a=E('div',undefined,'template-card-actions');const use=E(onAdd?'button':'a','+ На Canvas','ui-button');if(onAdd)use.onclick=()=>onAdd(p);else use.href='spaces.html';a.append(use);if(S.canEdit(p)){const edit=E('button','Edit');edit.onclick=()=>presetEditor(p);const del=E('button','Delete');del.onclick=()=>confirmDelete('Удалить шаблон?',()=>S.deletePreset(p.id));a.append(edit,del);}card.append(a);grid.append(card);}group.append(grid);tree.append(group);}if(!items.length&&!q){const empty=E('div',undefined,'library-empty');empty.append(E('strong','No templates yet.'),E('span','Создай шаблон с {{variable}} или обычным текстом и добавляй его в Canvas одним кликом.'));tree.append(empty);}if(!items.length&&q)tree.append(E('div','Ничего не найдено','library-empty'));}
+  newFolder.onclick=()=>folderEditor();newPreset.onclick=()=>presetEditor();render();return {render};
+};
+
+'use strict';
+(async()=>{
+  const S=Studio,$=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)],E=S.element,page=document.body.dataset.page;
+  await S.ready();
+  const allowed=['index.html','spaces.html','nodes.html','assets.html','presets.html','integrations.html','projects.html','flows.html','modifiers.html','winners.html','users.html'];
+  const next=()=>{const raw=new URLSearchParams(location.search).get('next')||'index.html';return allowed.includes(raw.split('?')[0])?raw:'index.html';};
+  const friendlyAuth=e=>({
+    'auth/invalid-credential':'Неверный email или пароль.','auth/invalid-email':'Некорректный email.','auth/email-already-in-use':'Этот email уже зарегистрирован.','auth/weak-password':'Пароль слишком слабый. Минимум 6 символов.','auth/too-many-requests':'Слишком много попыток. Попробуй позже.'
+  }[e?.code]||e?.message||String(e));
+  if(page==='signin'){
+    if(S.current()){location.replace(next());return;}
+    let mode='signin';const form=$('#auth-form'),title=$('#auth-title'),sub=$('#auth-subtitle'),nameWrap=$('#auth-name-wrap'),submit=$('#auth-submit'),error=$('#auth-error');
+    function switchMode(value){mode=value;$$('[data-auth-mode]').forEach(b=>b.classList.toggle('active',b.dataset.authMode===mode));nameWrap.hidden=mode==='signin';$('#auth-name').required=mode==='signup';title.textContent=mode==='signin'?'Войти в Magic':'Создать аккаунт';sub.textContent=mode==='signin'?'Email + пароль. Firebase сохраняет сессию между перезапусками браузера.':'Регистрация через email. После входа появится личный workspace.';submit.textContent=mode==='signin'?'Войти':'Создать аккаунт';error.textContent='';}
+    $$('[data-auth-mode]').forEach(b=>b.onclick=()=>switchMode(b.dataset.authMode));$('#auth-password-toggle').onclick=()=>{const i=$('#auth-password');i.type=i.type==='password'?'text':'password';};
+    form.onsubmit=async e=>{e.preventDefault();submit.disabled=true;error.textContent='';try{if(mode==='signin')await S.signIn(form.email.value,form.password.value);else await S.signUp({email:form.email.value,password:form.password.value,name:form.displayName.value});location.href=next();}catch(err){error.textContent=friendlyAuth(err);}finally{submit.disabled=false;}};switchMode('signin');return;
+  }
+  if(!await S.requireUser())return;S.bindShell();await S.mountProfileDrawer();const user=S.current();$$('[data-user-name]').forEach(x=>x.textContent=user.name);$$('[data-user-email]').forEach(x=>x.textContent=user.email);
+  const fmtDate=v=>{const n=S.timestamp(v);return n?new Date(n).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';};
+  const esc=s=>String(s??'');
+  function statusLabel(s){return {completed:'READY',failed:'FAILED',queued:'QUEUED',running:'GENERATING',cancelled:'CANCELLED',submission_unknown:'ПРОВЕРЬ BYTEPLUS',processing:'GENERATING'}[String(s||'').toLowerCase()]||String(s||'').toUpperCase();}
+
+  if(page==='dashboard'){
+    const [spaces,videos,users]=await Promise.all([S.listSpaces(),S.listVideos(),S.isAdmin()?S.listUsers():Promise.resolve([user])]);
+    const stats=MagicDomain.totals(videos);
+    $('#dashboard-scope').textContent=S.isAdmin()?'Все генерации команды · Spaces остаются личными':'Твои генерации и личные Spaces';
+    $('#stat-generations').textContent=stats.total;$('#stat-spaces').textContent=spaces.length;$('#stat-xp').textContent=stats.xp;$('#stat-completed').textContent=stats.completed;
+    $('#dashboard-running').textContent=stats.running;$('#dashboard-failed').textContent=stats.failed;
+    $('#dashboard-cost').textContent=stats.unknownCost===stats.total&&stats.total?'—':'$'+stats.cost.toFixed(2);
+    $('#cost-note').textContent=stats.unknownCost?`Без стоимости от API: ${stats.unknownCost}`:'По данным API';
+    const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push(d);}
+    const counts=days.map(d=>videos.filter(v=>{const n=new Date(S.timestamp(v.createdAt));const end=new Date(d);end.setDate(end.getDate()+1);return n>=d&&n<end;}).length),max=Math.max(1,...counts);
+    $('#generation-chart').replaceChildren(...days.map((d,i)=>{const col=E('div',undefined,'chart-col'),bar=E('div',undefined,'chart-bar');bar.style.height=`${Math.max(5,counts[i]/max*100)}%`;bar.title=`${counts[i]} генераций`;col.append(bar,E('small',d.toLocaleDateString('ru-RU',{weekday:'short'})));return col;}));
+    const recent=$('#dashboard-recent');recent.replaceChildren();
+    for(const v of videos.slice(0,6)){const row=E('a',undefined,'recent-row');row.href=v.uid===user.uid&&v.spaceId?`nodes.html?space=${encodeURIComponent(v.spaceId)}`:'assets.html';const info=E('div');info.append(E('strong',(v.prompt||'Без промпта').slice(0,72)),E('small',`${v.user||'User'} · ${fmtDate(v.createdAt)}`));row.append(info,E('span',statusLabel(v.status),'status-pill '+String(v.status||'')));recent.append(row);}
+    if(!videos.length)recent.append(E('div','Создай Space и запусти первую генерацию.','empty-card'));
+    $('#report-scope').textContent=S.isAdmin()?'Количество, результаты и суммы по каждому участнику. Неизвестная стоимость не считается нулём.':'Отчёт доступен только по твоему аккаунту.';
+    const people=new Map(users.map(u=>[u.uid,{uid:u.uid,name:u.name||u.displayName||u.email}]));
+    for(const v of videos)if(!people.has(v.uid))people.set(v.uid,{uid:v.uid,name:v.user||'User'});
+    for(const person of people.values()){
+      const summary=MagicDomain.totals(videos.filter(v=>v.uid===person.uid)),row=E('tr');
+      for(const value of [person.name,summary.total,summary.completed,summary.failed,summary.xp])row.append(E('td',String(value)));
+      const cost=E('td',summary.unknownCost===summary.total&&summary.total?'—':'$'+summary.cost.toFixed(2));
+      if(summary.unknownCost)cost.append(E('small',`Нет данных: ${summary.unknownCost}`));row.append(cost);$('#report-rows').append(row);
+    }
+  }
+
+  if(page==='spaces'){
+    let all=[],tab='mine',loadError=null;const list=$('#spaces-list'),empty=$('#spaces-empty'),count=$('#spaces-count'),newButton=$('#new-space');
+    const friendlyDbError=err=>{const code=String(err?.code||''),project=(window.MAGIC_FIREBASE_CONFIG||window.PICASSO_FIREBASE_CONFIG)?.projectId||'Firebase';if(code.includes('permission-denied'))return `Firestore (${project}) запретил доступ. Пустая база — это нормально: коллекции создаются автоматически. Нужно только опубликовать firestore.rules из проекта в Firebase → Firestore → Rules.`;if(code.includes('failed-precondition'))return 'Firestore просит индекс для этого запроса. Открой ссылку на создание индекса из Console браузера или Firebase Console.';return err?.message||String(err);};
+    function render(){
+      list.replaceChildren();
+      const rows=all.filter(s=>s.ownerUid===user.uid);
+      for(const s of rows){
+        const row=E('article',undefined,'space-row');const main=E('a',undefined,'space-main');main.href=`nodes.html?space=${encodeURIComponent(s.id)}`;main.append(E('strong',s.name||'Untitled'),E('small',`${s.nodeCount||0} nodes · обновлено ${fmtDate(s.updatedAt)}`));
+        const actions=E('div',undefined,'space-actions');const open=E('a','↗');open.title='Открыть';open.href=main.href;actions.append(open);
+        if(s.ownerUid===user.uid){
+          const rename=E('button','✎');rename.title='Переименовать';rename.onclick=async()=>{const name=prompt('Название Space',s.name||'');if(!name)return;try{await S.renameSpace(s.id,name);await reload();}catch(err){S.notify(friendlyDbError(err),'error');}};
+          const dup=E('button','⧉');dup.title='Дублировать';dup.onclick=async()=>{try{const copy=await S.duplicateSpace(s.id);location.href=`nodes.html?space=${encodeURIComponent(copy.id)}`;}catch(err){S.notify(friendlyDbError(err),'error');}};
+          const del=E('button','⌫');del.title='Удалить Space';del.onclick=async()=>{if(!confirm(`Удалить Space «${s.name}»? Сгенерированные видео останутся в Assets.`))return;try{await S.deleteSpace(s.id);await reload();}catch(err){S.notify(friendlyDbError(err),'error');}};
+          actions.append(rename,dup,del);
+        }
+        row.append(main,actions);list.append(row);
+      }
+      count.textContent=`${rows.length} spaces`;
+      empty.hidden=rows.length>0;
+      if(!rows.length){empty.textContent=loadError?friendlyDbError(loadError):'Здесь пока нет Canvas. Создай первый Space.';empty.classList.toggle('error-card',Boolean(loadError));}
+    }
+    async function reload(){loadError=null;try{all=await S.listSpaces();}catch(err){console.error('Spaces load failed',err);all=[];loadError=err;}render();}
+    function openNewSpaceDialog(){
+      const dialog=E('dialog',undefined,'studio-dialog new-space-dialog');const header=E('header');header.append(E('h2','Новый Space'));const close=E('button','×','icon-button');close.type='button';close.onclick=()=>dialog.close();header.append(close);
+      const form=E('form',undefined,'stack');const label=E('label','Название');const input=E('input');input.name='name';input.value='Untitled space';input.maxLength=80;input.required=true;label.append(input);const error=E('p','','form-error');const actions=E('div',undefined,'drawer-actions');const cancel=E('button','Отмена','ui-button');cancel.type='button';cancel.onclick=()=>dialog.close();const create=E('button','Создать Space','ui-button primary');create.type='submit';actions.append(cancel,create);form.append(label,error,actions);dialog.append(header,form);document.body.append(dialog);dialog.onclose=()=>dialog.remove();dialog.onclick=e=>{if(e.target===dialog)dialog.close();};
+      form.onsubmit=async e=>{e.preventDefault();create.disabled=true;error.textContent='';try{const space=await S.createSpace(input.value);location.href=`nodes.html?space=${encodeURIComponent(space.id)}`;}catch(err){console.error('Space create failed',err);error.textContent=friendlyDbError(err);create.disabled=false;}};
+      dialog.showModal();requestAnimationFrame(()=>{input.focus();input.select();});
+    }
+    $$('[data-spaces-tab]').forEach(b=>b.onclick=()=>{tab=b.dataset.spacesTab;$$('[data-spaces-tab]').forEach(x=>x.classList.toggle('active',x===b));render();});
+    newButton.onclick=openNewSpaceDialog;
+    render();
+    await reload();
+  }
+
+  if(page==='assets'){
+    let mode='videos',videos=await S.listVideos(),inputs=null;const grid=$('#assets-grid'),search=$('#asset-search'),status=$('#asset-status'),controllers=[];
+    async function reload(){videos=await S.listVideos();if(mode==='inputs')inputs=await S.listInputAssets();render();}
+    function videoCard(v){
+      const card=E('article',undefined,'asset-card'),media=E('div',undefined,'asset-media');
+      if(v.videoUrl){const video=E('video');video.src=v.videoUrl;video.controls=true;video.preload='metadata';media.append(video);}else media.append(E('div',statusLabel(v.status),'asset-placeholder '+String(v.status||'')));
+      if(v.cost!=null)media.append(E('span','$'+Number(v.cost).toFixed(2),'asset-cost'));
+      if(v.seconds>0)media.append(E('span',v.seconds+'s','asset-duration'));
+      const body=E('div',undefined,'asset-body');body.append(E('p',(v.prompt||'Без промпта').slice(0,180)),E('small',`${v.model||'model'} · ${v.resolution||''} ${v.ratio||''}`));
+      const tags=E('div',undefined,'asset-tags');tags.append(E('span',v.user||'User'),E('span',fmtDate(v.createdAt)));
+      if(v.archived)tags.append(E('span','В архиве'));const actions=E('div',undefined,'asset-actions');
+      if(v.videoUrl){const save=E('a','Скачать видео','ui-button small');save.href=v.videoUrl;save.target='_blank';save.rel='noopener';save.download='magic-'+v.id+'.mp4';actions.append(save);if(v.providerUrlExpiresAt)body.append(E('small',Date.now()>=v.providerUrlExpiresAt?'Ссылка провайдера могла истечь; отчёт сохранён.':'Ссылка ориентировочно до '+new Date(v.providerUrlExpiresAt).toLocaleString('ru-RU'),'asset-warning'));}
+      if(v.uid===user.uid&&v.spaceId){const open=E('a','Открыть Canvas','ui-button small');open.href=`nodes.html?space=${encodeURIComponent(v.spaceId)}`;actions.append(open);}
+      if(v.uid===user.uid&&!MagicDomain.terminal(v.status)&&v.requestId){const refresh=E('button','Проверить статус','ui-button small');refresh.onclick=async()=>{refresh.disabled=true;try{const fresh=await S.refreshGeneration(v);videos=videos.map(x=>x.id===fresh.id?fresh:x);render();}catch(e){S.notify(e.message,'error');}finally{refresh.disabled=false;}};actions.append(refresh);}
+      if(v.uid===user.uid&&MagicDomain.terminal(v.status)&&!v.archived){const archive=E('button','В архив','ui-button small ghost');archive.onclick=async()=>{archive.disabled=true;try{await S.deleteVideo(v.id);v.archived=true;render();}catch(e){S.notify(e.message,'error');archive.disabled=false;}};actions.append(archive);}
+      if(v.error||v.archiveWarning)body.append(E('small',v.error||v.archiveWarning,'asset-warning'));
+      body.append(tags,actions);card.append(media,body);return card;
+    }
+    function inputCard(a){const card=E('article',undefined,'asset-card'),media=E('div',undefined,'asset-media'),m=E(a.kind==='video'?'video':'img');if(a.url)m.src=a.url;else media.append(E('small','Файл доступен в браузере, где был добавлен.'));m.alt=a.name||'';if(a.kind==='video'){m.controls=true;m.preload='metadata';}media.append(m);const body=E('div',undefined,'asset-body');body.append(E('p',a.name||'Media'),E('small',`${a.kind} · ${Math.round((a.size||0)/1024)} KB · ${fmtDate(a.createdAt)}`));card.append(media,body);return card;}
+    function render(){
+      grid.replaceChildren();const q=search.value.trim().toLowerCase();let rows;
+      if(mode==='videos'){
+        rows=videos.filter(v=>(S.isAdmin()||!v.archived)&&(status.value==='all'||v.status===status.value)&&(`${v.prompt||''} ${v.model||''} ${v.user||''}`).toLowerCase().includes(q));
+        $('#assets-count').textContent=`${rows.length} генераций · ${S.isAdmin()?'вся команда':'только твои'}`;for(const v of rows)grid.append(videoCard(v));
+      }else{rows=(inputs||[]).filter(a=>(`${a.name||''} ${a.kind||''}`).toLowerCase().includes(q));$('#assets-count').textContent=`${rows.length} личных файлов`;for(const a of rows)grid.append(inputCard(a));}
+      $('#assets-empty').hidden=rows.length>0;status.hidden=mode!=='videos';
+    }
+    $$('[data-assets-tab]').forEach(b=>b.onclick=async()=>{mode=b.dataset.assetsTab;$$('[data-assets-tab]').forEach(x=>x.classList.toggle('active',x===b));try{if(mode==='inputs'&&!inputs)inputs=await S.listInputAssets();render();}catch(e){S.notify(e.message,'error');}});
+    search.oninput=render;status.onchange=render;$('#assets-refresh').onclick=()=>reload().catch(e=>S.notify(e.message,'error'));render();
+    for(const row of videos.filter(v=>v.uid===user.uid&&!MagicDomain.terminal(v.status)&&v.requestId)){
+      const controller=new AbortController();controllers.push(controller);
+      S.watchGeneration(row,fresh=>{const before=videos.find(v=>v.id===fresh.id);videos=videos.map(v=>v.id===fresh.id?fresh:v);if(before?.status!==fresh.status)render();},{signal:controller.signal}).catch(e=>S.notify('Отслеживание: '+e.message,'error'));
+    }
+    addEventListener('pagehide',()=>controllers.forEach(c=>c.abort()));
+  }
+
+  if(page==='presets'){await S.ensureTemplates();mountPresetLibrary($('#preset-library'));}
+
+  if(page==='integrations'){
+    const provider='byteplus',key=$('#byteplus-api-key'),worker=$('#byteplus-worker-url'),state=$('#byteplus-state'),connect=$('#byteplus-save'),test=$('#byteplus-test'),remove=$('#byteplus-remove'),card=$('#byteplus-card');
+    const existing=await S.getIntegration(provider),localKey=await S.providerKey(provider),workerUrl=S.apiGatewayBase();
+    worker.value=workerUrl;
+    if(existing?.connected||localKey||workerUrl){key.value='';key.placeholder=localKey?'Ключ сохранён в этом браузере':'ARK key не нужен в Worker mode';state.textContent=workerUrl?'● Worker сохранён — нажми «Проверить»':'● Direct mode сохранён — нажми «Проверить»';state.className='integration-state ok';card.classList.add('connected');remove.hidden=false;test.hidden=false;}
+    $('#byteplus-toggle').onclick=()=>{key.type=key.type==='password'?'text':'password';};
+    connect.onclick=async()=>{connect.disabled=true;try{
+      const apiKey=key.value.trim(),gateway=worker.value.trim();
+      if(!apiKey&&!gateway)throw new Error('Вставь ARK API Key для быстрого Direct mode или Cloudflare Worker URL.');
+      await S.saveIntegration(provider,{apiKey,workerUrl:gateway,label:'BytePlus ModelArk'});key.value='';
+      state.textContent=gateway?'● Cloudflare Worker сохранён. Нажми «Проверить».':'● Direct browser mode сохранён. Нажми «Проверить».';state.className='integration-state ok';card.classList.add('connected');remove.hidden=false;test.hidden=false;
+      S.notify(gateway?'Cloudflare Worker подключён':'ARK API Key сохранён локально для Direct mode');
+    }catch(e){state.textContent='● Ошибка: '+e.message;state.className='integration-state bad';}finally{connect.disabled=false;}};
+    test.onclick=async()=>{test.disabled=true;state.textContent=worker.value.trim()?'Проверяем Cloudflare Worker → BytePlus…':'Проверяем прямой запрос к BytePlus…';try{await S.testIntegration(provider);state.textContent=worker.value.trim()?'● Worker работает, BytePlus авторизация успешна':'● Direct mode работает — BytePlus API Key принят';state.className='integration-state ok';card.classList.add('connected');}catch(e){state.textContent='● Ошибка: '+e.message;state.className='integration-state bad';}finally{test.disabled=false;}};
+    remove.onclick=async()=>{if(!confirm('Отключить BytePlus?'))return;await S.removeIntegration(provider);key.value='';worker.value='';state.textContent='● Не подключено — генерация недоступна';state.className='integration-state';card.classList.remove('connected');remove.hidden=test.hidden=true;};
+    $$('.integration-future [data-provider-connect]').forEach(b=>b.onclick=()=>S.notify('Следующий provider подключается отдельным adapter без переделки Canvas.'));
+  }
+
+  if(page==='users'){
+    if(!S.isAdmin()){$('.page-wrap').replaceChildren(E('div','Доступ только для суперадмина.','empty-card'));return;}
+    async function team(){
+      const list=$('#team-list');list.replaceChildren();
+      for(const member of await S.listUsers()){
+        const row=E('div',undefined,'team-row'),info=E('div');info.append(E('strong',member.name),E('small',member.email));
+        const role=E('select');role.setAttribute('aria-label','Роль '+member.name);role.add(new Option('Пользователь','user'));role.add(new Option('Суперадмин','superuser'));role.value=member.role;role.disabled=member.uid===user.uid;
+        if(role.disabled)role.title='Твоя роль суперадмина';
+        role.onchange=async()=>{role.disabled=true;try{await S.updateUserRole(member.uid,role.value);member.role=role.value;S.notify('Роль обновлена');}catch(e){role.value=member.role;S.notify(e.message,'error');}finally{role.disabled=false;}};
+        row.append(info,role);list.append(row);
+      }
+    }
+    const form=$('#create-user-form');form.onsubmit=async e=>{
+      e.preventDefault();const submit=form.querySelector('[type=submit]');submit.disabled=true;$('#create-user-error').textContent='';
+      try{await S.createUser({email:form.elements.email.value,password:form.elements.password.value,name:form.elements.displayName.value,role:form.elements.role.value});form.reset();await team();S.notify('Пользователь создан');}
+      catch(error){$('#create-user-error').textContent=friendlyAuth(error);}finally{submit.disabled=false;}
+    };await team();
+  }
+  if(page==='winners'){
+    const duration=$('#xp-seconds'),resolution=$('#xp-resolution'),refs=$('#xp-refs');
+    function calculate(){
+      $('#xp-result').textContent=MagicDomain.xp({seconds:duration.value,resolution:resolution.value,referenceCount:refs.value});
+      $('#xp-seconds-label').textContent=duration.value+' сек.';$('#xp-refs-label').textContent=refs.value;
+      $('#xp-multipliers').textContent=`T ×${Number(duration.value)/4} · Q ×${MagicDomain.resolutions[resolution.value]} · R ×${(1+.15*(Number(refs.value)-1)).toFixed(2)}`;
+    }
+    for(const control of [duration,resolution,refs])control.oninput=calculate;calculate();
+    function renderRank(target,rows,field){
+      target.replaceChildren();for(const [index,row] of rows.entries()){
+        const li=E('li',undefined,'rank-row'+(index===0?' first':'')),name=E('div');name.append(E('strong',row.nickname||'User'),E('small',field==='xp'?`${row.completed||0} готовых видео`:'Ошибок генерации'));
+        li.append(E('span',String(index+1),'rank-position'),name,E('b',String(row[field]||0)+(field==='xp'?' XP':'')));target.append(li);
+      }
+      if(!rows.length)target.append(E('li','Пока нет результатов. Рейтинг появится после генераций.','empty-card'));
+    }
+    async function ranking(){
+      try{const rows=await S.listLeaderboard();renderRank($('#xp-ranking'),rows.filter(r=>r.completed>0).sort((a,b)=>b.xp-a.xp||(a.nickname||'').localeCompare(b.nickname||'')),'xp');renderRank($('#error-ranking'),rows.filter(r=>r.failed>0).sort((a,b)=>b.failed-a.failed||(a.nickname||'').localeCompare(b.nickname||'')),'failed');}
+      catch(e){$('#xp-ranking').replaceChildren(E('li','Рейтинг пока недоступен: '+e.message,'empty-card'));$('#error-ranking').replaceChildren();}
+    }
+    $('#rebuild-ranking').onclick=async()=>{const button=$('#rebuild-ranking');button.disabled=true;try{await S.rebuildLeaderboard();await ranking();S.notify('Рейтинг пересчитан по истории генераций');}catch(e){S.notify(e.message,'error');}finally{button.disabled=false;}};
+    await ranking();
+  }
+
+  if(page==='placeholder'){const name=document.body.dataset.module||'Module';$('#placeholder-title').textContent=name;}
+})().catch(error=>{Studio.notify(error.message||String(error),'error');});
+</script></body></html>

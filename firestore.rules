@@ -1,0 +1,116 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() { return request.auth != null && myProfile().data.role in ['user','superuser']; }
+    function myProfile() { return get(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function isAdmin() { return signedIn() && myProfile().data.role == 'superuser'; }
+    function owns(field) { return signedIn() && resource.data[field] == request.auth.uid; }
+    function createsOwn(field) { return signedIn() && request.resource.data[field] == request.auth.uid; }
+    function terminal(status) { return status in ['completed', 'failed', 'cancelled']; }
+    function validResult(v) {
+      return v.uid == request.auth.uid && terminal(v.status)
+        && v.seconds is number && v.seconds >= 4 && v.seconds <= 30
+        && v.resolution in ['480p','720p','1080p']
+        && v.referenceCount is int && v.referenceCount >= 0 && v.referenceCount <= 15;
+    }
+    function resultXP(v) {
+      let q = v.resolution == '1080p' ? 2.0 : (v.resolution == '720p' ? 1.5 : 1.0);
+      let n = v.referenceCount < 1 ? 1 : v.referenceCount;
+      return math.floor(10 * (v.seconds / 4.0) * q * (1 + 0.15 * (n - 1)) + 0.5);
+    }
+    function hasScoreWrite(videoId) {
+      return getAfter(/databases/$(database)/documents/leaderboard/$(request.auth.uid)).data.lastVideoId == videoId;
+    }
+
+    match /users/{uid} {
+      allow get: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow list: if isAdmin();
+      allow create: if isAdmin() && request.resource.data.role in ['user','superuser'];
+      allow update: if (
+        isAdmin() && request.resource.data.role in ['user','superuser']
+          && (request.auth.uid != uid || request.resource.data.role == 'superuser')
+      ) || (
+        signedIn() && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName','telegram','photoURL','updatedAt'])
+      );
+      allow delete: if isAdmin() && request.auth.uid != uid;
+    }
+
+    // Strictly private, including from superusers. No member/admin override.
+    match /spaces/{spaceId} {
+      allow read, delete: if owns('ownerUid');
+      allow create: if createsOwn('ownerUid');
+      allow update: if owns('ownerUid') && request.resource.data.ownerUid == resource.data.ownerUid;
+    }
+
+    match /{collection}/{id} {
+      allow read: if collection in ['templates','templateFolders'] && signedIn() && (
+        resource.data.scope == 'common' || resource.data.ownerUid == request.auth.uid || isAdmin()
+      );
+      allow create: if collection in ['templates','templateFolders'] && createsOwn('ownerUid')
+        && request.resource.data.scope in ['mine','common'] && (request.resource.data.scope == 'mine' || isAdmin());
+      allow update: if collection in ['templates','templateFolders'] && signedIn()
+        && request.resource.data.scope in ['mine','common'] && (isAdmin() || (
+          resource.data.scope == 'mine' && owns('ownerUid')
+          && request.resource.data.ownerUid == resource.data.ownerUid
+          && request.resource.data.scope == resource.data.scope
+        ));
+      allow delete: if collection in ['templates','templateFolders'] && signedIn()
+        && (isAdmin() || (resource.data.scope == 'mine' && owns('ownerUid')));
+    }
+
+    match /integrations/{id} {
+      allow read, delete: if owns('ownerUid');
+      allow create: if createsOwn('ownerUid');
+      allow update: if owns('ownerUid') && request.resource.data.ownerUid == resource.data.ownerUid;
+    }
+    // Source references remain private. Generated videos have a separate collection.
+    match /assets/{id} {
+      allow read, delete: if owns('uid');
+      allow create: if createsOwn('uid');
+      allow update: if owns('uid') && request.resource.data.uid == resource.data.uid;
+    }
+    match /videos/{id} {
+      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow create: if signedIn() && validResult(request.resource.data) && hasScoreWrite(id);
+      allow update: if (
+        owns('uid') && !terminal(resource.data.status) && validResult(request.resource.data)
+        && request.resource.data.uid == resource.data.uid && hasScoreWrite(id)
+      ) || (
+        signedIn() && (owns('uid') || isAdmin())
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['archived'])
+        && request.resource.data.archived is bool
+      );
+      // Archive cards, keep the report and lifetime ranking intact.
+      allow delete: if false;
+    }
+
+    match /leaderboard/{uid} {
+      function validShape(d) {
+        return d.keys().hasOnly(['uid','nickname','xp','completed','failed','lastVideoId','updatedAt'])
+          && d.uid == uid && d.nickname is string && d.nickname.size() <= 80
+          && d.xp is number && d.xp >= 0 && d.completed is int && d.completed >= 0
+          && d.failed is int && d.failed >= 0 && d.lastVideoId is string;
+      }
+      function nextScore(before) {
+        let d = request.resource.data;
+        let path = /databases/$(database)/documents/videos/$(d.lastVideoId);
+        let v = getAfter(path).data;
+        return signedIn() && request.auth.uid == uid
+          && (!exists(path) || !terminal(get(path).data.status))
+          && validResult(v) && v.uid == uid
+          && d.nickname == myProfile().data.displayName
+          && d.xp == before.get('xp',0) + (v.status == 'completed' ? resultXP(v) : 0)
+          && d.completed == before.get('completed',0) + (v.status == 'completed' ? 1 : 0)
+          && d.failed == before.get('failed',0) + (v.status == 'failed' ? 1 : 0);
+      }
+      // Only nicknames and totals are public to signed-in members, never prompts or URLs.
+      allow read: if signedIn();
+      allow create: if validShape(request.resource.data) && (isAdmin() || nextScore({}));
+      allow update: if validShape(request.resource.data) && (isAdmin() || nextScore(resource.data));
+      allow delete: if isAdmin();
+    }
+    match /config/{docId} { allow read, write: if isAdmin(); }
+    match /{document=**} { allow read, write: if false; }
+  }
+}

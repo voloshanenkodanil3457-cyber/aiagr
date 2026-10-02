@@ -1,0 +1,29 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() { return request.auth != null; }
+    function owner(uid) { return signedIn() && request.auth.uid == uid; }
+    function isAdmin() {
+      return signedIn() && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'superuser';
+    }
+    match /users/{uid}/generations/{file} {
+      allow read: if owner(uid) || isAdmin();
+      allow write: if owner(uid) && (request.resource == null || (
+        request.resource.size <= 500 * 1024 * 1024 && request.resource.contentType.matches('video/.*')
+      ));
+    }
+    match /users/{uid}/assets/{file} {
+      allow read: if owner(uid);
+      allow write: if owner(uid) && (request.resource == null || (
+        request.resource.size <= 250 * 1024 * 1024 && request.resource.contentType.matches('(image|video)/.*')
+      ));
+    }
+    match /users/{uid}/profile/{file} {
+      allow read: if owner(uid);
+      allow write: if owner(uid) && (request.resource == null || (
+        request.resource.size <= 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*')
+      ));
+    }
+    match /{allPaths=**} { allow read, write: if false; }
+  }
+}

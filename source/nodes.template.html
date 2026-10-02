@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Canvas · Magic</title><!--STYLE--></head>
+<body class="canvas-page" data-page="canvas">
+<!--SHELL-->
+<main id="viewport" class="viewport" tabindex="0" aria-label="Рабочее поле нод">
+  <div id="world" class="world">
+    <svg id="wires" class="wires" aria-label="Связи между нодами"><g id="edge-layer"></g><path id="draft-wire" class="draft-wire" hidden></path></svg>
+    <div id="node-layer"></div><div id="selection-box" class="selection-box" hidden></div>
+  </div>
+  <section id="empty-state" class="empty-state"><div class="empty-symbol">◇</div><h1>Начни с одной ноды.</h1><p>Добавь ноду через «+» или перетащи сюда изображение / видео.</p><button id="empty-presets" class="quiet-button">Открыть библиотеку</button></section>
+</main>
+
+<!-- hidden compatibility bar; data is shown in the real topbar -->
+<header class="project-bar"><div><strong id="space-name">Canvas</strong><span id="node-count">Пустое поле</span></div><span id="session-label">Сессия</span></header>
+
+<div class="side-rail-wrap">
+  <nav class="side-rail" aria-label="Canvas tools"><span id="rail-grip" class="rail-grip" title="Перетащить панель"></span>
+    <button id="add-toggle" class="tool" title="Добавить ноду" aria-label="Добавить ноду" aria-expanded="false" aria-controls="add-menu"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+    <button id="settings-toggle" class="tool" title="Настройки нод" aria-label="Настройки нод" aria-expanded="false" aria-controls="side-panel"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 17h16M8 4v6M16 14v6"/></svg></button>
+    <button id="history-toggle" class="tool" title="История сессии" aria-label="История сессии" aria-expanded="false" aria-controls="side-panel"><svg viewBox="0 0 24 24"><path d="M3 11a9 9 0 1 1 2 7M3 5v6h6M12 7v5l3 2"/></svg></button>
+    <button id="presets-toggle" class="tool" title="Пресеты" aria-label="Пресеты" aria-expanded="false" aria-controls="side-panel"><svg viewBox="0 0 24 24"><path d="M10.5 18a7.5 7.5 0 1 0 0-15 7.5 7.5 0 0 0 0 15ZM16 16l5 5"/></svg></button>
+    <span class="rail-divider"></span><button id="avatar-button" class="avatar" aria-expanded="false" aria-controls="profile-popover">P</button>
+  </nav>
+  <div id="add-menu" class="add-menu" hidden><span class="menu-label">Добавить</span>
+    <button id="upload-action"><svg viewBox="0 0 24 24"><path d="M12 16V3m-5 5 5-5 5 5M4 15v6h16v-6"/></svg><span>Upload<small>Изображения и видео</small></span></button><hr>
+    <button data-add="media"><span>▧</span><span>Media<small>Изображения и видео</small></span></button>
+    <button data-add="text"><span>T</span><span>Text generation</span></button>
+    <button data-add="generation"><span>✦</span><span>Video generation<small>Seedance 2.5 · BytePlus</small></span></button>
+    <button data-add="preset"><span>▱</span><span>Preset<small>Дополнение к prompt</small></span></button>
+    <button data-add="output"><span>▷</span><span>Output</span></button>
+  </div>
+  <div id="profile-popover" class="profile-popover" hidden></div>
+</div>
+
+<aside id="side-panel" class="side-panel" hidden><header><div><span class="eyebrow" id="panel-eyebrow">WORKSPACE</span><h2 id="panel-title">Настройки</h2></div><button id="close-panel" class="tool" title="Закрыть" aria-label="Закрыть"><svg viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></svg></button></header><div id="panel-body" class="panel-body"></div></aside>
+
+<div class="canvas-tools"><nav class="mode-tools" aria-label="Работа с нодами">
+  <button id="select-tool" class="tool" title="Выбор (V)" aria-label="Выбор" aria-pressed="true"><svg viewBox="0 0 24 24"><path d="m6 3 12 10-7 1-3 7z"/></svg></button>
+  <button id="pan-tool" class="tool" title="Двигать поле (H)" aria-label="Двигать поле" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M8 12V6a2 2 0 0 1 4 0v5-7a2 2 0 0 1 4 0v7-4a2 2 0 0 1 4 0v8c0 4-2 6-6 6h-1c-2 0-3-1-4-2l-5-6a2 2 0 0 1 3-2l1 1Z"/></svg></button>
+  <span class="divider"></span><button id="delete-selection" class="tool" title="Delete" aria-label="Удалить" disabled><svg viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14M10 11v6m4-6v6"/></svg></button>
+</nav><details class="help"><summary>?</summary><div><strong>Управление</strong><p>Ноды: тяни за заголовок. Зажми ЛКМ на пустом поле для выделения рамкой.</p><p>Связи: перетащи между портами. Пробел + drag — движение поля. Ctrl/⌘ + колесо — масштаб.</p><p>Shift + клик — несколько нод. Delete — удалить. Ctrl/⌘+Z — undo.</p></div></details></div>
+
+<div class="navigator"><section id="minimap-wrap" class="minimap-wrap"><div class="minimap-heading"><span>Обзор поля</span><span id="map-count">0</span></div><svg id="minimap" viewBox="0 0 260 144" tabindex="0"><g id="minimap-nodes"></g><rect id="minimap-view" rx="2"/></svg></section><nav class="nav-toolbar">
+  <button id="undo" class="tool" title="Undo" disabled><svg viewBox="0 0 24 24"><path d="M8 5 3 10l5 5M3 10h11a6 6 0 0 1 0 12"/></svg></button><button id="redo" class="tool" title="Redo" disabled><svg viewBox="0 0 24 24"><path d="m16 5 5 5-5 5m5-5H10a6 6 0 0 0 0 12"/></svg></button><span class="divider"></span>
+  <button id="zoom-out" class="tool">−</button><button id="zoom-reset" class="zoom-value">100%</button><button id="zoom-in" class="tool">+</button><span class="divider"></span><button id="toggle-minimap" class="tool" aria-pressed="true">▧</button><button id="fit-view" class="tool" title="Fit view">⌗</button>
+</nav></div>
+
+<section id="generation-composer" class="generation-composer" aria-label="Панель генерации" hidden></section><div id="port-menu" class="port-menu" hidden></div>
+<div id="notice" class="notice" role="status" hidden></div><div id="selection-status" class="selection-status">0 нод · 0 связей</div><input id="canvas-file-picker" type="file" accept="image/*,video/*" multiple hidden>
+<!--SCRIPTS-->
+</body></html>

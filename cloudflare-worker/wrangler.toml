@@ -1,0 +1,14 @@
+name = "magic-byteplus-api"
+main = "worker.js"
+compatibility_date = "2026-10-01"
+
+# Optional after GitHub Pages is live:
+# [vars]
+# ALLOWED_ORIGIN = "https://YOURNAME.github.io"
+# BYTEPLUS_MODEL = "dreamina-seedance-2-5-260628"
+
+[vars]
+FIREBASE_PROJECT_ID = "aiagr-80390"
+# Set ALLOWED_ORIGIN to your website origin before deploying.
+# ALLOWED_ORIGIN = "https://YOURNAME.github.io"
+# LEGACY_TASK_OWNER_UID = "UID of the owner of old pending tasks, optional"
