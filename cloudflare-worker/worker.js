@@ -2,6 +2,10 @@ import {authenticate,issueTaskToken,verifyTaskToken,issueSessionToken,verifySess
 
 const BYTEPLUS_BASE = 'https://ark.ap-southeast.bytepluses.com/api/v3';
 const DEFAULT_MODEL = 'dreamina-seedance-2-5-260628';
+function configuredModel(env) {
+  const model=String(env.BYTEPLUS_MODEL||'').trim();
+  return !model || /^(?:dreamina[-\s])?seedance[-\s]?2[.-]5$/i.test(model) ? DEFAULT_MODEL : model;
+}
 
 function corsHeaders(request, env) {
   const origin = request.headers.get('Origin') || '';
@@ -62,7 +66,7 @@ function buildGenerationBody(payload = {}, env) {
   for (const url of payload.reference_videos || []) content.push({type:'video_url', video_url:{url}, role:'reference_video'});
 
   const out = {
-    model: env.BYTEPLUS_MODEL || DEFAULT_MODEL,
+    model: configuredModel(env),
     content,
     generate_audio: payload.generate_audio !== false,
     watermark: false,
@@ -99,7 +103,7 @@ export default {
     const url = new URL(request.url);
     try {
       if (url.pathname === '/health') {
-        return json({ok:true, service:'magic-byteplus-worker', model:env.BYTEPLUS_MODEL || DEFAULT_MODEL}, 200, request, env);
+        return json({ok:true, service:'magic-byteplus-worker', model:configuredModel(env)}, 200, request, env);
       }
 
       const uid = await authenticate(request, env);
@@ -114,7 +118,7 @@ export default {
 
       if (url.pathname === '/byteplus/test' && request.method === 'POST') {
         const data = await byteplus('/contents/generations/tasks?page_num=1&page_size=1', {method:'GET'}, env);
-        return json({ok:true, authenticated:true, sampleCount:Array.isArray(data?.items) ? data.items.length : 0}, 200, request, env);
+        return json({ok:true, authenticated:true, model:configuredModel(env), modelAccessVerified:false, sampleCount:Array.isArray(data?.items) ? data.items.length : 0}, 200, request, env);
       }
 
       if (url.pathname === '/byteplus/submit' && request.method === 'POST') {

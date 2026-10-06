@@ -18,6 +18,7 @@ await context.route('**/*',async route=>{
   if(url.startsWith('https://www.gstatic.com/firebasejs/'))return route.fulfill({contentType:'application/javascript',body:module});
   if(url.includes('ark.ap-southeast.bytepluses.com')){
     if(req.method()==='POST'){
+      if(await page.evaluate(()=>__qa.get('submitError',false)))return route.fulfill({status:404,contentType:'application/json',body:JSON.stringify({error:{message:'The model or endpoint seedance-2.5 does not exist or you do not have access to it. Request id: regression-id'}})});
       const id=await page.evaluate(body=>{const rows=__qa.get('submissions',[]),id='task-'+(rows.length+1);rows.push({id,body});__qa.put('submissions',rows);return id;},req.postDataJSON());
       return route.fulfill({contentType:'application/json',body:JSON.stringify({id})});
     }
@@ -54,11 +55,38 @@ try{
   await page.click('#composer-generate');await page.waitForFunction(()=>__qa.get('submissions',[]).length===2);
   assert.equal(await page.locator('[data-type=output]').count(),2,'x2 must reuse the existing Output');
   await page.waitForTimeout(5000);assert.equal((await metrics()).writes,0,'submission and polling must not write Firestore');assert.equal((await metrics()).reads,0,'submission and polling must not read Firestore');
-  const submits=await page.evaluate(()=>__qa.get('submissions',[]));assert.ok(submits.every(x=>x.body.content[0].text.includes(longPrompt.trim())));assert.ok(submits.every(x=>x.body.generate_audio===false&&x.body.resolution==='1080p'&&x.body.duration===10));
+  const submits=await page.evaluate(()=>__qa.get('submissions',[]));assert.ok(submits.every(x=>x.body.model==='dreamina-seedance-2-5-260628'));assert.ok(submits.every(x=>x.body.content[0].text.includes(longPrompt.trim())));assert.ok(submits.every(x=>x.body.generate_audio===false&&x.body.resolution==='1080p'&&x.body.duration===10));
   await page.evaluate(()=>__qa.put('taskStatus','completed'));await page.waitForFunction(()=>Object.keys(__qa.get('docs',{})).filter(k=>k.startsWith('videos/')).length===3,{},{timeout:15000});
   await page.waitForFunction(()=>__qa.get('docs',{})['spaces/first'].canvasState?.state?.nodes.filter(n=>n.type==='output'&&n.fields.status==='completed').length===2);
   const score=await page.evaluate(()=>__qa.get('docs',{})['leaderboard/alice']);assert.equal(score.completed,2);assert.equal(score.xp,100);
   await page.reload();await page.locator('[data-node=G1] textarea').waitFor();assert.equal(await page.locator('[data-type=output]').count(),2);assert.ok((await page.locator('[data-node=G1] textarea').inputValue()).includes('cinematic'));
+  // Reproduce an old graph stored in both local cache and Firestore.
+  await page.evaluate(()=>{
+    const key='magic.canvas.cache.v1.alice.first',state=JSON.parse(localStorage.getItem(key));
+    state.state.nodes.find(n=>n.id==='G1').fields.model='seedance-2.5';
+    localStorage.setItem(key,JSON.stringify(state));
+    const docs=__qa.get('docs',{});docs['spaces/first'].canvasState=state;__qa.put('docs',docs);
+  });
+  await page.reload();await page.locator('[data-node=G1] textarea').waitFor();
+  await page.locator('[data-node=G1] textarea').click();
+  assert.equal(await page.locator('[data-panel-field=model]').inputValue(),'dreamina-seedance-2-5-260628');
+  const direct=await page.evaluate(async()=>{
+    __qa.put('taskStatus','running');
+    const row=await Studio.createVideoRecord({prompt:'Legacy model regression',model:'seedance-2.5',seconds:4});
+    const sent=await Studio.submitGeneration(row.id,{prompt:row.prompt,model:'seedance-2.5',duration:4,resolution:'480p',ratio:'16:9'});
+    localStorage.removeItem('magic.job.v3.alice.'+row.id);
+    const probe=await Studio.testIntegration('byteplus');
+    return {model:row.model,request:__qa.get('submissions',[]).at(-1).body,requestId:sent.requestId,probe};
+  });
+  assert.equal(direct.model,'dreamina-seedance-2-5-260628');
+  assert.equal(direct.request.model,direct.model);assert.ok(direct.requestId);assert.equal(direct.probe.modelAccessVerified,false);
+  const failure=await page.evaluate(async()=>{
+    __qa.put('submitError',true);
+    try{await Studio.submitGeneration('unused',{prompt:'Test',model:'seedance-2.5',duration:4});}
+    catch(e){return {status:e.httpStatus,message:e.message};}
+    finally{__qa.put('submitError',false);}
+  });
+  assert.equal(failure.status,404);assert.ok(failure.message.includes('regression-id'));assert.ok(failure.message.includes('Activated'));
   await page.locator('[data-node=G1] textarea').fill('Saved by F5');await page.reload();await page.locator('[data-node=G1] textarea').waitFor();assert.equal(await page.locator('[data-node=G1] textarea').inputValue(),'Saved by F5');
   assert.equal(await page.evaluate(()=>__qa.get('docs',{})['spaces/first'].canvasState.state.nodes.find(n=>n.id==='G1').fields.prompt),'Saved by F5');
   await page.locator('[data-node=G1] textarea').click();await page.locator('[data-panel-field=batch]').selectOption('1');await page.evaluate(()=>__qa.put('taskStatus','failed'));await page.click('#composer-generate');

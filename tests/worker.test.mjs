@@ -19,6 +19,18 @@ before(async()=>{
  };
 });
 after(()=>{globalThis.fetch=originalFetch;});
+test('Worker normalizes legacy environment model in health, probe and paid request',async()=>{
+ const legacy={...env,BYTEPLUS_MODEL:'seedance-2.5'},model='dreamina-seedance-2-5-260628';
+ const health=await worker.fetch(new Request('https://worker.test/health'),legacy);
+ assert.equal((await health.json()).model,model);
+ const headers={Authorization:'Bearer '+await token(),'X-Magic-Session':(await issueSessionToken('alice',legacy)).sessionToken};
+ const probe=await worker.fetch(new Request('https://worker.test/byteplus/test',{method:'POST',headers}),legacy);
+ const result=await probe.json();assert.equal(result.model,model);assert.equal(result.modelAccessVerified,false);
+ const response=await worker.fetch(new Request('https://worker.test/byteplus/submit',{method:'POST',headers,body:JSON.stringify({payload:{prompt:'Scene',model:'seedance-2.5',duration:8,resolution:'720p',ratio:'16:9'}})}),legacy);
+ assert.equal(response.status,200);assert.equal(lastProviderBody.model,model);
+ const endpoint=await worker.fetch(new Request('https://worker.test/health'),{...env,BYTEPLUS_MODEL:' ep-custom-id '});
+ assert.equal((await endpoint.json()).model,'ep-custom-id');
+});
 test('valid signed Firebase tokens accepted; wrong project, expiry and forgery rejected',async()=>{
  const request=jwt=>new Request('https://worker.test',{headers:{Authorization:'Bearer '+jwt}});
  assert.equal(await authenticate(request(await token()),env),'alice');

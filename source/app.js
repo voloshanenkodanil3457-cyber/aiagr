@@ -1,6 +1,7 @@
 'use strict';
 window.Studio=(()=>{
   const CFG=window.MAGIC_APP_CONFIG||window.PICASSO_APP_CONFIG||{firebaseSdkVersion:'10.12.0',apiGatewayUrl:''};
+  const videoModel=value=>MagicDomain.normalizeBytePlusModel(value,CFG.defaultVideoModel);
   const FBCFG=window.MAGIC_FIREBASE_CONFIG||window.PICASSO_FIREBASE_CONFIG;
   const sdk=CFG.firebaseSdkVersion||'10.12.0';
   const cache={user:null,profile:null,folders:[],presets:[],integrations:new Map(),firebaseError:null};
@@ -188,7 +189,7 @@ window.Studio=(()=>{
     if(payload.last_frame_url)content.push({type:'image_url',image_url:{url:payload.last_frame_url},role:'last_frame'});
     for(const url of payload.reference_images||[])content.push({type:'image_url',image_url:{url},role:'reference_image'});
     for(const url of payload.reference_videos||[])content.push({type:'video_url',video_url:{url},role:'reference_video'});
-    const body={model:payload.model||CFG.defaultVideoModel||'dreamina-seedance-2-5-260628',content,generate_audio:payload.generate_audio!==false,watermark:false,output_format:payload.output_format||'mp4'};
+    const body={model:videoModel(payload.model),content,generate_audio:payload.generate_audio!==false,watermark:false,output_format:payload.output_format||'mp4'};
     if(payload.ratio)body.ratio=payload.ratio;
     if(payload.resolution)body.resolution=payload.resolution;
     if(payload.duration!==undefined&&payload.duration!==null&&payload.duration!=='')body.duration=Number(payload.duration);
@@ -199,7 +200,7 @@ window.Studio=(()=>{
   async function responseOrError(r,label='API'){
     const type=r.headers.get('content-type')||'';let data;
     try{data=type.includes('json')?await r.json():await r.text();}catch{data='';}
-    if(!r.ok){const detail=typeof data==='string'?data:(data?.error?.message||data?.error||data?.message||JSON.stringify(data));const err=new Error(`${label} ${r.status}${detail?`: ${String(detail).slice(0,500)}`:''}`);err.httpStatus=r.status;throw err;}
+    if(!r.ok){const detail=typeof data==='string'?data:(data?.detail?.error?.message||data?.detail?.message||data?.error?.message||data?.error||data?.message||JSON.stringify(data));const message=typeof detail==='string'?detail:JSON.stringify(detail);const hint=r.status===404&&/model|endpoint/i.test(message||'')?' Проверь Model ID и статус Activated в BytePlus → Activation management. Успешная проверка API-ключа не подтверждает доступ к модели.':'';const err=new Error(`${label} ${r.status}${message?`: ${message.slice(0,500)}`:''}${hint}`);err.httpStatus=r.status;throw err;}
     return data;
   }
 
@@ -229,12 +230,12 @@ window.Studio=(()=>{
     const h={...await gatewayHeaders(),...headers};if(body!==undefined){h['Content-Type']='application/json';body=JSON.stringify(body);}let r;
     try{r=await fetch(base+path,{method,headers:h,body});}
     catch(e){throw new Error('Не удалось связаться с Cloudflare Worker. Проверь Worker URL и deploy.');}
-    if(!r.ok){const type=r.headers.get('content-type')||'';let detail;try{const data=type.includes('json')?await r.json():await r.text();detail=typeof data==='string'?data:(data?.detail?.message||data?.detail||data?.error||JSON.stringify(data));}catch{detail='';}const err=new Error(`Worker ${r.status}${detail?`: ${String(detail).slice(0,500)}`:''}`);err.httpStatus=r.status;throw err;}
+    if(!r.ok)await responseOrError(r,'Worker');
     return r;
   }
   async function testIntegration(provider){
     const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Сначала настрой Direct ARK API Key или Cloudflare Worker URL.');
-    if(provider==='byteplus'){localStorage.removeItem(credentialKey('session'));const r=await proxy('/byteplus/test',{method:'POST',body:{}});return r.json();}
+    if(provider==='byteplus'){localStorage.removeItem(credentialKey('session'));const r=await proxy('/byteplus/test',{method:'POST',body:{}});return {...await r.json(),modelAccessVerified:false};}
     throw new Error('Тест для этого провайдера пока не реализован.');
   }
 
@@ -344,7 +345,7 @@ window.Studio=(()=>{
   async function createVideoRecord(data){
     assertFirebase();const me=current();
     const row={id:uid(),uid:me.uid,user:me.name,spaceId:data.spaceId||null,spaceName:data.spaceName||'',sourceNodeId:data.sourceNodeId||null,outputNodeId:data.outputNodeId||null,
-      prompt:data.prompt||'',provider:data.provider||'byteplus',model:data.model||CFG.defaultVideoModel||'dreamina-seedance-2-5-260628',resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
+      prompt:data.prompt||'',provider:data.provider||'byteplus',model:videoModel(data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
       seconds:Math.max(4,Math.min(30,Number(data.seconds)||8)),referenceCount:Math.max(0,Math.min(15,Number(data.referenceCount)||0)),hasRef:Boolean(data.hasRef),refMode:'reference',generateAudio:data.generateAudio!==false,
       status:'queued',pct:0,cost:null,error:null,requestId:null,videoUrl:null,remoteUrl:null,storagePath:null,createdAt:now(),updatedAt:now(),cloudSaved:false};
     return rememberVideo(row);
@@ -434,7 +435,7 @@ window.Studio=(()=>{
   async function submitGeneration(videoId,payload,provider='byteplus'){
     const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи BytePlus в My settings → Integrations.');
     if(provider!=='byteplus')throw new Error('Провайдер пока не подключён к генератору.');
-    const body={payload:{...payload,prompt:String(payload.prompt||''),duration:Math.max(4,Math.min(30,Number(payload.duration)||8)),resolution:normalizeResolution(payload.resolution),ratio:normalizeRatio(payload.aspect_ratio||payload.ratio),generate_audio:payload.generate_audio!==false,output_format:'mp4'}};
+    const body={payload:{...payload,model:videoModel(payload.model),prompt:String(payload.prompt||''),duration:Math.max(4,Math.min(30,Number(payload.duration)||8)),resolution:normalizeResolution(payload.resolution),ratio:normalizeRatio(payload.aspect_ratio||payload.ratio),generate_audio:payload.generate_audio!==false,output_format:'mp4'}};
     if(new Blob([JSON.stringify(body)]).size>60*1024*1024)throw new Error('Референсы превышают размер запроса API. Уменьши изображения или используй HTTPS-ссылки.');
     const response=await proxy('/byteplus/submit',{method:'POST',body});const data=await response.json();
     const requestId=data.id||data.request_id;

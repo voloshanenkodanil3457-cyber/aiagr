@@ -1,6 +1,13 @@
 'use strict';
 // Shared, side-effect-free generation rules. Also used by the tests.
 window.MagicDomain = (() => {
+  const defaultVideoModel = 'dreamina-seedance-2-5-260628';
+  function normalizeBytePlusModel(value, fallback = defaultVideoModel) {
+    const model = String(value || '').trim() || String(fallback || '').trim();
+    // Old graphs stored a display slug rather than a ModelArk model ID.
+    // Preserve explicit versioned IDs and custom endpoint IDs.
+    return !model || /^(?:dreamina[-\s])?seedance[-\s]?2[.-]5$/i.test(model) ? defaultVideoModel : model;
+  }
   const resolutions = { '480p': 1, '720p': 1.5, '1080p': 2 };
   const terminal = status => ['completed', 'failed', 'cancelled'].includes(status);
   function xp({ seconds = 4, resolution = '480p', referenceCount = 1 } = {}) {
@@ -24,5 +31,5 @@ window.MagicDomain = (() => {
     if (direction === 'in') return { generation: ['media', 'preset'], text: ['preset'], output: ['generation'] }[type] || [];
     return { generation: ['output'], media: ['generation'], preset: ['generation', 'text'], text: ['generation'] }[type] || [];
   }
-  return { xp, totals, terminal, compatible, resolutions };
+  return { xp, totals, terminal, compatible, resolutions, defaultVideoModel, normalizeBytePlusModel };
 })();
