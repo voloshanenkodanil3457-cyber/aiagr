@@ -132,6 +132,60 @@ try{
     __qa.put('taskStatus','network');let row=await Studio.createVideoRecord({prompt:'Offline test',seconds:4});row=await Studio.updateVideo(row.id,{requestId:'offline-job',status:'running'});
     try{await Studio.watchGeneration(row,()=>{},{interval:1});}catch{}return Studio.getVideo(row.id);
   });assert.equal(retry.status,'running','network problems must not be recorded as generation failures');assert.equal((await metrics()).writes,0);assert.equal((await metrics()).reads,0);
-  assert.deepEqual(errors,[]);console.log('PASS browser: scoped roles, reports, local edits, 0 Firestore during submit/poll, drag menus, Output reuse, batching, reload, local media, Base64 refs, provider-only video links, zero Storage, full presets, settings, Winners.');
+  // Actual Generate clicks with an image: waiting for an ID is not "Ready".
+  await page.evaluate(()=>{__qa.put('uid','alice');const docs=__qa.get('docs',{});docs['spaces/start-tests']={ownerUid:'alice',name:'Launch regression'};__qa.put('docs',docs);__qa.put('taskStatus','completed');});
+  await page.goto(base+'nodes.html?space=start-tests');await page.locator('#empty-state button').waitFor();
+  await page.click('#add-toggle');await page.click('[data-add=generation]');await page.locator('[data-node=G1] textarea').fill('A bird flies');
+  await page.locator('#generation-composer input[type=file]').setInputFiles({name:'launch-reference.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a3ioAAAAASUVORK5CYII=','base64')});
+  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('magic.canvas.cache.v1.alice.start-tests')).assets.some(a=>!a.uploading));
+  await page.evaluate(()=>{
+    window.__realFetch=window.fetch;window.__startCalls=[];window.__startMode='hold';MAGIC_APP_CONFIG.apiRequestTimeoutMs=10000;
+    window.fetch=(url,options={})=>{
+      if(options.method!=='POST'||!String(url).match(/contents\/generations\/tasks$|\/byteplus\/submit$/))return __realFetch(url,options);
+      __startCalls.push({url:String(url),body:JSON.parse(options.body)});
+      const response=(body,status=200)=>new Response(JSON.stringify(body),{status,headers:{'Content-Type':'application/json'}});
+      if(__startMode==='quota')return Promise.resolve(response({error:{message:'Your account has reached the set usage limit. Safe Experience Mode. Request id: quota-trace'}},429));
+      if(__startMode==='trace')return Promise.resolve(response({request_id:'diagnostic-only'}));
+      if(__startMode==='body-hang')return Promise.resolve({ok:true,headers:new Headers({'Content-Type':'application/json'}),json:()=>new Promise((_,reject)=>options.signal.addEventListener('abort',()=>reject(new DOMException('Aborted','AbortError')),{once:true}))});
+      return new Promise((resolve,reject)=>{window.__releaseStart=()=>resolve(response({id:'accepted-launch-task'}));options.signal.addEventListener('abort',()=>reject(new DOMException('Aborted','AbortError')),{once:true});});
+    };
+  });
+  await reset();await page.click('#composer-generate');await page.waitForFunction(()=>__startCalls.length===1);
+  assert.ok((await page.locator('[data-type=output] .loading-label').textContent()).includes('ожидание ID'));
+  assert.equal(await page.locator('[data-type=output] .loading-view').isVisible(),true);assert.equal(await page.locator('#composer-generate').textContent(),'Отправка…');
+  const request=await page.evaluate(()=>__startCalls[0].body);assert.ok(request.content.some(c=>c.type==='image_url'&&c.image_url.url.startsWith('data:image/png;base64,')));
+  assert.equal((await metrics()).writes,0);assert.equal((await metrics()).reads,0);
+  await page.evaluate(()=>__releaseStart());await page.waitForFunction(()=>!document.querySelector('#composer-generate').disabled,{},{timeout:15000});
+  await page.waitForFunction(()=>__qa.get('docs',{})['spaces/start-tests'].canvasState?.state.nodes.some(n=>n.type==='output'&&n.fields.status==='completed')&&!localStorage.getItem('magic.space.pending.alice.start-tests'));
+  // A hung POST unlocks the UI without claiming failure or sending a second POST.
+  await page.evaluate(()=>{MAGIC_APP_CONFIG.apiRequestTimeoutMs=700;__startMode='hold';__startCalls=[];});await reset();await page.click('#composer-generate');
+  await page.waitForFunction(()=>!document.querySelector('#composer-generate').disabled);
+  assert.equal(await page.locator('[data-type=output] output').textContent(),'Запуск не подтверждён');assert.ok((await page.locator('[data-type=output] .output-status').textContent()).includes('ответ API не получен'));
+  assert.equal(await page.evaluate(()=>__startCalls.length),1);assert.equal((await metrics()).writes,0);assert.equal((await metrics()).reads,0);
+  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('magic.canvas.cache.v1.alice.start-tests')).state.nodes.find(n=>n.type==='output').fields.status),'submission_unknown');
+  // Headers alone do not end the timeout; reading an unfinished JSON body is bounded.
+  await page.evaluate(()=>{__startMode='body-hang';__startCalls=[];});await page.click('#composer-generate');await page.waitForFunction(()=>!document.querySelector('#composer-generate').disabled);
+  assert.equal(await page.locator('[data-type=output] output').textContent(),'Запуск не подтверждён');assert.equal(await page.evaluate(()=>__startCalls.length),1);
+  await page.evaluate(()=>{__startMode='trace';__startCalls=[];});await page.click('#composer-generate');await page.waitForFunction(()=>!document.querySelector('#composer-generate').disabled);
+  assert.ok((await page.locator('[data-type=output] .output-status').textContent()).includes('API не вернул ID'));assert.equal(await page.locator('[data-type=output] output').textContent(),'Запуск не подтверждён');
+  await page.evaluate(()=>{__startMode='quota';__startCalls=[];});await page.click('#composer-generate');await page.waitForFunction(()=>!document.querySelector('#composer-generate').disabled);
+  assert.equal(await page.locator('[data-type=output] output').textContent(),'FAILED');assert.ok((await page.locator('[data-type=output] .output-status').textContent()).includes('Лимит BytePlus'));assert.equal(await page.evaluate(()=>__startCalls.length),1);
+  await page.waitForFunction(()=>__qa.get('docs',{})['spaces/start-tests'].canvasState?.state.nodes.some(n=>n.type==='output'&&n.fields.status==='failed')&&!localStorage.getItem('magic.space.pending.alice.start-tests'));
+  // The optional Worker uses the same bounded request and keeps ownership metadata.
+  await page.evaluate(()=>{const gateway='https://worker.example.test';localStorage.setItem('magic.credentials.alice.gateway',gateway);localStorage.setItem('magic.credentials.alice.session',JSON.stringify({gateway,token:'mock-membership',expiresAt:Date.now()+3600000}));__startMode='hold';__startCalls=[];});
+  await reset();await page.click('#composer-generate');await page.waitForFunction(()=>!document.querySelector('#composer-generate').disabled);
+  assert.equal(await page.locator('[data-type=output] output').textContent(),'Запуск не подтверждён');assert.equal(await page.evaluate(()=>__startCalls.length),1);assert.ok((await page.evaluate(()=>__startCalls[0].url)).endsWith('/byteplus/submit'));assert.equal((await metrics()).writes,0);
+  await page.evaluate(()=>localStorage.removeItem('magic.credentials.alice.gateway'));
+  // Local video validation releases Generate before sending anything to the API.
+  await page.locator('#generation-composer input[type=file]').setInputFiles({name:'local-reference.mp4',mimeType:'video/mp4',buffer:Buffer.from('mock-video')});
+  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('magic.canvas.cache.v1.alice.start-tests')).assets.some(a=>a.kind==='video'&&!a.uploading));
+  await page.evaluate(()=>__startCalls=[]);await page.click('#composer-generate');await page.waitForFunction(()=>!document.querySelector('#composer-generate').disabled);
+  assert.ok((await page.locator('#notice').textContent()).includes('HTTPS'));assert.equal(await page.evaluate(()=>__startCalls.length),0);assert.equal((await metrics()).storage,0);
+  // Provider errors must reach Output even if the Firestore transaction never resolves.
+  await page.getByRole('button',{name:'Убрать local-reference.mp4',exact:true}).click();
+  await page.evaluate(()=>{__qa.sdk.runTransaction=()=>new Promise(()=>{});__startMode='quota';__startCalls=[];});
+  await page.click('#composer-generate');await page.waitForFunction(()=>!document.querySelector('#composer-generate').disabled,{},{timeout:3000});
+  assert.equal(await page.locator('[data-type=output] output').textContent(),'FAILED');assert.ok((await page.locator('[data-type=output] .output-status').textContent()).includes('Лимит BytePlus'));assert.equal(await page.evaluate(()=>__startCalls.length),1);
+  assert.deepEqual(errors,[]);console.log('PASS browser: roles, reports, local canvas, Base64 images, 0 Storage, Output reuse/batching, ID wait, Direct/Worker/body timeouts without POST retry, quota errors, task ID validation, local video blocker.');
 }catch(error){await page.screenshot({path:'/tmp/magic-browser-failure.png'});console.error(error,errors);process.exitCode=1;}
 finally{await browser.close();server.close();}

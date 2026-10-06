@@ -418,25 +418,37 @@ window.Studio=(()=>{
   async function responseOrError(r,label='API'){
     const type=r.headers.get('content-type')||'';let data;
     try{data=type.includes('json')?await r.json():await r.text();}catch{data='';}
-    if(!r.ok){const detail=typeof data==='string'?data:(data?.detail?.error?.message||data?.detail?.message||data?.error?.message||data?.error||data?.message||JSON.stringify(data));const message=typeof detail==='string'?detail:JSON.stringify(detail);const hint=r.status===404&&/model|endpoint/i.test(message||'')?' Проверь Model ID и статус Activated в BytePlus → Activation management. Успешная проверка API-ключа не подтверждает доступ к модели.':'';const err=new Error(`${label} ${r.status}${message?`: ${message.slice(0,500)}`:''}${hint}`);err.httpStatus=r.status;throw err;}
+    if(!r.ok){const detail=typeof data==='string'?data:(data?.detail?.error?.message||data?.detail?.message||data?.error?.message||data?.error||data?.message||JSON.stringify(data));const message=typeof detail==='string'?detail:JSON.stringify(detail);const hint=r.status===404&&/model|endpoint/i.test(message||'')?' Проверь Model ID и статус Activated в BytePlus → Activation management. Успешная проверка API-ключа не подтверждает доступ к модели.':r.status===429&&/Safe Experience Mode|SetLimitExceeded|set usage limit|set inference limit/i.test(message||'')?' Лимит BytePlus: проверь Safe Experience Mode в Model Activation. Этот запрос не создал новую задачу.':'';const err=new Error(`${label} ${r.status}${message?`: ${message.slice(0,500)}`:''}${hint}`);err.httpStatus=r.status;throw err;}
     return data;
+  }
+
+  function withDeadline(task,ms,message,onTimeout){
+    let timer;
+    return Promise.race([task,new Promise((_,reject)=>{timer=setTimeout(()=>{
+      const error=new Error(message);error.name='TimeoutError';reject(error);onTimeout?.();
+    },ms);})]).finally(()=>clearTimeout(timer));
+  }
+  async function requestApi(url,options,label){
+    const controller=new AbortController(),ms=Math.max(100,Math.min(300000,Number(CFG.apiRequestTimeoutMs)||90000));
+    // Bound both the connection and reading the response body. Never retry a POST.
+    return withDeadline((async()=>responseOrError(await fetch(url,{...options,signal:controller.signal}),label))(),ms,
+      `${label}: ответ API не получен за ${Math.ceil(ms/1000)} сек. Если отправлялась генерация, её запуск не подтверждён. Проверь историю BytePlus перед повторением.`,()=>controller.abort());
   }
 
   async function directBytePlus(path,{body}={}){
     const credentials=await providerCredentials('byteplus');
     const apiKey=credentials?.apiKey||String(localStorage.getItem(credentialKey('apiKey'))||'').trim();
     if(!apiKey)throw new Error('Вставь ARK API Key в My settings.');
-    const headers={'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json'};let r;
+    const headers={'Authorization':`Bearer ${apiKey}`,'Content-Type':'application/json'};let data;
     try{
-      if(path==='/byteplus/test')r=await fetch(byteplusBase()+'/contents/generations/tasks?page_num=1&page_size=1',{method:'GET',headers});
-      else if(path==='/byteplus/submit')r=await fetch(byteplusBase()+'/contents/generations/tasks',{method:'POST',headers,body:JSON.stringify(buildBytePlusRequest(body?.payload||body||{}))});
-      else if(path==='/byteplus/status')r=await fetch(byteplusBase()+'/contents/generations/tasks/'+encodeURIComponent(body?.taskId||''),{method:'GET',headers});
+      if(path==='/byteplus/test')data=await requestApi(byteplusBase()+'/contents/generations/tasks?page_num=1&page_size=1',{method:'GET',headers},'BytePlus');
+      else if(path==='/byteplus/submit')data=await requestApi(byteplusBase()+'/contents/generations/tasks',{method:'POST',headers,body:JSON.stringify(buildBytePlusRequest(body?.payload||body||{}))},'BytePlus');
+      else if(path==='/byteplus/status')data=await requestApi(byteplusBase()+'/contents/generations/tasks/'+encodeURIComponent(body?.taskId||''),{method:'GET',headers},'BytePlus');
       else throw new Error('Неизвестный BytePlus route.');
     }catch(e){
       if(e instanceof TypeError)throw new Error('Браузер не смог вызвать BytePlus напрямую. Обычно это CORS. Для GitHub Pages используй Cloudflare Worker URL в My settings.');
       throw e;
     }
-    const data=await responseOrError(r,'BytePlus');
     return new Response(JSON.stringify(data),{status:200,headers:{'Content-Type':'application/json'}});
   }
 
@@ -445,11 +457,10 @@ window.Studio=(()=>{
     const base=apiGatewayBase();
     if(!base&&path.startsWith('/byteplus/'))return directBytePlus(path,{method,body,headers});
     if(!base)throw new Error('Cloudflare Worker URL не настроен.');
-    const h={...await gatewayHeaders(),...headers};if(body!==undefined){h['Content-Type']='application/json';body=JSON.stringify(body);}let r;
-    try{r=await fetch(base+path,{method,headers:h,body});}
-    catch(e){throw new Error('Не удалось связаться с Cloudflare Worker. Проверь Worker URL и deploy.');}
-    if(!r.ok)await responseOrError(r,'Worker');
-    return r;
+    const h={...await withDeadline(gatewayHeaders(),15000,'Не удалось подготовить авторизацию Worker. Запрос генерации ещё не отправлен.'),...headers};if(body!==undefined){h['Content-Type']='application/json';body=JSON.stringify(body);}let data;
+    try{data=await requestApi(base+path,{method,headers:h,body},'Worker');}
+    catch(e){if(e instanceof TypeError)throw new Error('Не удалось связаться с Cloudflare Worker. Проверь Worker URL и deploy.');throw e;}
+    return new Response(JSON.stringify(data),{status:200,headers:{'Content-Type':'application/json'}});
   }
   async function testIntegration(provider){
     const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Сначала настрой Direct ARK API Key или Cloudflare Worker URL.');
@@ -512,7 +523,7 @@ window.Studio=(()=>{
       return {...item,url:item.url?.startsWith('blob:')?null:item.url};
     }));
   }
-  function fileDataUrl(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.readAsDataURL(file);});}
+  function fileDataUrl(file){const reader=new FileReader();return withDeadline(new Promise((resolve,reject)=>{reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error||new Error('Не удалось прочитать изображение.'));reader.onabort=()=>reject(new Error('Чтение изображения прервано.'));reader.readAsDataURL(file);}),30000,'Не удалось подготовить изображение за 30 сек. Добавь файл повторно.',()=>reader.abort());}
   async function storeReferenceUrl(url,spaceId,assetId=uid()){
     const parsed=new URL(url);if(parsed.protocol!=='https:')throw new Error('Нужна публичная HTTPS-ссылка на медиа.');
     const name=decodeURIComponent(parsed.pathname.split('/').pop())||'Reference';
@@ -523,7 +534,7 @@ window.Studio=(()=>{
   async function ensureRemoteAsset(item){
     // Only the API request carries image bytes. The graph and Firestore keep metadata.
     if(/^https:\/\//.test(item.url||''))return {...item,referenceUrl:item.url};
-    const stored=await MagicLocal.get(cache.user.uid,item.id);
+    const stored=await withDeadline(MagicLocal.get(cache.user.uid,item.id),10000,`Локальное хранилище не ответило. Добавь файл «${item.name}» повторно.`);
     if(!stored?.file)throw new Error(`Добавь файл «${item.name}» повторно: локальная копия недоступна.`);
     if(item.kind==='video')throw new Error('Видеореференс требует публичную HTTPS-ссылку. Добавь его кнопкой «По ссылке»; локальное видео остаётся на этом компьютере.');
     if(!/^image\/(jpeg|png|webp|bmp|tiff|gif|heic|heif)$/.test(stored.file.type))throw new Error('Для API выбери JPG, PNG, WebP, BMP, TIFF, GIF, HEIC или HEIF.');
@@ -577,7 +588,9 @@ window.Studio=(()=>{
     const old=await getVideo(id);if(!old||old.uid!==cache.user.uid)throw new Error('Нет доступа к этой генерации.');
     const row=rememberVideo({...old,...patch,updatedAt:now(),cloudSaved:false});
     if(MagicDomain.terminal(row.status)){
-      try{return await persistVideo(row);}catch(e){notify('Результат сохранён локально; отправка в базу ожидает повторения: '+e.message,'error');}
+      // Show the provider result immediately, even when Firestore is offline.
+      // The durable local outbox retries persistence on the next page/reload.
+      persistVideo(row).catch(e=>notify('Результат сохранён локально; отправка в базу ожидает повторения: '+e.message,'error'));
     }
     return row;
   }
@@ -656,7 +669,8 @@ window.Studio=(()=>{
     const body={payload:{...payload,model:videoModel(payload.model),prompt:String(payload.prompt||''),duration:Math.max(4,Math.min(30,Number(payload.duration)||8)),resolution:normalizeResolution(payload.resolution),ratio:normalizeRatio(payload.aspect_ratio||payload.ratio),generate_audio:payload.generate_audio!==false,output_format:'mp4'}};
     if(new Blob([JSON.stringify(body)]).size>60*1024*1024)throw new Error('Референсы превышают размер запроса API. Уменьши изображения или используй HTTPS-ссылки.');
     const response=await proxy('/byteplus/submit',{method:'POST',body});const data=await response.json();
-    const requestId=data.id||data.request_id;
+    // request_id is an API diagnostic trace, not necessarily a generation task ID.
+    const requestId=data.id;
     if(!requestId)throw new Error('API не вернул ID задачи. Проверь историю BytePlus перед повторным запуском.');
     return updateVideo(videoId,{requestId,taskToken:data.taskToken||null,status:'queued',pct:0});
   }

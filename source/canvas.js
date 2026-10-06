@@ -9,7 +9,7 @@
   if(!SPACE){Studio.notify('Space не найден или нет доступа.','error');location.replace('spaces.html');return;}
   const $=(s,r=document)=>r.querySelector(s), svgNS='http://www.w3.org/2000/svg';
   const viewport=$('#viewport'),world=$('#world'),nodeLayer=$('#node-layer'),edgeLayer=$('#edge-layer'),draftPath=$('#draft-wire');
-  const nodes=new Map(),edges=new Map(),assets=new Map(),selected=new Set(),jobs=new Map(),submittingSources=new Set();
+  const nodes=new Map(),edges=new Map(),assets=new Map(),selected=new Set(),jobs=new Map(),submittingSources=new Map();
   const types={media:{prefix:'M',title:'Media',icon:'▧',color:'blue'},text:{prefix:'T',title:'Text generation',icon:'T',color:'text-icon'},generation:{prefix:'G',title:'Video generation',icon:'✦',color:'purple'},preset:{prefix:'P',title:'Preset',icon:'▱',color:'preset-icon'},output:{prefix:'O',title:'Output',icon:'▷',color:'green'}};
   const counters={media:0,text:0,generation:0,output:0,preset:0},camera={x:0,y:0,zoom:1};
   const SESSION_KEY='magic.canvas.cache.v1.'+Studio.current().id+'.'+SPACE_ID;
@@ -72,12 +72,24 @@
   function endRename(n,cancel=false){const input=$('.node-name-input',n.el);if(cancel){n.fields.name=input.dataset.original||'';input.value=n.fields.name;}else if(!n.fields.name?.trim()){n.fields.name=nodeName(n);input.value=n.fields.name;}syncFields(n);finishEdit();input.hidden=true;$('.node-title',n.el).hidden=false;schedule();}
   function reconcileJobs(){for(const [id,job] of jobs){const out=nodes.get(id);if(!out||!nodes.get(job.source)){job.controller?.abort();jobs.delete(id);}}}
   function applyVideoRecord(out,r){out.fields.trackingPaused=false;out.fields.generationId=r.id||out.fields.generationId;out.fields.status=r.status||out.fields.status;out.fields.requestId=r.requestId||out.fields.requestId;out.fields.statusUrl=r.statusUrl||out.fields.statusUrl;out.fields.responseUrl=r.responseUrl||out.fields.responseUrl;out.fields.videoUrl=r.videoUrl||out.fields.videoUrl;out.fields.remoteUrl=r.remoteUrl||out.fields.remoteUrl;out.fields.providerUrlExpiresAt=r.providerUrlExpiresAt||out.fields.providerUrlExpiresAt;out.fields.cost=r.cost??out.fields.cost;out.fields.error=r.error||null;out.fields.progress=Number(r.pct??out.fields.progress)||0;}
-  function paintOutput(n){const download=$('.output-download',n.el);download.hidden=!n.fields.videoUrl;if(n.fields.videoUrl){download.href=n.fields.videoUrl;download.download='magic-'+(n.fields.generationId||n.id)+'.mp4';download.textContent=n.fields.providerUrlExpiresAt&&Date.now()>=n.fields.providerUrlExpiresAt?'Ссылка могла истечь':'Скачать видео';download.title='Ссылка провайдера временная. Сохрани файл на компьютер.';}const job=jobs.get(n.id),status=n.fields.status||'',loading=!!job&&['queued','running','processing'].includes(status||'running'),src=incoming(n.id)[0],video=$('.output-video',n.el);n.el.classList.toggle('is-loading',loading);n.el.setAttribute('aria-busy',String(loading));$('.loading-view',n.el).hidden=!loading;$('.output-message',n.el).hidden=loading||!!n.fields.videoUrl;$('.play-mark',n.el).hidden=loading||!!n.fields.videoUrl;$('.cancel-generation',n.el).hidden=!loading;$('.resume-generation',n.el).hidden=!n.fields.trackingPaused||!n.fields.requestId;video.hidden=!n.fields.videoUrl;if(!n.fields.videoUrl&&video.hasAttribute('src')){video.pause();video.removeAttribute('src');}if(n.fields.videoUrl&&video.src!==n.fields.videoUrl)video.src=n.fields.videoUrl;
-    if(loading){const pct=Number(job?.progress??n.fields.progress)||0;$('.loading-percent',n.el).textContent=(pct?Math.round(pct)+'%':'…');const track=$('.loading-track',n.el);track.setAttribute('aria-valuenow',String(pct));track.style.setProperty('--progress',(pct||3)+'%');}
-    else if(!n.fields.videoUrl){$('output',n.el).textContent=n.fields.trackingPaused?'Отслеживание приостановлено':status==='submission_unknown'?'Проверь историю BytePlus':status==='failed'?'FAILED':status==='cancelled'?'Cancelled':status==='completed'?'Completed':src?'Ready to generate':'No source';$('.output-status',n.el).textContent=n.fields.trackingWarning||n.fields.error||(n.fields.trackingPaused?'Удалённая задача продолжает работать.':null)|| (status==='completed'?'Result archived in Assets':src?`Source ${nodeName(src)}`:'Connect Video generation');}
+  function paintOutput(n){
+    const download=$('.output-download',n.el);download.hidden=!n.fields.videoUrl;
+    if(n.fields.videoUrl){download.href=n.fields.videoUrl;download.download='magic-'+(n.fields.generationId||n.id)+'.mp4';download.textContent=n.fields.providerUrlExpiresAt&&Date.now()>=n.fields.providerUrlExpiresAt?'Ссылка могла истечь':'Скачать видео';download.title='Ссылка провайдера временная. Сохрани файл на компьютер.';}
+    const job=jobs.get(n.id),status=n.fields.status||'',src=incoming(n.id)[0],phase=submittingSources.get(src?.id),sending=status==='submitting'&&phase==='sending',loading=sending||!!job&&['queued','running','processing'].includes(status||'running'),video=$('.output-video',n.el);
+    n.el.classList.toggle('is-loading',loading);n.el.setAttribute('aria-busy',String(loading));$('.loading-view',n.el).hidden=!loading;$('.output-message',n.el).hidden=loading||!!n.fields.videoUrl;$('.play-mark',n.el).hidden=loading||!!n.fields.videoUrl;
+    $('.cancel-generation',n.el).hidden=!job||!loading;$('.resume-generation',n.el).hidden=!n.fields.trackingPaused||!n.fields.requestId;
+    video.hidden=!n.fields.videoUrl;if(!n.fields.videoUrl&&video.hasAttribute('src')){video.pause();video.removeAttribute('src');}if(n.fields.videoUrl&&video.src!==n.fields.videoUrl)video.src=n.fields.videoUrl;
+    if(loading){
+      const pct=Number(job?.progress??n.fields.progress)||0;$('.loading-percent',n.el).textContent=sending?'…':(pct?Math.round(pct)+'%':'…');
+      $('.loading-label',n.el).textContent=sending?'Отправка · ожидание ID задачи':status==='queued'?'BytePlus · в очереди':'Seedance 2.5 · generating';
+      const track=$('.loading-track',n.el);track.setAttribute('aria-valuenow',String(pct));track.style.setProperty('--progress',(pct||3)+'%');
+    }else if(!n.fields.videoUrl){
+      $('output',n.el).textContent=phase==='preparing'?'Подготовка референсов…':n.fields.trackingPaused?'Отслеживание приостановлено':['submission_unknown','submitting'].includes(status)?'Запуск не подтверждён':status==='failed'?'FAILED':status==='cancelled'?'Cancelled':status==='completed'?'Completed':status==='queued'?'В очереди':src?'Ready to generate':'No source';
+      $('.output-status',n.el).textContent=phase==='preparing'?'Чтение локальных файлов; задача ещё не отправлена.':n.fields.trackingWarning||n.fields.error||(n.fields.trackingPaused?'Удалённая задача продолжает работать.':null)||(status==='completed'?'Result archived in Assets':src?`Source ${nodeName(src)}`:'Connect Video generation');
+    }
     $('.node-state',n.el).textContent=n.fields.videoUrl?'Ready':status|| (src?`Source ${src.id}`:'Waiting');
   }
-  function updateGenerateButtons(){const c=$('#composer-generate');if(c){const loading=submittingSources.has(composerNode)||[...jobs.values()].some(j=>j.source===composerNode);c.disabled=loading;c.textContent=loading?'Generating…':'✦ Generate';}for(const n of nodes.values()){const button=$('[data-generate]',n.el);if(!button)continue;const running=submittingSources.has(n.id)||[...jobs.values()].some(j=>j.source===n.id);button.disabled=running;button.textContent=running?'Generating…':n.type==='text'?'✦ Generate text':'✦ Generate';}}
+  function updateGenerateButtons(){const label=id=>submittingSources.get(id)==='preparing'?'Подготовка…':submittingSources.has(id)?'Отправка…':'Generating…';const c=$('#composer-generate');if(c){const loading=submittingSources.has(composerNode)||[...jobs.values()].some(j=>j.source===composerNode);c.disabled=loading;c.textContent=loading?label(composerNode):'✦ Generate';}for(const n of nodes.values()){const button=$('[data-generate]',n.el);if(!button)continue;const running=submittingSources.has(n.id)||[...jobs.values()].some(j=>j.source===n.id);button.disabled=running;button.textContent=running?label(n.id):n.type==='text'?'✦ Generate text':'✦ Generate';}}
   async function trackOutput(output,source,record){
     if(jobs.has(output.id))return;
     const controller=new AbortController(),job={source:source.id,videoId:record.id,progress:Number(record.pct)||0,controller};
@@ -100,7 +112,7 @@
   async function startGeneration(source){
     if(!source||source.type!=='generation'||submittingSources.has(source.id)||[...jobs.values()].some(j=>j.source===source.id))return;
     finishEdit();const prompt=compiledPrompt(source).trim();if(!prompt){notify('Добавь промпт перед генерацией.');return;}
-    submittingSources.add(source.id);updateGenerateButtons();
+    submittingSources.set(source.id,'preparing');updateGenerateButtons();for(const out of nodes.values())if(out.type==='output')paintOutput(out);
     try{
       if(!await Studio.providerCredentials('byteplus'))throw new Error('Подключи BytePlus в My settings → Integrations.');
       const ids=[...new Set([...incoming(source.id,'media').flatMap(n=>n.assets),...source.assets])],localRefs=ids.map(id=>assets.get(id));
@@ -109,6 +121,7 @@
       const refs=await Promise.all(localRefs.map(a=>Studio.ensureRemoteAsset(a)));
       if(new Blob([JSON.stringify(refs.map(a=>a.referenceUrl))]).size>59*1024*1024)throw new Error('Референсы слишком большие для API. Уменьши изображения или добавь их по ссылке.');
       const count=[1,2,4].includes(Number(source.fields.batch))?Number(source.fields.batch):1,runs=[];
+      submittingSources.set(source.id,'sending');updateGenerateButtons();
       const existing=[...edges.values()].filter(e=>e.from===source.id&&nodes.get(e.to)?.type==='output').map(e=>nodes.get(e.to));
       mutate('Запущена генерация',()=>{
         for(let i=0;i<count;i++){
@@ -117,7 +130,7 @@
             while([...nodes.values()].some(n=>pos.x<n.x+n.el.offsetWidth+24&&pos.x+280>n.x&&pos.y<n.y+n.el.offsetHeight+24&&pos.y+260>n.y)&&guard++<100)pos.y+=310;
             output=addNode('output',pos);connectRaw(source.id,output.id);
           }
-          output.fields={name:output.fields.name,status:'queued',progress:0};runs.push(output);
+          output.fields={name:output.fields.name,status:'submitting',progress:0};runs.push(output);
         }
         selected.clear();selected.add(source.id);refreshContent();updateStatus();
       },`${nodeName(source)} · ${count} результатов`);
@@ -125,7 +138,7 @@
       const options={model:source.fields.model,duration:Number(source.fields.duration)||8,resolution:source.fields.resolution,aspect_ratio:source.fields.ratio,generate_audio:source.fields.generateAudio!=='false'};
       await Promise.all(runs.map(async output=>{
         const record=await Studio.createVideoRecord({spaceId:SPACE_ID,spaceName:SPACE.name,sourceNodeId:source.id,outputNodeId:output.id,prompt,provider:'byteplus',model:options.model,resolution:options.resolution,ratio:options.aspect_ratio,seconds:options.duration,referenceCount:refs.length,hasRef:refs.length>0,generateAudio:options.generate_audio});
-        applyVideoRecord(output,record);paintOutput(output);saveSession();
+        applyVideoRecord(output,{...record,status:'submitting'});paintOutput(output);saveSession();
         try{
           const submitted=await Studio.submitGeneration(record.id,{...options,prompt,reference_images:images,reference_videos:videos},'byteplus');
           applyVideoRecord(output,submitted);saveSession();trackOutput(output,source,submitted);
@@ -133,11 +146,11 @@
           const definite=error.httpStatus>=400&&error.httpStatus<500;
           const failed=await Studio.updateVideo(record.id,{status:definite?'failed':'submission_unknown',error:error.message,finishedAt:definite?Date.now():null});
           applyVideoRecord(output,failed);paintOutput(output);saveSession();if(definite)checkpoint();
-          notify(definite?error.message:'Ответ запуска не получен. Проверь историю BytePlus перед повторением.');
+          notify(error.message);
         }
       }));
     }catch(error){notify(error.message);}
-    finally{submittingSources.delete(source.id);updateGenerateButtons();schedule();}
+    finally{submittingSources.delete(source.id);updateGenerateButtons();for(const out of nodes.values())if(out.type==='output')paintOutput(out);schedule();}
   }
 
   function buildNode(data){
