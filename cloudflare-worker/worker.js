@@ -1,5 +1,6 @@
 import {authenticate,issueTaskToken,verifyTaskToken,issueSessionToken,verifySessionToken} from './auth.js';
 import {portraitRoute,servePortraitFile,validatePortraitReferences} from './portraits.js';
+import {openRouterRoute,serveOpenRouterMedia} from './openrouter.js';
 
 const BYTEPLUS_BASE = 'https://ark.ap-southeast.bytepluses.com/api/v3';
 const DEFAULT_MODEL = 'dreamina-seedance-2-5-260628';
@@ -15,7 +16,8 @@ function corsHeaders(request, env) {
   return {
     'Access-Control-Allow-Origin': allowed || '*',
     'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Task-Token,X-Magic-Session',
+    'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Task-Token,X-Magic-Session,X-OpenRouter-Key,Range',
+    'Access-Control-Expose-Headers': 'Content-Length,Content-Range,Accept-Ranges',
     'Access-Control-Max-Age': '86400',
     'Vary': 'Origin'
   };
@@ -108,6 +110,9 @@ export default {
         return json({ok:true, service:'magic-byteplus-worker', model:configuredModel(env)}, 200, request, env);
       }
       if(url.pathname.startsWith('/byteplus/portraits/file/') && request.method==='GET')return await servePortraitFile(request,env);
+      if(url.pathname.startsWith('/openrouter/media/')&&request.method==='GET'){
+        const response=await serveOpenRouterMedia(request,env),headers=new Headers(response.headers);for(const [k,v]of Object.entries(corsHeaders(request,env)))headers.set(k,v);return new Response(response.body,{status:response.status,headers});
+      }
 
       const uid = await authenticate(request, env);
       if(url.pathname==='/byteplus/session' && request.method==='POST'){
@@ -115,9 +120,10 @@ export default {
         if(!profile.ok)return json({error:'Account is not a member of this team'},403,request,env);
         const role=(await profile.json())?.fields?.role?.stringValue;
         if(!['user','superuser'].includes(role))return json({error:'Account is not a member of this team'},403,request,env);
-        return json(await issueSessionToken(uid,env),200,request,env);
+        return json(await issueSessionToken(uid,env,role),200,request,env);
       }
-      await verifySessionToken(request.headers.get('X-Magic-Session'),uid,env);
+      const session=await verifySessionToken(request.headers.get('X-Magic-Session'),uid,env);
+      if(url.pathname.startsWith('/openrouter/')&&request.method==='POST')return json(await openRouterRoute(request,env,uid,session),200,request,env);
       if(url.pathname.startsWith('/byteplus/portraits/') && request.method==='POST')return json(await portraitRoute(request,env,uid),200,request,env);
 
       if (url.pathname === '/byteplus/test' && request.method === 'POST') {

@@ -265,11 +265,57 @@ button:disabled, input:disabled, select:disabled, textarea:disabled, [aria-disab
 [data-cursor="unavailable"] { cursor: var(--cursor-unavailable) !important; }
 .file-over { cursor: var(--cursor-drop) !important; }
 }
+
+/* Shared media surfaces use Magic's existing colors and typography. */
+.media-preview-dialog{padding:0;border:1px solid var(--line-strong);border-radius:16px;background:var(--panel);color:var(--text);max-width:94vw;max-height:94vh;box-shadow:var(--shadow);overflow:auto;}
+.media-preview-dialog::backdrop{background:rgb(4 5 8 / .68);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.media-preview-shell{position:relative;padding:14px;display:grid;gap:12px;min-width:min(300px,86vw)}
+.media-preview-close{position:absolute;right:22px;top:22px;z-index:2;border:1px solid #ffffff38;border-radius:50%;width:32px;height:32px;background:#111b;color:white;font-size:23px;line-height:1;}
+.media-preview-stage{max-width:86vw;min-width:0;background:#070709;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:grid;place-items:center;position:relative;margin:auto;}
+.media-preview-stage video{width:100%;height:100%;min-height:0;object-fit:contain;display:block;}
+.media-preview-notice{padding:24px;color:#bbbcc4;text-align:center;line-height:1.6;font-size:12px;position:absolute;inset:0;display:grid;place-items:center;background:#0b0b10db;}
+.media-preview-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+.media-preview-actions button[aria-expanded=true]{background:var(--blue-soft);border-color:var(--blue);color:var(--blue)}
+.media-preview-details{border:1px solid var(--line);border-radius:10px;background:var(--bg-soft);padding:14px;max-height:24vh;overflow:auto;overscroll-behavior:contain;}
+.media-preview-prompt{display:block;white-space:pre-wrap;word-break:break-word;text-align:left;font-size:12px;line-height:1.7;width:100%;border:0;background:none;color:var(--text);padding:0;}
+.media-preview-prompt:hover{color:var(--blue)}
+.media-preview-info{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 24px;font-size:12px;line-height:1.5;}
+.media-preview-info dt{color:var(--muted)}.media-preview-info dd{margin:0;overflow-wrap:anywhere;}
+.output-expand{position:absolute;right:8px;top:8px;z-index:3;width:30px;height:30px;border-radius:8px;border:1px solid #ffffff30;background:#111b;color:white;font-size:18px;}
+.output-video::-webkit-media-controls-fullscreen-button,.media-preview-stage video::-webkit-media-controls-fullscreen-button{display:none}
+.canvas-page .output-download{border:0;cursor:pointer;}
+.asset-preview-trigger{padding:0;border:0;width:100%;background:#202024;color:var(--text);cursor:pointer;text-align:inherit;}
+.asset-preview-trigger:focus-visible{outline:2px solid var(--blue);outline-offset:-3px}
+.asset-preview-trigger video{pointer-events:none;object-fit:contain;}
+.asset-preview-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:42px;height:42px;border:1px solid #ffffff65;border-radius:50%;background:#0d0d11aa;color:white;display:grid;place-items:center;font-size:18px;opacity:.85;}
+.asset-preview-trigger:hover .asset-preview-play{background:var(--blue);border-color:var(--blue);opacity:1;}
+.provider-selection{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 18px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);}
+.provider-selection span{color:var(--muted);font-size:12px;}.provider-selection strong{margin-left:auto;color:var(--blue);font-size:12px;}
+.provider-enabled-badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:6px;background:var(--blue-soft);color:var(--blue);font-size:10px;margin-top:8px;}
+.integration-card.is-active{border-color:var(--blue);}.integration-card .integration-actions{flex-wrap:wrap;justify-content:flex-end;}.integration-actions .ui-button{font-size:11px;padding:7px 10px;}
+.integration-model-row{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);display:flex;align-items:center;gap:12px;font-size:11px;}.integration-model-row strong{color:var(--muted);font-weight:500;}.integration-model-row code{margin-left:auto;overflow-wrap:anywhere;color:var(--text);}
+.integration-delete{font-size:10px;color:var(--muted);padding:0;border:0;background:none;margin:14px 0 0 48px;}.integration-delete:hover{color:var(--red);}
+.camera-library-header{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:24px;}
+.camera-library-heading{display:grid;grid-template-columns:minmax(240px,1fr) minmax(340px,1.5fr);gap:32px;margin-bottom:24px;}
+.camera-library-heading h1{font-size:30px;letter-spacing:-.04em;margin:6px 0 12px;}.camera-library-heading p:not(.eyebrow){color:var(--muted);font-size:12px;line-height:1.7;max-width:410px;}
+.camera-library-tools{display:grid;gap:16px;}.camera-library-stats{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;}.camera-library-stats>div{padding:14px;border-right:1px solid var(--line);}.camera-library-stats>div:last-child{border:0;}.camera-library-stats strong{display:block;font-size:23px;}.camera-library-stats small{font-size:10px;}
+.camera-library-stats{grid-template-columns:repeat(3,minmax(0,1fr));}.camera-library-stats small{overflow-wrap:anywhere;line-height:1.5;}
+.camera-library-tools label{display:grid;gap:8px;color:var(--muted);font-size:10px;letter-spacing:.05em;}.camera-library-tools input{height:44px;width:100%;font-size:12px;letter-spacing:normal;}
+.camera-filters{display:flex;gap:7px;flex-wrap:wrap;}.camera-filter{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel-2);font-size:11px;font-weight:600;}.camera-filter small{font-size:9px;}.camera-filter[aria-pressed=true]{border-color:var(--blue);color:var(--blue);background:var(--blue-soft);}.camera-filter[aria-pressed=true] small{color:var(--blue);}
+.camera-results{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:11px;margin:0 0 12px;}.camera-results a{color:var(--muted);font-size:10px;}.camera-results a:hover{color:var(--blue);}
+.camera-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;}.camera-card{background:var(--panel);border:1px solid var(--line);border-radius:13px;overflow:hidden;min-width:0;}.camera-card:hover{border-color:var(--line-strong);}.camera-preview{aspect-ratio:16/9;background:#08080b;position:relative;}.camera-preview video{width:100%;height:100%;display:block;object-fit:contain;}.camera-preview-error{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:11px;pointer-events:none;}
+.camera-card-body{padding:16px;display:grid;gap:13px;}.camera-shot-meta{display:flex;justify-content:space-between;gap:8px;font-size:9px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;}.camera-shot-meta span:last-child{color:var(--blue);}.camera-card h2{font-size:16px;line-height:1.35;min-height:43px;letter-spacing:-.015em;}.camera-card-prompt{font-size:11px;line-height:1.65;max-height:154px;min-height:154px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--line);border-left:2px solid var(--blue);border-radius:7px;background:var(--bg-soft);padding:11px;}.camera-card-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;}.camera-card-actions .ui-button{font-size:10px;padding:9px 6px;white-space:nowrap;}
+.camera-space-dialog select{width:100%;}.camera-space-dialog .panel-note{line-height:1.6;}.node[data-camera=true]{border-color:#317dab;}.node[data-camera=true] .preset-heading{color:var(--blue);}.node[data-camera=true] .node-icon{color:var(--blue);}
+.camera-node-preview{margin:10px 0;}.camera-node-preview video{display:block;width:100%;aspect-ratio:16/9;object-fit:contain;background:#08080b;border-radius:8px;}.camera-node-preview small{display:block;font-size:10px;margin-top:6px;color:var(--muted);}.asset-delete{color:var(--red);}.asset-actions{flex-wrap:wrap;}
+@media(min-width:1700px){.camera-grid{grid-template-columns:repeat(4,minmax(0,1fr));}.camera-card-prompt{max-height:138px;min-height:138px;}}
+@media(max-width:1300px){.camera-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:1000px){.camera-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.camera-library-heading{grid-template-columns:1fr;gap:20px;}.integration-head{flex-wrap:wrap;}.integration-head .integration-copy{min-width:150px;}}
+@media(max-width:540px){.camera-grid{grid-template-columns:1fr;}.camera-library-header{padding:18px;}.camera-library-heading h1{font-size:25px;}.camera-filter{padding:8px;}.media-preview-shell{padding:10px;}.media-preview-info{grid-template-columns:1fr;gap:3px;}.media-preview-info dd{margin-bottom:10px;}.media-preview-actions .ui-button{font-size:11px;}.provider-selection strong{margin-left:0;}.integration-model-row{display:block;}.integration-model-row code{display:block;margin-top:6px;}.integration-help{margin-left:0;}}
 </style></head>
 <body class="canvas-page" data-page="canvas">
 <aside class="app-sidebar">
       <a class="brand" href="index.html"><span class="brand-logo"></span><span class="brand-copy"><strong>Magic</strong><small>AI Ad Creatives</small></span></a>
-      <section class="nav-group"><span class="nav-label">CREATE</span><nav class="app-nav"><a href="index.html"><span class="nav-icon">▦</span><span>Dashboard</span></a><a href="spaces.html" aria-current="page"><span class="nav-icon">⌘</span><span>Canvas</span></a><a href="flows.html"><span class="nav-icon">✣</span><span>Flows</span></a><a href="assets.html"><span class="nav-icon">▧</span><span>Assets</span></a></nav></section><section class="nav-group"><span class="nav-label">ORGANIZE</span><nav class="app-nav"><a href="projects.html"><span class="nav-icon">□</span><span>Projects</span></a><a href="presets.html"><span class="nav-icon">▤</span><span>Templates</span></a><a href="modifiers.html"><span class="nav-icon">☷</span><span>Modifiers</span></a></nav></section><section class="nav-group"><span class="nav-label">RESULTS</span><nav class="app-nav"><a href="winners.html"><span class="nav-icon">♕</span><span>Winners</span></a></nav></section><section class="nav-group"><span class="nav-label">ACCOUNT</span><nav class="app-nav"><a href="integrations.html"><span class="nav-icon">⚙</span><span>My settings</span></a><a href="users.html" data-superuser-only hidden><span class="nav-icon">♙</span><span>Users</span></a></nav></section>
+      <section class="nav-group"><span class="nav-label">CREATE</span><nav class="app-nav"><a href="index.html"><span class="nav-icon">▦</span><span>Dashboard</span></a><a href="spaces.html" aria-current="page"><span class="nav-icon">⌘</span><span>Canvas</span></a><a href="flows.html"><span class="nav-icon">✣</span><span>Flows</span></a><a href="assets.html"><span class="nav-icon">▧</span><span>Assets</span></a></nav></section><section class="nav-group"><span class="nav-label">ORGANIZE</span><nav class="app-nav"><a href="projects.html"><span class="nav-icon">□</span><span>Projects</span></a><a href="presets.html"><span class="nav-icon">▤</span><span>Templates</span></a><a href="modifiers.html"><span class="nav-icon">☷</span><span>Camera movement</span></a></nav></section><section class="nav-group"><span class="nav-label">RESULTS</span><nav class="app-nav"><a href="winners.html"><span class="nav-icon">♕</span><span>Winners</span></a></nav></section><section class="nav-group"><span class="nav-label">ACCOUNT</span><nav class="app-nav"><a href="integrations.html"><span class="nav-icon">⚙</span><span>My settings</span></a><a href="users.html" data-superuser-only hidden><span class="nav-icon">♙</span><span>Users</span></a></nav></section>
       <div class="sidebar-user"><small>USER</small><span data-user-email>—</span></div>
     </aside><header class="app-topbar"><div class="topbar-breadcrumb"><a href="spaces.html">← Spaces</a><span class="slash">/</span><strong id="space-breadcrumb">Canvas</strong><span class="slash">/</span><span>📁 No project</span></div><div class="topbar-legend"><span class="legend-dot creation">Creation</span><span class="legend-dot output">Output</span><span class="legend-dot variable">Variable</span><span class="legend-dot modifier">Modifier</span></div><span id="autosave-state" class="autosave-state">Сохранено на компьютере</span><span class="topbar-spacer"></span><div class="topbar-actions"><button class="theme-button" data-theme-toggle title="Сменить тему">★ <span data-theme-state>Dark</span></button><button id="shell-avatar" class="avatar-button" data-user-avatar aria-label="Профиль">M</button><span class="share-button">Личный Space</span></div></header><div id="drawer-backdrop" class="drawer-backdrop"></div>
     <aside id="profile-drawer" class="profile-drawer" aria-label="Профиль">
@@ -382,10 +428,46 @@ window.MagicDomain = (() => {
   }
   function compatible(type, direction) {
     if (direction === 'in') return { generation: ['media', 'preset'], text: ['preset'], output: ['generation'] }[type] || [];
-    return { generation: ['output'], media: ['generation'], preset: ['generation', 'text'], text: ['generation'] }[type] || [];
+    return { generation: ['output'], media: ['generation'], camera: ['generation'], preset: ['generation', 'text'], text: ['generation'] }[type] || [];
   }
   return { xp, totals, terminal, compatible, resolutions, defaultVideoModel, normalizeBytePlusModel };
 })();
+
+(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MagicProviders=api;})(typeof window==='object'?window:globalThis,()=>{
+  'use strict';
+  const openRouterModel='bytedance/seedance-2.5';
+  const fail=message=>{throw Object.assign(new Error(message),{httpStatus:400,status:400});};
+  function source(url,kind){
+    if(typeof url!=='string')return false;
+    try{const u=new URL(url);if(u.protocol==='https:'&&!u.username&&!u.password)return true;}catch{}
+    return kind==='image'&&/^data:image\/(jpeg|png|webp|bmp|tiff|gif|heic|heif);base64,[A-Za-z0-9+/]+={0,2}$/.test(url);
+  }
+  function buildOpenRouterRequest(p={}){
+    const prompt=String(p.prompt||'').trim();if(!prompt||prompt.length>32000)fail('Промпт должен содержать от 1 до 32000 символов.');
+    const images=p.reference_images||[],videos=p.reference_videos||[];
+    if(!Array.isArray(images)||!Array.isArray(videos)||images.length+videos.length>15)fail('Допускается до 15 референсов.');
+    if(images.some(u=>!source(u,'image'))||videos.some(u=>!source(u,'video')))fail('Для OpenRouter нужны HTTPS-ссылки или изображения Base64. BytePlus asset:// не переносится между провайдерами.');
+    const body={model:openRouterModel,prompt,generate_audio:p.generate_audio!==false};
+    if(p.duration!==undefined){const v=Number(p.duration);if(!Number.isInteger(v)||v<4||v>30)fail('Длительность: 4–30 секунд.');body.duration=v;}
+    if(p.resolution)body.resolution=p.resolution;
+    const ratio=p.aspect_ratio||p.ratio;if(ratio&&ratio!=='adaptive')body.aspect_ratio=ratio;
+    if(Number.isInteger(Number(p.seed))&&Number(p.seed)>=0)body.seed=Number(p.seed);
+    const frames=[];for(const [frame_type,url]of [['first_frame',p.first_frame_url],['last_frame',p.last_frame_url]])if(url){if(!source(url,'image'))fail('Неподдерживаемый кадр.');frames.push({type:'image_url',image_url:{url},frame_type});}
+    if(frames.length)body.frame_images=frames;
+    if(images.length||videos.length)body.input_references=[...images.map(url=>({type:'image_url',image_url:{url}})),...videos.map(url=>({type:'video_url',video_url:{url}}))];
+    if(JSON.stringify(body).length>60*1024*1024)fail('Референсы превышают 60 МБ.');return body;
+  }
+  function validateCapabilities(body,model){
+    if(!model||model.id!==openRouterModel)fail('Seedance 2.5 не найдена в доступных видеомоделях OpenRouter. Нажми «Проверить» в My settings.');
+    for(const [field,list,label]of [['duration','supported_durations','Длительность'],['resolution','supported_resolutions','Разрешение'],['aspect_ratio','supported_aspect_ratios','Формат']]){
+      if(body[field]!==undefined&&Array.isArray(model[list])&&model[list].length&&!model[list].includes(body[field]))fail(`${label} ${body[field]} не поддерживается OpenRouter. Доступно: ${model[list].join(', ')}.`);
+    }
+    return body;
+  }
+  function contentUrl(taskId){if(typeof taskId!=='string'||!/^[\w-]{1,180}$/.test(taskId))fail('Некорректный ID задачи OpenRouter.');return 'https://openrouter.ai/api/v1/videos/'+encodeURIComponent(taskId)+'/content';}
+  const providerName=p=>p==='openrouter'?'OpenRouter':'BytePlus';
+  return {openRouterModel,buildOpenRouterRequest,validateCapabilities,contentUrl,providerName};
+});
 
 'use strict';
 // Binary media stays in IndexedDB; small snapshots and the outbox stay in localStorage.
@@ -457,7 +539,7 @@ window.Studio=(()=>{
       await new Promise(resolve=>{const off=authM.onAuthStateChanged(auth,async user=>{off();cache.user=user;try{if(user)await hydrateProfile(user);}catch(e){cache.firebaseError=e;}resolve();});});
       if(cache.user&&cache.profile){
         await migrateLegacyCredentials();
-        if(apiGatewayBase())await gatewaySession().catch(e=>notify(e.message,'error'));
+        for(const base of new Set([apiGatewayBase(),openRouterGateway()].filter(Boolean)))await gatewaySession(base).catch(e=>notify(e.message,'error'));
         // Replay durable work from the preceding page/reload, never on each canvas edit.
         await flushPendingWork();
       }
@@ -563,28 +645,52 @@ window.Studio=(()=>{
     }catch(err){console.warn('Integration metadata unavailable; local credentials still work.',err);}
     const localKey=String(localStorage.getItem(credentialKey('apiKey'))||'').trim();
     if(localKey&&!cache.integrations.has('byteplus'))cache.integrations.set('byteplus',{id:`${cache.user.uid}_byteplus`,ownerUid:cache.user.uid,provider:'byteplus',label:'BytePlus ModelArk',connected:true,credentialHint:localKey.slice(0,10)+'…',localOnly:true});
+    const routerKey=localStorage.getItem(credentialKey('openrouter.apiKey'));
+    if(routerKey&&!cache.integrations.has('openrouter'))cache.integrations.set('openrouter',{id:`${cache.user.uid}_openrouter`,ownerUid:cache.user.uid,provider:'openrouter',connected:true,localOnly:true});
   }
   async function getIntegration(provider){await ready();if(!cache.integrations.size&&cache.user)await loadIntegrations();return cache.integrations.get(provider)||null;}
   async function saveIntegration(provider,data){
-    assertFirebase();if(provider!=='byteplus')throw new Error('Этот provider пока не подключён.');
-    const apiKey=String(data.apiKey||'').trim();
+    assertFirebase();if(!['byteplus','openrouter'].includes(provider))throw new Error('Этот provider пока не подключён.');
+    const field=provider==='openrouter'?'openrouter.apiKey':'apiKey';
+    const apiKey=String(data.apiKey||localStorage.getItem(credentialKey(field))||'').trim();
     const workerUrl=String(data.workerUrl||'').trim().replace(/\/$/,'');
-    if(!apiKey&&!workerUrl)throw new Error('Вставь ARK API Key для Direct mode или Cloudflare Worker URL.');
-    if(apiKey)localStorage.setItem(credentialKey('apiKey'),apiKey);else if(workerUrl)localStorage.removeItem(credentialKey('apiKey'));
-    if(workerUrl)localStorage.setItem(credentialKey('gateway'),workerUrl);else localStorage.removeItem(credentialKey('gateway'));localStorage.removeItem(credentialKey('session'));
+    if(workerUrl){const parsed=new URL(workerUrl);if(parsed.protocol!=='https:'||parsed.username||parsed.password||parsed.search||parsed.hash)throw new Error('Worker URL должен быть HTTPS без параметров и пароля.');}
+    if(provider==='openrouter'&&!apiKey)throw new Error('Вставь OpenRouter API key.');
+    if(!apiKey&&!workerUrl)throw new Error('Вставь ARK API Key или Cloudflare Worker URL.');
+    if(apiKey)localStorage.setItem(credentialKey(field),apiKey);
+    const gatewayField=provider==='openrouter'?'openrouter.gateway':'gateway';
+    if(workerUrl)localStorage.setItem(credentialKey(gatewayField),workerUrl);else localStorage.removeItem(credentialKey(gatewayField));localStorage.removeItem(credentialKey('session'));
+    localStorage.removeItem(credentialKey(provider+'.verified'));if(provider==='openrouter')localStorage.removeItem(credentialKey('openrouter.capabilities'));
     
     const id=`${cache.user.uid}_${provider}`,old=cache.integrations.get(provider)||{};
     const hint=workerUrl?workerUrl.replace(/^https?:\/\//,'').slice(0,40):(apiKey.slice(0,10)+'…');
-    const row={ownerUid:cache.user.uid,provider,label:String(data.label||'BytePlus ModelArk'),connected:true,connectionMode:workerUrl?'worker':'direct',credentialHint:hint,updatedAt:now(),createdAt:old.createdAt||now()};
+    const row={ownerUid:cache.user.uid,provider,label:MagicProviders.providerName(provider),connected:true,connectionMode:workerUrl?'worker':'direct',credentialHint:hint,updatedAt:now(),createdAt:old.createdAt||now()};
     try{await api.fsM.setDoc(api.fsM.doc(api.db,'integrations',id),row);}catch(err){console.warn('Could not save integration metadata to Firestore; using local-only mode.',err);row.localOnly=true;}
-    cache.integrations.set(provider,{id,...row});if(workerUrl)await gatewaySession();return {id,...row};
+    cache.integrations.set(provider,{id,...row});if(!activeVideoProvider())setVideoProvider(provider);window.dispatchEvent(new Event('magic-integration-changed'));if(workerUrl)await gatewaySession(workerUrl);return {id,...row};
   }
+  function activeVideoProvider(){
+    const saved=localStorage.getItem(credentialKey('seedanceProvider'));
+    if(saved!==null)return ['byteplus','openrouter'].includes(saved)?saved:null;
+    if(apiGatewayBase()||localStorage.getItem(credentialKey('apiKey')))return 'byteplus';
+    return localStorage.getItem(credentialKey('openrouter.apiKey'))?'openrouter':null;
+  }
+  function setVideoProvider(provider){
+    if(provider&&!['byteplus','openrouter'].includes(provider))throw new Error('Неизвестный провайдер.');
+    const available=provider==='byteplus'?(apiGatewayBase()||localStorage.getItem(credentialKey('apiKey'))):provider==='openrouter'?localStorage.getItem(credentialKey('openrouter.apiKey')):true;
+    if(!available)throw new Error('Сначала подключи API провайдера.');
+    localStorage.setItem(credentialKey('seedanceProvider'),provider||'none');window.dispatchEvent(new Event('magic-integration-changed'));
+  }
+  function integrationVerified(provider){return read(credentialKey(provider+'.verified'),null);}
+  function openRouterGateway(){return String(localStorage.getItem(credentialKey('openrouter.gateway'))||'').replace(/\/$/,'');}
+  function videoModelFor(provider,value){return provider==='openrouter'?MagicProviders.openRouterModel:videoModel(value);}
   async function removeIntegration(provider){
+    if(activeVideoProvider()===provider)setVideoProvider(null);
     if(provider==='byteplus'){
       localStorage.removeItem(credentialKey('apiKey'));
       localStorage.removeItem(credentialKey('gateway'));localStorage.removeItem(credentialKey('session'));
       
-    }
+    }else if(provider==='openrouter'){for(const f of ['openrouter.apiKey','openrouter.gateway','openrouter.capabilities'])localStorage.removeItem(credentialKey(f));}
+    localStorage.removeItem(credentialKey(provider+'.verified'));window.dispatchEvent(new Event('magic-integration-changed'));
     const item=cache.integrations.get(provider);if(item){try{await api.fsM.deleteDoc(api.fsM.doc(api.db,'integrations',item.id));}catch(err){console.warn('Integration metadata delete skipped',err);}}
     cache.integrations.delete(provider);
   }
@@ -598,6 +704,7 @@ window.Studio=(()=>{
       const apiKey=String(localStorage.getItem(credentialKey('apiKey'))||'').trim();
       return apiKey?{apiKey,connected:true,mode:'direct'}:null;
     }
+    if(provider==='openrouter'){const apiKey=String(localStorage.getItem(credentialKey('openrouter.apiKey'))||'').trim(),workerUrl=openRouterGateway();return apiKey?{apiKey,workerUrl,mode:workerUrl?'worker':'direct',connected:true}:null;}
     return null;
   }
   async function providerKey(provider){return (await providerCredentials(provider))?.apiKey||'';}
@@ -619,7 +726,7 @@ window.Studio=(()=>{
   async function responseOrError(r,label='API'){
     const type=r.headers.get('content-type')||'';let data;
     try{data=type.includes('json')?await r.json():await r.text();}catch{data='';}
-    if(!r.ok){const detail=typeof data==='string'?data:(data?.detail?.error?.message||data?.detail?.message||data?.error?.message||data?.error||data?.message||JSON.stringify(data));const message=typeof detail==='string'?detail:JSON.stringify(detail);const hint=r.status===400&&/may contain real person|PrivacyInformation|RealPerson/i.test(message||'')?' BytePlus отклонил портрет. Нажми «Портрет» у этого референса: выбери проверенного человека или разрешённого виртуального персонажа, зарегистрируй фото и дождись Active.':'';const otherHint=r.status===404&&/model|endpoint/i.test(message||'')?' Проверь Model ID и статус Activated в BytePlus → Activation management. Успешная проверка API-ключа не подтверждает доступ к модели.':r.status===429&&/Safe Experience Mode|SetLimitExceeded|set usage limit|set inference limit/i.test(message||'')?' Лимит BytePlus: проверь Safe Experience Mode в Model Activation. Этот запрос не создал новую задачу.':'';const err=new Error(`${label} ${r.status}${message?`: ${message.slice(0,500)}`:''}${hint}${otherHint}`);err.httpStatus=r.status;throw err;}
+    if(!r.ok){const detail=typeof data==='string'?data:(data?.detail?.error?.message||data?.detail?.message||data?.error?.message||data?.error||data?.message||JSON.stringify(data));const message=typeof detail==='string'?detail:JSON.stringify(detail),router=label==='OpenRouter';const hint=!router&&r.status===400&&/may contain real person|PrivacyInformation|RealPerson/i.test(message||'')?' BytePlus отклонил портрет. Нажми «Портрет» у этого референса и подключи проверенную группу.':'';const otherHint=router&&r.status===402?' Проверь баланс и лимит ключа OpenRouter.':!router&&r.status===404&&/model|endpoint/i.test(message||'')?' Проверь Model ID и статус Activated в BytePlus → Activation management. Успешная проверка API-ключа не подтверждает доступ к модели.':!router&&r.status===429&&/Safe Experience Mode|SetLimitExceeded|set usage limit|set inference limit/i.test(message||'')?' Лимит BytePlus: проверь Safe Experience Mode в Model Activation. Этот запрос не создал новую задачу.':'';const err=new Error(`${label} ${r.status}${message?`: ${message.slice(0,500)}`:''}${hint}${otherHint}`);err.httpStatus=r.status;throw err;}
     return data;
   }
 
@@ -633,7 +740,7 @@ window.Studio=(()=>{
     const controller=new AbortController(),ms=Math.max(100,Math.min(300000,Number(CFG.apiRequestTimeoutMs)||90000));
     // Bound both the connection and reading the response body. Never retry a POST.
     return withDeadline((async()=>responseOrError(await fetch(url,{...options,signal:controller.signal}),label))(),ms,
-      `${label}: ответ API не получен за ${Math.ceil(ms/1000)} сек. Если отправлялась генерация, её запуск не подтверждён. Проверь историю BytePlus перед повторением.`,()=>controller.abort());
+      `${label}: ответ API не получен за ${Math.ceil(ms/1000)} сек. Если отправлялась генерация, её запуск не подтверждён. Проверь историю провайдера перед повторением.`,()=>controller.abort());
   }
 
   async function directBytePlus(path,{body}={}){
@@ -663,6 +770,29 @@ window.Studio=(()=>{
     catch(e){if(e instanceof TypeError)throw new Error('Не удалось связаться с Cloudflare Worker. Проверь Worker URL и deploy.');throw e;}
     return new Response(JSON.stringify(data),{status:200,headers:{'Content-Type':'application/json'}});
   }
+  async function openRouterRequest(path,{body,credentials}={}){
+    credentials=credentials||await providerCredentials('openrouter');if(!credentials)throw new Error('Подключи OpenRouter в My settings.');
+    if(credentials.mode==='worker'){
+      const headers={...await gatewayHeaders(null,credentials.workerUrl),'Content-Type':'application/json'};
+      if(credentials.apiKey)headers['X-OpenRouter-Key']=credentials.apiKey;
+      return requestApi(credentials.workerUrl+'/openrouter/'+path,{method:'POST',headers,body:JSON.stringify(body||{})},'OpenRouter');
+    }
+    const endpoint=path==='test'?'/key':path==='models'?'/videos/models':path==='submit'?'/videos':path==='status'?'/videos/'+encodeURIComponent(body.taskId):null;
+    if(!endpoint)throw new Error('Неизвестный OpenRouter route.');
+    try{return await requestApi('https://openrouter.ai/api/v1'+endpoint,{method:path==='submit'?'POST':'GET',headers:{Authorization:'Bearer '+credentials.apiKey,'Content-Type':'application/json','HTTP-Referer':location.origin,'X-Title':'Magic'},...(path==='submit'?{body:JSON.stringify(body.payload)}:{})},'OpenRouter');}
+    catch(e){if(e instanceof TypeError)throw new Error('Браузер не смог связаться с OpenRouter. Проверь сеть или подключи обновлённый Worker.');throw e;}
+  }
+  async function openRouterCapabilities(credentials){
+    const saved=read(credentialKey('openrouter.capabilities'),null),scope=credentials.workerUrl||'direct';
+    if(saved?.scope===scope&&saved.expiresAt>Date.now())return saved.model;
+    const result=await openRouterRequest('models',{credentials}),model=result.data?.find(m=>m.id===MagicProviders.openRouterModel);
+    MagicProviders.validateCapabilities({},model);write(credentialKey('openrouter.capabilities'),{model,scope,expiresAt:Date.now()+3600000});return model;
+  }
+  async function prepareVideoRequest(provider,payload){
+    if(provider!=='openrouter')return payload;
+    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи OpenRouter в My settings.');
+    const body=MagicProviders.buildOpenRouterRequest(payload);return MagicProviders.validateCapabilities(body,await openRouterCapabilities(credentials));
+  }
   async function portraitApi(path,body={}){
     if(!apiGatewayBase())throw new Error('Регистрация портретов требует Worker URL в My settings. AK/SK хранятся только в Worker; обычный Direct API остаётся доступным для остальных референсов.');
     return (await proxy('/byteplus/portraits/'+path,{method:'POST',body})).json();
@@ -679,8 +809,15 @@ window.Studio=(()=>{
     await MagicLocal.put(cache.user.uid,item.id,stored);return {...item,portraitGroupId:groupId||null};
   }
   async function testIntegration(provider){
-    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Сначала настрой Direct ARK API Key или Cloudflare Worker URL.');
-    if(provider==='byteplus'){localStorage.removeItem(credentialKey('session'));const r=await proxy('/byteplus/test',{method:'POST',body:{}});return {...await r.json(),modelAccessVerified:false};}
+    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Сначала подключи API key или Cloudflare Worker URL.');
+    if(credentials.workerUrl){localStorage.removeItem(credentialKey('session.'+credentials.workerUrl));localStorage.removeItem(credentialKey('session'));}
+    if(provider==='byteplus'){localStorage.removeItem(credentialKey('session'));const r=await proxy('/byteplus/test',{method:'POST',body:{}}),result={...await r.json(),modelAccessVerified:false};write(credentialKey(provider+'.verified'),{checkedAt:now()});return result;}
+    if(provider==='openrouter'){
+      const [key,model]=await Promise.all([openRouterRequest('test',{credentials}),openRouterCapabilities(credentials)]);
+      const info=key.data||key,limit=info.limit_remaining??(info.limit==null?null:Number(info.limit)-Number(info.usage||0));
+      const result={ok:true,model:MagicProviders.openRouterModel,modelListed:true,remaining:limit,isFreeTier:!!info.is_free_tier,capabilities:model,checkedAt:now()};
+      write(credentialKey(provider+'.verified'),result);return result;
+    }
     throw new Error('Тест для этого провайдера пока не реализован.');
   }
 
@@ -747,8 +884,8 @@ window.Studio=(()=>{
     const meta={id:assetId,uid:cache.user.uid,spaceId,name,kind,size:0,url:parsed.href,storagePath:null,createdAt:now(),updatedAt:now()};
     await MagicLocal.put(cache.user.uid,assetId,{meta,cloudSaved:false});return meta;
   }
-  async function ensureRemoteAsset(item){
-    if(item.portraitGroupId)return MagicPortraits.ensure(item);
+  async function ensureRemoteAsset(item,{provider=activeVideoProvider()}={}){
+    if(item.portraitGroupId&&provider!=='openrouter')return MagicPortraits.ensure(item);
     // Only the API request carries image bytes. The graph and Firestore keep metadata.
     if(/^https:\/\//.test(item.url||''))return {...item,referenceUrl:item.url};
     const stored=await withDeadline(MagicLocal.get(cache.user.uid,item.id),10000,`Локальное хранилище не ответило. Добавь файл «${item.name}» повторно.`);
@@ -791,7 +928,8 @@ window.Studio=(()=>{
   async function createVideoRecord(data){
     assertFirebase();const me=current();
     const row={id:uid(),uid:me.uid,user:me.name,spaceId:data.spaceId||null,spaceName:data.spaceName||'',sourceNodeId:data.sourceNodeId||null,outputNodeId:data.outputNodeId||null,
-      prompt:data.prompt||'',provider:data.provider||'byteplus',model:videoModel(data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
+      prompt:data.prompt||'',provider:data.provider||'byteplus',model:videoModelFor(data.provider,data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
+      transport:data.transport||'direct',gatewayUrl:data.gatewayUrl||null,
       seconds:Math.max(4,Math.min(30,Number(data.seconds)||8)),referenceCount:Math.max(0,Math.min(15,Number(data.referenceCount)||0)),hasRef:Boolean(data.hasRef),refMode:'reference',generateAudio:data.generateAudio!==false,
       status:'queued',pct:0,cost:null,error:null,requestId:null,videoUrl:null,remoteUrl:null,storagePath:null,createdAt:now(),updatedAt:now(),cloudSaved:false};
     return rememberVideo(row);
@@ -818,8 +956,10 @@ window.Studio=(()=>{
       const videoRef=api.fsM.doc(api.db,'videos',row.id),scoreRef=api.fsM.doc(api.db,'leaderboard',row.uid);
       const {id,cloudSaved,trackingWarning,...data}=row;
       data.schemaVersion=2;data.referenceCount=Math.max(0,Math.min(15,Number(data.referenceCount)||0));data.seconds=Math.max(4,Math.min(30,Number(data.seconds)||8));data.resolution=normalizeResolution(data.resolution);
+      let wasDeleted=false;
       await api.fsM.runTransaction(api.db,async tx=>{
-        const [previous,score]=await Promise.all([tx.get(videoRef),tx.get(scoreRef)]);
+        const [previous,score,deleted]=await Promise.all([tx.get(videoRef),tx.get(scoreRef),tx.get(api.fsM.doc(api.db,'videoDeletions',row.id))]);
+        wasDeleted=deleted.exists();if(wasDeleted)return;
         // The same terminal task can be observed by several tabs. Count it only once.
         if(previous.exists()&&MagicDomain.terminal(previous.data().status))return;
         const before=score.exists()?score.data():{};
@@ -827,6 +967,7 @@ window.Studio=(()=>{
         tx.set(scoreRef,{uid:row.uid,nickname:current().name,xp:(before.xp||0)+(row.status==='completed'?MagicDomain.xp(data):0),
           completed:(before.completed||0)+(row.status==='completed'?1:0),failed:(before.failed||0)+(row.status==='failed'?1:0),lastVideoId:row.id,updatedAt:now()});
       });
+      if(wasDeleted){localStorage.removeItem(jobsPrefix()+row.id);return null;}
       return rememberVideo({...row,cloudSaved:true});
     })();syncingVideos.set(row.id,task);
     try{return await task;}finally{syncingVideos.delete(row.id);}
@@ -845,6 +986,20 @@ window.Studio=(()=>{
     if(!MagicDomain.terminal(row.status))throw new Error('Дождись завершения задачи.');
     await api.fsM.updateDoc(api.fsM.doc(api.db,'videos',id),{archived:true});
     const local=localVideos()[id];if(local)rememberVideo({...local,archived:true});
+  }
+  async function permanentlyDeleteVideo(id){
+    assertFirebase();if(!isAdmin())throw new Error('Удаление из базы доступно только суперадмину.');
+    const pending=syncingVideos.get(id);if(pending)await pending;
+    const ref=api.fsM.doc(api.db,'videos',id);
+    await api.fsM.runTransaction(api.db,async tx=>{
+      const snap=await tx.get(ref),row=snap.exists()?snap.data():localVideos()[id];
+      if(!row)throw new Error('Запись уже удалена или не найдена. Обнови Assets.');
+      if(!MagicDomain.terminal(row.status))throw new Error('Сначала дождись завершения задачи.');
+      // Minimal marker prevents stale browser outboxes from recreating a result or awarding XP twice.
+      tx.set(api.fsM.doc(api.db,'videoDeletions',id),{uid:row.uid});
+      if(snap.exists())tx.delete(ref);
+    });
+    localStorage.removeItem(jobsPrefix()+id);
   }
   async function listLeaderboard(){const snap=await api.fsM.getDocs(api.fsM.collection(api.db,'leaderboard'));return snap.docs.map(d=>({...d.data(),uid:d.id}));}
   async function rebuildLeaderboard(){
@@ -879,9 +1034,16 @@ window.Studio=(()=>{
     const preferred=['video_url','videoUrl','url','output_url','output'];for(const k of preferred)if(k in value){const u=extractMediaUrl(value[k]);if(u)return u;}
     for(const k of ['video','videos','content','data','result','results','outputs'])if(k in value){const u=extractMediaUrl(value[k]);if(u)return u;}return null;
   }
-  function statusName(raw){const s=String(raw||'').toUpperCase();if(['COMPLETED','SUCCEEDED','SUCCESS'].includes(s))return'completed';if(['FAILED','ERROR','CANCELLED','CANCELED'].includes(s))return'failed';if(['QUEUED','PENDING'].includes(s))return'queued';return'running';}
-  async function submitGeneration(videoId,payload,provider='byteplus'){
-    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи BytePlus в My settings → Integrations.');
+  function statusName(raw){const s=String(raw||'').toUpperCase();if(['COMPLETED','SUCCEEDED','SUCCESS'].includes(s))return'completed';if(['CANCELLED','CANCELED'].includes(s))return'cancelled';if(['FAILED','ERROR','EXPIRED'].includes(s))return'failed';if(['QUEUED','PENDING'].includes(s))return'queued';return'running';}
+  async function submitGeneration(videoId,payload,provider=activeVideoProvider()){
+    if(provider!==activeVideoProvider())throw Object.assign(new Error('Активный провайдер изменился. Запусти генерацию заново с текущим подключением.'),{httpStatus:400});
+    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи API в My settings → Integrations.');
+    if(provider==='openrouter'){
+      const request=await prepareVideoRequest(provider,payload),data=await openRouterRequest('submit',{body:{payload:request},credentials});
+      if(!data.id)throw new Error('OpenRouter не вернул ID задачи. Проверь историю перед новым запуском.');
+      MagicProviders.contentUrl(data.id);
+      return updateVideo(videoId,{requestId:data.id,taskToken:data.taskToken||null,transport:credentials.mode,gatewayUrl:credentials.workerUrl||null,status:'queued',pct:0});
+    }
     if(provider!=='byteplus')throw new Error('Провайдер пока не подключён к генератору.');
     const body={payload:{...payload,model:videoModel(payload.model),prompt:String(payload.prompt||''),duration:Math.max(4,Math.min(30,Number(payload.duration)||8)),resolution:normalizeResolution(payload.resolution),ratio:normalizeRatio(payload.aspect_ratio||payload.ratio),generate_audio:payload.generate_audio!==false,output_format:'mp4'}};
     if(new Blob([JSON.stringify(body)]).size>60*1024*1024)throw new Error('Референсы превышают размер запроса API. Уменьши изображения или используй HTTPS-ссылки.');
@@ -892,11 +1054,11 @@ window.Studio=(()=>{
     return updateVideo(videoId,{requestId,taskToken:data.taskToken||null,status:'queued',pct:0});
   }
   async function persistRemoteVideo(record,result){
-    const remote=extractMediaUrl(result)||record.remoteUrl;
+    const remote=record.provider==='openrouter'?MagicProviders.contentUrl(record.requestId):extractMediaUrl(result)||record.remoteUrl;
     if(!remote)throw new Error('API завершил задачу, но URL видео пока не найден.');
     const videoUrl=remote,storagePath=null,archiveWarning=null;
     const providerTime=Number(result?.updated_at||result?.finished_at);
-    const providerUrlExpiresAt=(providerTime>0?(providerTime<1e12?providerTime*1000:providerTime):now())+24*60*60*1000;
+    const providerUrlExpiresAt=record.provider==='openrouter'?null:(providerTime>0?(providerTime<1e12?providerTime*1000:providerTime):now())+24*60*60*1000;
     const metrics=result?.metrics||result?.usage||result?.data?.metrics||{},rawCost=result?.cost??metrics.cost??record.cost;
     const actualDuration=Number(result?.duration??result?.content?.duration??metrics.duration);
     const patch={status:'completed',pct:100,remoteUrl:remote,videoUrl,storagePath,providerUrlExpiresAt,
@@ -905,16 +1067,51 @@ window.Studio=(()=>{
     if(['480p','720p','1080p'].includes(result?.resolution))patch.resolution=result.resolution;
     return updateVideo(record.id,patch);
   }
+  const playbackCache=new Map();
+  async function resolveVideoSource(record){
+    if(!record||(!isAdmin()&&record.uid!==cache.user.uid))throw new Error('Нет доступа к этой генерации.');
+    if(record.provider!=='openrouter'){const url=record.videoUrl||record.remoteUrl;if(!url)throw new Error('Видео ещё не готово.');return {url,release:()=>{}};}
+    const cacheKey=cache.user.uid+'|'+record.id+'|'+record.requestId+'|'+(record.gatewayUrl||'direct');
+    let entry=playbackCache.get(cacheKey);if(entry&&entry.expiresAt<Date.now()){playbackCache.delete(cacheKey);entry=null;}
+    if(!entry){
+      entry={refs:0,expiresAt:Date.now()+25*60000};
+      entry.promise=(async()=>{
+        if(record.transport==='worker'){
+          const gateway=record.gatewayUrl;if(!gateway)throw new Error('У генерации не сохранён Worker URL.');
+          if(record.uid!==cache.user.uid&&![openRouterGateway(),apiGatewayBase()].includes(gateway))throw new Error('Для предпросмотра команды подключи тот же Worker в My settings → OpenRouter.');
+          const data=await openRouterRequest('playback',{credentials:{mode:'worker',workerUrl:gateway},body:{taskId:record.requestId,taskToken:record.taskToken}});entry.expiresAt=Math.min(entry.expiresAt,data.expiresAt||entry.expiresAt);return data.url;
+        }
+        if(record.uid!==cache.user.uid)throw new Error('Этот ролик создан через личный Direct API. Для общего предпросмотра команды используйте OpenRouter через Worker.');
+        const credentials=await providerCredentials('openrouter');if(!credentials?.apiKey)throw new Error('Подключи OpenRouter API key, которым создан этот ролик.');
+        const controller=new AbortController();
+        const blob=await withDeadline((async()=>{const r=await fetch(MagicProviders.contentUrl(record.requestId),{headers:{Authorization:'Bearer '+credentials.apiKey},signal:controller.signal});if(!r.ok){await responseOrError(r,'OpenRouter');}return r.blob();})(),90000,'OpenRouter: загрузка видео не завершилась. Повтори предпросмотр.',()=>controller.abort());
+        const url=URL.createObjectURL(blob);entry.blobUrl=url;return url;
+      })().catch(e=>{playbackCache.delete(cacheKey);throw e;});playbackCache.set(cacheKey,entry);
+    }
+    entry.refs++;let released=false;
+    const release=()=>{if(released)return;released=true;if(--entry.refs===0&&entry.blobUrl){URL.revokeObjectURL(entry.blobUrl);if(playbackCache.get(cacheKey)===entry)playbackCache.delete(cacheKey);}};
+    try{return {url:await entry.promise,release};}catch(e){release();throw e;}
+  }
+  async function downloadVideo(record){
+    const source=await resolveVideoSource(record);let temp;
+    try{
+      let url=source.url;if(!url.startsWith('blob:')){const r=await fetch(url);if(!r.ok)throw new Error('Не удалось скачать видео: '+r.status);temp=URL.createObjectURL(await r.blob());url=temp;}
+      const link=document.createElement('a');link.href=url;link.download='magic-'+safeName(record.id||record.requestId)+'.mp4';link.click();
+    }finally{setTimeout(()=>{if(temp)URL.revokeObjectURL(temp);source.release();},1000);}
+  }
+  window.addEventListener('pagehide',()=>{for(const entry of playbackCache.values())if(entry.blobUrl)URL.revokeObjectURL(entry.blobUrl);playbackCache.clear();});
   async function refreshGeneration(record){
     record=record?.id?record:await getVideo(record);
     if(!record||record.uid!==cache.user.uid)throw new Error('Продолжить можно только свою генерацию.');
     if(MagicDomain.terminal(record.status)||!record.requestId)return record;
-    if(!await providerCredentials(record.provider||'byteplus'))throw new Error('Настрой BytePlus для продолжения задачи.');
-    const response=await proxy('/byteplus/status',{method:'POST',body:{taskId:record.requestId,taskToken:record.taskToken||null}});
-    const data=await response.json(),status=statusName(data.status||data.state);
-    if(status==='failed'){
+    const router=record.provider==='openrouter';
+    let data;
+    if(router){const credentials=record.transport==='worker'?{mode:'worker',workerUrl:record.gatewayUrl}:await providerCredentials('openrouter');if(!credentials)throw new Error('Настрой OpenRouter для продолжения задачи.');data=await openRouterRequest('status',{credentials,body:{taskId:record.requestId,taskToken:record.taskToken}});}
+    else{if(!await providerCredentials(record.provider||'byteplus'))throw new Error('Настрой BytePlus для продолжения задачи.');data=await (await proxy('/byteplus/status',{method:'POST',body:{taskId:record.requestId,taskToken:record.taskToken||null}})).json();}
+    const status=statusName(data.status||data.state);
+    if(['failed','cancelled'].includes(status)){
       const error=data.error?.message||data.error||data.message||'API сообщил об ошибке генерации';
-      return updateVideo(record.id,{status:'failed',error:typeof error==='string'?error:JSON.stringify(error),finishedAt:now()});
+      return updateVideo(record.id,{status,error:typeof error==='string'?error:JSON.stringify(error),finishedAt:now()});
     }
     if(status==='completed')return persistRemoteVideo(record,data);
     return updateVideo(record.id,{status,pct:Number(data.progress??data.pct??record.pct)||0,trackingWarning:null});
@@ -924,7 +1121,7 @@ window.Studio=(()=>{
     const finish=()=>{clearTimeout(timer);signal?.removeEventListener('abort',finish);resolve();};
     const timer=setTimeout(finish,ms);signal?.addEventListener('abort',finish,{once:true});
   });}
-  async function watchGeneration(record,onUpdate,{interval=4500,signal}={}){
+  async function watchGeneration(record,onUpdate,{interval=record.provider==='openrouter'?15000:4500,signal}={}){
     let item=record,errors=0;
     while(!signal?.aborted&&!MagicDomain.terminal(item.status)){
       await pause(Math.min(30000,interval*2**errors),signal);if(signal?.aborted)break;
@@ -937,25 +1134,25 @@ window.Studio=(()=>{
     }
     return item;
   }
-  let sessionRequest;
-  async function gatewaySession(){
-    const gateway=apiGatewayBase();if(!gateway)return null;
-    const stored=read(credentialKey('session'),null);
+  const sessionRequests=new Map();
+  async function gatewaySession(gateway=apiGatewayBase()){
+    if(!gateway)return null;
+    const sessionKey=credentialKey('session.'+gateway),stored=read(sessionKey,null)||read(credentialKey('session'),null);
     if(stored?.gateway===gateway&&stored.expiresAt>Date.now()+60000)return stored.token;
-    if(sessionRequest)return sessionRequest;
-    sessionRequest=(async()=>{
+    if(sessionRequests.has(gateway))return sessionRequests.get(gateway);
+    const sessionRequest=(async()=>{
       const response=await fetch(gateway+'/byteplus/session',{method:'POST',headers:{Authorization:'Bearer '+await api.auth.currentUser.getIdToken()},signal:AbortSignal.timeout(8000)});
       // Compatibility with the already-deployed, older Worker. Replace its code before
       // inviting the team; the new Worker always requires the membership receipt.
-      if(response.status===404){write(credentialKey('session'),{gateway,token:null,expiresAt:Date.now()+300000});return null;}
+      if(response.status===404){write(sessionKey,{gateway,token:null,expiresAt:Date.now()+300000});return null;}
       const data=await responseOrError(response,'Worker');
-      write(credentialKey('session'),{gateway,token:data.sessionToken,expiresAt:data.expiresAt});return data.sessionToken;
-    })();
-    try{return await sessionRequest;}finally{sessionRequest=null;}
+      write(sessionKey,{gateway,token:data.sessionToken,expiresAt:data.expiresAt});return data.sessionToken;
+    })();sessionRequests.set(gateway,sessionRequest);
+    try{return await sessionRequest;}finally{sessionRequests.delete(gateway);}
   }
-  async function gatewayHeaders(taskToken){
+  async function gatewayHeaders(taskToken,base=apiGatewayBase()){
     const headers={Authorization:'Bearer '+await api.auth.currentUser.getIdToken()};
-    const session=await gatewaySession();if(session)headers['X-Magic-Session']=session;
+    const session=await gatewaySession(base);if(session)headers['X-Magic-Session']=session;
     if(taskToken)headers['X-Task-Token']=taskToken;return headers;
   }
 
@@ -985,9 +1182,9 @@ window.Studio=(()=>{
 
   return {ready,requireUser,current,isAdmin,signIn,signUp,logout,updateProfile,uploadProfilePhoto,listUsers,createUser,updateUserRole,uid,read,write,notify,download,element:el,timestamp,
     listFolders,listPresets,canEdit,saveFolder,deleteFolder,savePreset,deletePreset,loadTemplates,ensureTemplates,
-    portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,providerKey,providerCredentials,apiGatewayBase,
+    portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,integrationVerified,activeVideoProvider,setVideoProvider,videoModelFor,prepareVideoRequest,providerKey,providerCredentials,apiGatewayBase,openRouterGateway,
     listSpaces,createSpace,getSpace,renameSpace,duplicateSpace,deleteSpace,saveSpaceState,queueSpaceState,flushSpaceState,flushPendingWork,
-    uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,submitGeneration,refreshGeneration,watchGeneration,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
+    uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,permanentlyDeleteVideo,submitGeneration,refreshGeneration,watchGeneration,resolveVideoSource,downloadVideo,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
     getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
 })();
 
@@ -1082,6 +1279,92 @@ window.MagicPortraits = (() => {
   return {ensure:prepare,manage};
 })();
 
+(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MagicCameraMovements=api;})(typeof window==='object'?window:globalThis,()=>{
+  const rows=[
+    ['01','Pan/Tilt','Static shot','01-static-shot-hq','Camera: locked-off static shot. Movement: hold one fixed camera position for the full clip. Speed: still and steady. Framing: keep the same angle, height, lens distance and composition. End: finish with the same framing and camera position.'],
+    ['02','Pan/Tilt','Pan right','02-pan-right-hq','Camera: pan right. Movement: rotate the camera horizontally from left to right from one fixed point. Speed: smooth constant rotation. Framing: keep the horizon level while new space enters from the right side of the frame. End: settle on a clear final composition.'],
+    ['02B','Pan/Tilt','Pan left','2b-pan-left-hq','Camera: pan left. Movement: rotate the camera horizontally from right to left from one fixed point. Speed: smooth constant rotation. Framing: keep the horizon level while new space enters from the left side of the frame. End: settle on a clear final composition.'],
+    ['03','Pan/Tilt','Whip pan right','03-whip-pan-right-hq','Camera: whip pan right. Movement: rotate rapidly from the starting direction toward a new target on the right. Speed: fast snap with brief motion blur during the rotation. Framing: begin on one readable composition and land on a second readable target. End: settle into a sharp final frame.'],
+    ['03B','Pan/Tilt','Whip pan left','3b-whip-pan-left-hq','Camera: whip pan left. Movement: rotate rapidly from the starting direction toward a new target on the left. Speed: fast snap with brief motion blur during the rotation. Framing: begin on one readable composition and land on a second readable target. End: settle into a sharp final frame.'],
+    ['04','Pan/Tilt','Tilt up','04-tilt-up-hq','Camera: tilt up. Movement: rotate the camera upward from one fixed point. Speed: smooth constant tilt. Framing: keep the vertical subject or architecture centered as the frame travels upward. End: land on the upper target.'],
+    ['04B','Pan/Tilt','Tilt down','4b-tilt-down-hq','Camera: tilt down. Movement: rotate the camera downward from one fixed point. Speed: smooth constant tilt. Framing: keep the vertical subject or architecture centered as the frame travels downward. End: land on the lower target.'],
+    ['05','Zoom/Lens','Slow zoom in','05-slow-zoom-in-hq','Camera: slow zoom in. Movement: slowly increase lens focal length toward a tighter frame. Speed: gradual and even. Framing: keep the main visual target readable as it becomes larger in frame. End: finish on a stable tighter composition.'],
+    ['05B','Zoom/Lens','Slow zoom out','5b-slow-zoom-out-hq','Camera: slow zoom out. Movement: slowly decrease lens focal length toward a wider frame. Speed: gradual and even. Framing: keep the main visual target readable as more surrounding space appears. End: finish on a stable wider composition.'],
+    ['06','Zoom/Lens','Fast zoom in','06-fast-zoom-in-v2-hq','Camera: fast zoom in. Movement: quickly increase lens focal length toward the main visual target. Speed: quick decisive zoom. Framing: keep the target centered or clearly readable during the scale change. End: finish on a stable tighter composition.'],
+    ['06B','Zoom/Lens','Fast zoom out','06b-fast-zoom-out-v2-hq','Camera: fast zoom out. Movement: quickly decrease lens focal length away from the main visual target. Speed: quick decisive zoom. Framing: keep the target readable as the surrounding space appears. End: finish on a stable wider composition.'],
+    ['07A','Zoom/Lens','Crash zoom in','07a-crash-zoom-in-v2-hq','Camera: crash zoom in. Movement: snap the lens rapidly toward the main visual target. Speed: very fast and punchy. Framing: keep the target readable through the sudden scale change. End: land on a bold tighter composition.'],
+    ['07B','Zoom/Lens','Crash zoom out','07b-crash-zoom-out-v2-hq','Camera: crash zoom out. Movement: snap the lens rapidly away from the main visual target. Speed: very fast and punchy. Framing: keep the target readable as the surrounding space appears. End: land on a bold wider composition.'],
+    ['08','Dolly/Track','Dolly in','08-dolly-in-hq','Camera: dolly in. Movement: move the camera physically forward in a straight line toward the main subject. Speed: smooth controlled push. Framing: keep camera height, lens direction and subject position consistent while distance closes. End: finish in a tighter composition.'],
+    ['09','Dolly/Track','Dolly out','09-dolly-out-hq','Camera: dolly out. Movement: move the camera physically backward in a straight line away from the main subject. Speed: smooth controlled retreat. Framing: keep lens direction and camera height consistent while more environment enters frame. End: finish in a wider composition.'],
+    ['10','Physical Moves','Truck right','10-truck-right-hq','Camera: truck right. Movement: move the camera physically to the right on a straight horizontal path. Speed: smooth constant lateral travel. Framing: keep the lens facing the same direction while the scene slides across frame. End: finish on a clean lateral composition.'],
+    ['10B','Physical Moves','Truck left','10b-truck-left-hq','Camera: truck left. Movement: move the camera physically to the left on a straight horizontal path. Speed: smooth constant lateral travel. Framing: keep the lens facing the same direction while the scene slides across frame. End: finish on a clean lateral composition.'],
+    ['11A','Physical Moves','Pedestal up','11a-pedestal-up-hq','Camera: pedestal up. Movement: move the entire camera vertically upward in a straight line. Speed: smooth constant lift. Framing: keep the lens level and pointed in the same direction during the vertical move. End: finish with the higher framing clearly readable.'],
+    ['11B','Physical Moves','Pedestal down','11b-pedestal-down-hq','Camera: pedestal down. Movement: move the entire camera vertically downward in a straight line. Speed: smooth constant descent. Framing: keep the lens level and pointed in the same direction during the vertical move. End: finish with the lower framing clearly readable.'],
+    ['12','Physical Moves','Slider right','12-slider-right-hq','Camera: slider right. Movement: slide the camera a small distance to the right. Speed: slow controlled constant motion. Framing: keep foreground, subject and background layers readable as parallax shifts. End: finish on a refined composition with the new right-side angle visible.'],
+    ['12B','Physical Moves','Slider left','12b-slider-left-hq','Camera: slider left. Movement: slide the camera a small distance to the left. Speed: slow controlled constant motion. Framing: keep foreground, subject and background layers readable as parallax shifts. End: finish on a refined composition with the new left-side angle visible.'],
+    ['13','Physical Moves','Push past / pass-by shot','13-push-past-pass-by-shot-hq','Camera: push past. Movement: move forward past a visible foreground object, edge or opening. Speed: smooth forward glide. Framing: let the foreground pass close to the lens while the space beyond becomes clearer. End: arrive inside or beyond the foreground layer.'],
+    ['14','Physical Moves','Arc right','14-arc-right-hq','Camera: arc right. Movement: move on a shallow curved path around the main subject toward the right side. Speed: smooth measured curve. Framing: keep distance, height and subject readability consistent while the angle changes. End: finish from a new right-side angle.'],
+    ['14B','Physical Moves','Arc left','14b-arc-left-hq','Camera: arc left. Movement: move on a shallow curved path around the main subject toward the left side. Speed: smooth measured curve. Framing: keep distance, height and subject readability consistent while the angle changes. End: finish from a new left-side angle.'],
+    ['15','Physical Moves','Orbit clockwise','15-orbit-clockwise-hq','Camera: clockwise orbit. Movement: circle clockwise around the main subject at a consistent radius. Speed: smooth controlled orbit. Framing: keep the subject centered while the background rotates around them. End: complete the intended arc or full circle with stable framing.'],
+    ['15B','Physical Moves','Orbit counterclockwise','15b-orbit-counterclockwise-hq','Camera: counterclockwise orbit. Movement: circle counterclockwise around the main subject at a consistent radius. Speed: smooth controlled orbit. Framing: keep the subject centered while the background rotates around them. End: complete the intended arc or full circle with stable framing.'],
+    ['16','Dolly/Track','Tracking shot','16-tracking-shot-hq',"Camera: tracking shot. Movement: move through the scene with the main subject. Speed: match the subject's pace. Framing: keep the subject consistently readable while the environment moves around them. End: maintain a clear moving composition."],
+    ['17','Dolly/Track','Follow shot / over-the-shoulder','17-follow-shot-over-the-shoulder-hq',"Camera: follow shot from behind. Movement: move behind the subject along their route at shoulder height. Speed: match the subject's pace. Framing: keep the back, shoulder or head as the foreground guide while the route ahead stays readable. End: continue following with the subject leading the frame."],
+    ['18','Dolly/Track','Reverse tracking / walk-and-talk','18-reverse-tracking-walk-and-talk-hq',"Camera: reverse tracking shot. Movement: move backward in front of the walking subject. Speed: match the subject's forward pace. Framing: keep front-facing face and body framing stable as the background moves behind them. End: hold a clear front-facing moving composition."],
+    ['19','Dolly/Track','Side tracking','19-side-tracking-hq',"Camera: side tracking shot. Movement: move parallel beside the subject along their direction of travel. Speed: match the subject's motion. Framing: keep the subject in side profile or three-quarter profile at a stable distance. End: continue the parallel movement with clear horizontal motion."],
+    ['20','Dolly/Track','Low tracking','20-low-tracking-v2-hq','Camera: low tracking shot. Movement: move at ground or below-waist height alongside the subject\'s movement path. Speed: match the subject, footsteps or wheels. Framing: keep the low detail readable while the ground plane moves through frame. End: finish with the low perspective clearly maintained.'],
+    ['21','Dolly/Track','Vehicle tracking','21-vehicle-tracking-hq',"Camera: vehicle tracking shot. Movement: move with the vehicle along its route. Speed: match the vehicle's pace. Framing: keep the vehicle stable in frame while the road or environment moves past. End: maintain a clear moving vehicle composition."],
+    ['22','Dolly/Track','Chase shot','22-chase-shot-hq','Camera: chase shot. Movement: follow a moving subject quickly along the action route. Speed: fast, reactive and physically close. Framing: keep the subject visible while allowing energetic reframing. End: stay connected to the subject in motion.'],
+    ['23','Human Camera','Handheld shot','23-handheld-shot-hq','Camera: handheld shot. Movement: hold the camera at human operator height with natural body movement. Speed: responsive and organic. Framing: keep the subject readable while the frame has subtle sway and micro-adjustments. End: finish with a natural handheld composition.'],
+    ['24','Human Camera','Body-mounted camera / Snorricam','24-snorricam-v2-hq',"Camera: body-mounted Snorricam. Movement: keep the camera fixed relative to the subject's torso or face while the subject moves. Speed: match the subject's body motion. Framing: keep the subject close, centered and facing the camera as the background moves around them. End: finish with the subject still locked in frame."],
+    ['25','Drone/Crane','Crane up','25-crane-up-hq','Camera: crane up. Movement: travel smoothly upward through open space. Speed: slow controlled vertical lift. Framing: keep the subject or location readable as the camera rises. End: finish with the higher scale clearly visible.'],
+    ['25B','Drone/Crane','Crane down','25b-crane-down-hq','Camera: crane down. Movement: travel smoothly downward through open space. Speed: slow controlled vertical descent. Framing: keep the subject or location readable as the camera descends. End: finish with the lower subject or destination clearly visible.'],
+    ['26','Drone/Crane','Drone push in','26-drone-push-in-hq','Camera: drone push in. Movement: fly smoothly forward through open space toward the subject or destination. Speed: controlled aerial glide. Framing: keep the route and destination readable as the camera approaches. End: arrive at a closer aerial composition.'],
+    ['26B','Drone/Crane','Drone pull back','26b-drone-pull-back-hq','Camera: drone pull back. Movement: fly smoothly backward away from the subject or destination. Speed: controlled aerial retreat. Framing: keep the subject readable as more landscape appears. End: finish on a wider aerial composition.'],
+    ['27','Drone/Crane','Helicopter shot','27-helicopter-shot-hq','Camera: helicopter-style aerial shot. Movement: move from high altitude along a broad gradual flight path. Speed: steady controlled aerial motion. Framing: keep the landscape or distant moving subject readable at wide scale. End: finish on a stable high-altitude composition.'],
+    ['S1','Specials','First-person view','s1-first-person-view-hq',"Camera: first-person view. Movement: move forward at human eye height from the character's perspective. Speed: natural walking or reaching pace. Framing: use visible hands, arms or body edges as the viewer's physical reference. End: arrive at the next point of action from the same point of view."],
+    ['S2','Specials','Tilt-shift','s2-tilt-shift-hq','Camera: tilt-shift miniature view. Movement: hold or glide from a high angled view over the scene. Speed: small precise movement. Framing: keep a narrow band of sharp focus across the key subject area with soft blur above and below. End: finish with the miniature-scale view intact.'],
+    ['S3','Specials','Infinite zoom','s3-infinite-zoom-hq','Camera: infinite zoom. Movement: zoom continuously inward toward the exact center target. Speed: smooth accelerating zoom. Framing: keep the circular target centered as it expands. End: finish when the next visual world fills the frame.'],
+    ['S4','Specials','Earth zoom out','s4-earth-zoom-out-hq','Camera: earth zoom out. Movement: pull upward from the starting point through street, city, landscape and planet scale. Speed: rapid expanding zoom out. Framing: keep the original location centered as scale grows. End: finish on a planet-scale view with the starting point still implied at center.'],
+    ['S5','Specials','Time-lapse','s5-time-lapse-hq','Camera: locked-camera time-lapse. Movement: hold one fixed camera position while time moves rapidly forward. Speed: fast time compression with a stable camera. Framing: keep the same composition and horizon as motion passes through the frame. End: finish from the same camera angle with visible passage of time.'],
+    ['S6','Specials','Pass-through objects','s6-pass-through-objects-hq','Camera: pass-through movement. Movement: move forward toward a visible object, surface or barrier and continue into the space beyond. Speed: smooth centered glide. Framing: keep the opening or surface centered as the transition point. End: arrive inside the revealed space beyond.']
+  ];
+  const clips=Object.freeze(rows.map(([id,category,name,slug,prompt])=>Object.freeze({id,category,name,prompt,url:'https://aicameramovements.com/previews/hq/'+slug+'.mp4'})));
+  const categories=['Dolly/Track','Zoom/Lens','Drone/Crane','Pan/Tilt','Physical Moves','Human Camera','Specials'];
+  const get=id=>clips.find(c=>c.id===id);
+  function filter(query='',category='all'){const q=query.trim().toLowerCase();return clips.filter(c=>(category==='all'||c.category===category)&&[c.name,c.category,c.prompt,c.id].join(' ').toLowerCase().includes(q));}
+  return {clips,categories,get,filter};
+});
+
+window.MagicVideoViewer=(()=>{
+  const E=(tag,text,cls)=>Studio.element(tag,text,cls);
+  async function copy(text){
+    try{await navigator.clipboard.writeText(text);}catch{const input=E('textarea');input.value=text;input.style.cssText='position:fixed;opacity:0;pointer-events:none';(document.querySelector('dialog[open]')||document.body).append(input);input.select();if(!document.execCommand('copy')){input.remove();throw new Error('Не удалось скопировать промпт.');}input.remove();}
+    Studio.notify('Промпт скопирован');
+  }
+  function show(record,{mode='assets'}={}){
+    document.querySelector('.media-preview-dialog')?.close();
+    const dialog=E('dialog',undefined,'media-preview-dialog');dialog.dataset.previewMode=mode;dialog.setAttribute('aria-label',mode==='assets'?'Предпросмотр генерации':'Предпросмотр видео');
+    const shell=E('div',undefined,'media-preview-shell'),close=E('button','×','media-preview-close');close.setAttribute('aria-label','Закрыть предпросмотр');close.onclick=()=>dialog.close();
+    const stage=E('div',undefined,'media-preview-stage'),video=E('video'),notice=E('p','Загружаем видео…','media-preview-notice');video.controls=true;video.playsInline=true;video.setAttribute('controlsList','nofullscreen');video.setAttribute('disablePictureInPicture','');video.hidden=true;stage.append(video,notice);shell.append(close,stage);
+    const actions=E('div',undefined,'media-preview-actions'),download=E('button','↓ Скачать видео','ui-button primary');download.onclick=async()=>{download.disabled=true;try{await Studio.downloadVideo(record);}catch(e){Studio.notify(e.message,'error');}finally{download.disabled=false;}};actions.append(download);
+    if(mode==='assets'){
+      const promptToggle=E('button','Промпт','ui-button'),infoToggle=E('button','Описание','ui-button'),promptPanel=E('div',undefined,'media-preview-details'),infoPanel=E('div',undefined,'media-preview-details');promptPanel.hidden=infoPanel.hidden=true;promptPanel.id='video-preview-prompt';infoPanel.id='video-preview-info';
+      const prompt=E('button',record.prompt||'Промпт не сохранён','media-preview-prompt');prompt.title='Нажми, чтобы скопировать полный промпт';prompt.setAttribute('aria-label','Скопировать полный промпт');prompt.onclick=()=>copy(record.prompt||'').catch(e=>Studio.notify(e.message,'error'));promptPanel.append(prompt);
+      const dl=E('dl',undefined,'media-preview-info');
+      for(const [label,value]of [['Создал',record.user||record.uid||'—'],['Дата',Studio.timestamp(record.createdAt)?new Date(Studio.timestamp(record.createdAt)).toLocaleString('ru-RU'):'—'],['Модель',record.model||'—'],['Провайдер',MagicProviders.providerName(record.provider)],['Формат',record.ratio||'—'],['Качество / разрешение',record.resolution||'—'],['Длительность',record.seconds?record.seconds+' сек.':'—'],['Аудио',record.generateAudio===false?'Без звука':'Со звуком']]){dl.append(E('dt',label),E('dd',value));}infoPanel.append(dl);
+      for(const [toggle,panel]of [[promptToggle,promptPanel],[infoToggle,infoPanel]]){toggle.setAttribute('aria-controls',panel.id);toggle.setAttribute('aria-expanded','false');toggle.onclick=()=>{panel.hidden=!panel.hidden;toggle.setAttribute('aria-expanded',String(!panel.hidden));};}
+      actions.prepend(promptToggle,infoToggle);shell.append(actions,promptPanel,infoPanel);
+    }else shell.append(actions);
+    dialog.append(shell);document.body.append(dialog);let source,closed=false;
+    const resize=()=>{const [w,h]=String(record.ratio||'16:9').split(':').map(Number),ratio=video.videoWidth&&video.videoHeight?video.videoWidth/video.videoHeight:w/h||16/9,maxHeight=innerHeight*(mode==='assets'?.58:.76),width=Math.min(innerWidth*.86,maxHeight*ratio,video.videoWidth||1280);stage.style.width=width+'px';stage.style.aspectRatio=String(ratio);if(mode==='assets')dialog.style.width=Math.min(innerWidth*.94,Math.max(width+30,Math.min(620,innerWidth*.9)))+'px';};
+    dialog.onclose=()=>{closed=true;video.pause();video.removeAttribute('src');video.load();source?.release();removeEventListener('resize',resize);dialog.remove();};dialog.onclick=e=>{if(e.target===dialog)dialog.close();};dialog.addEventListener('keydown',e=>e.stopPropagation());
+    video.onloadedmetadata=resize;video.onerror=()=>{notice.hidden=false;notice.textContent='Не удалось воспроизвести видео. Ссылка могла истечь или формат недоступен.';};addEventListener('resize',resize);resize();dialog.showModal();
+    Studio.resolveVideoSource(record).then(result=>{if(closed){result.release();return;}source=result;notice.hidden=true;video.hidden=false;video.src=result.url;video.play().catch(()=>{});}).catch(e=>{if(!closed){notice.textContent=e.message;download.disabled=true;}});
+    return dialog;
+  }
+  return {show,copy};
+})();
+
 'use strict';
 window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
   const S=Studio,E=S.element;let scope='all',folderFilter=null;root.replaceChildren();
@@ -1139,7 +1422,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
   function log(label,detail=''){journal.push({id:Date.now()+'-'+Math.random().toString(16).slice(2),time:new Date().toISOString(),label,detail});if(panel==='history')renderPanel();}
   function commit(before,label,detail=''){const after=snapshot();if(JSON.stringify(before)===JSON.stringify(after))return;undoStack.push({before,after,label});redoStack=[];log(label,detail);updateStatus();saveSession();}
   function mutate(label,fn,detail=''){finishEdit();const before=snapshot();const result=fn();commit(before,label,detail);return result;}
-  function restore(state){cancelDraft();selected.clear();selectedEdge=null;for(const n of nodes.values())resizeObserver.unobserve(n.el);nodes.clear();edges.clear();nodeLayer.replaceChildren();for(const data of state.nodes)buildNode(data);for(const e of state.edges)edges.set(e.id,{...e});refreshContent();updateStatus();schedule();if(panel==='settings')renderPanel();}
+  function restore(state){cancelDraft();selected.clear();selectedEdge=null;for(const n of nodes.values()){resizeObserver.unobserve(n.el);n.previewSource?.release();}nodes.clear();edges.clear();nodeLayer.replaceChildren();for(const data of state.nodes)buildNode(data);for(const e of state.edges)edges.set(e.id,{...e});refreshContent();updateStatus();schedule();if(panel==='settings')renderPanel();}
   function undo(){finishEdit();const entry=undoStack.pop();if(!entry)return;redoStack.push(entry);restore(entry.before);log('Отменено: '+entry.label);updateStatus();saveSession();}
   function redo(){finishEdit();const entry=redoStack.pop();if(!entry)return;undoStack.push(entry);restore(entry.after);log('Повторено: '+entry.label);updateStatus();saveSession();}
   function finishEdit(){if(!activeEdit)return;const edit=activeEdit;activeEdit=null;commit(edit.before,edit.field==='name'?`Переименована нода ${edit.id}`:`Изменены настройки ${edit.id}`,edit.field==='text'?'Текст для передачи':edit.field==='prompt'?'Промпт':edit.field==='instruction'?'Инструкция':edit.field==='name'?'Название':edit.field);}
@@ -1164,24 +1447,31 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
   function textBody(id){return `<div class="text-node-body"><textarea id="text-${id}" data-field="text" rows="6" aria-label="Текст для передачи" placeholder="Введи текст…"></textarea></div>`;}
   function generationBody(id){return `<div class="prompt-node-body"><textarea data-field="prompt" rows="5" aria-label="Промпт ${id}" placeholder="Опиши видео…
 Можно использовать @image1 и @video1"></textarea><span class="prompt-node-hint">✦ Seedance · нажми для настройки</span></div>`;}
-  function presetBody(){return '<div class="preset-node-body"><h3 class="preset-heading"></h3><p class="preset-excerpt" tabindex="0" role="button" aria-label="Редактировать пресет"></p></div>';}
+  function presetBody(){return '<div class="preset-node-body"><h3 class="preset-heading"></h3><div class="camera-node-preview" hidden><video controls muted loop playsinline preload="metadata" controlslist="nodownload nofullscreen"></video><small class="camera-node-error" hidden>Пример недоступен. Промпт камеры сохранён.</small><small>Пример движения камеры</small></div><p class="preset-excerpt" tabindex="0" role="button" aria-label="Редактировать пресет"></p></div>';}
 
-  function outputBody(){return `<div class="output-preview"><video class="output-video" controls playsinline preload="metadata" hidden></video><span class="play-mark">▷</span><div class="loading-view" hidden><div class="loading-percent">0%</div><div class="loading-track" role="progressbar" aria-label="Generation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="loading-marker"></span></div><span class="loading-label">Seedance 2.5 · generating</span></div><div class="output-message"><output>Ожидание</output><small class="output-status">Подключи Video generation</small></div><a class="output-download" target="_blank" rel="noopener" hidden>Скачать видео</a><button class="cancel-generation" hidden>Остановить отслеживание</button><button class="resume-generation" hidden>Продолжить отслеживание</button></div>`;}
+  function outputBody(){return `<div class="output-preview"><video class="output-video" controls controlslist="nofullscreen" playsinline preload="metadata" hidden></video><button class="output-expand" aria-label="Предпросмотр видео" title="Предпросмотр" hidden>↗</button><span class="play-mark">▷</span><div class="loading-view" hidden><div class="loading-percent">0%</div><div class="loading-track" role="progressbar" aria-label="Generation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="loading-marker"></span></div><span class="loading-label">Seedance 2.5 · generating</span></div><div class="output-message"><output>Ожидание</output><small class="output-status">Подключи Video generation</small></div><button class="output-download" hidden>Скачать видео</button><button class="cancel-generation" hidden>Остановить отслеживание</button><button class="resume-generation" hidden>Продолжить отслеживание</button></div>`;}
   function nodeName(n){return n.fields.name?.trim()||`${n.type==='generation'?'Video':n.type==='text'?'Text':types[n.type].title} ${n.id}`;}
   function renameNode(n){const title=$('.node-title',n.el),input=$('.node-name-input',n.el);if(!input.hidden)return;input.dataset.original=n.fields.name;title.hidden=true;input.hidden=false;input.focus();input.select();}
   function endRename(n,cancel=false){const input=$('.node-name-input',n.el);if(cancel){n.fields.name=input.dataset.original||'';input.value=n.fields.name;}else if(!n.fields.name?.trim()){n.fields.name=nodeName(n);input.value=n.fields.name;}syncFields(n);finishEdit();input.hidden=true;$('.node-title',n.el).hidden=false;schedule();}
   function reconcileJobs(){for(const [id,job] of jobs){const out=nodes.get(id);if(!out||!nodes.get(job.source)){job.controller?.abort();jobs.delete(id);}}}
-  function applyVideoRecord(out,r){out.fields.trackingPaused=false;out.fields.generationId=r.id||out.fields.generationId;out.fields.status=r.status||out.fields.status;out.fields.requestId=r.requestId||out.fields.requestId;out.fields.statusUrl=r.statusUrl||out.fields.statusUrl;out.fields.responseUrl=r.responseUrl||out.fields.responseUrl;out.fields.videoUrl=r.videoUrl||out.fields.videoUrl;out.fields.remoteUrl=r.remoteUrl||out.fields.remoteUrl;out.fields.providerUrlExpiresAt=r.providerUrlExpiresAt||out.fields.providerUrlExpiresAt;out.fields.cost=r.cost??out.fields.cost;out.fields.error=r.error||null;out.fields.progress=Number(r.pct??out.fields.progress)||0;}
+  function applyVideoRecord(out,r){out.videoRecord={...out.videoRecord,...r};out.fields.provider=r.provider||out.fields.provider;out.fields.ratio=r.ratio||out.fields.ratio;out.fields.trackingPaused=false;out.fields.generationId=r.id||out.fields.generationId;out.fields.status=r.status||out.fields.status;out.fields.requestId=r.requestId||out.fields.requestId;out.fields.videoUrl=r.videoUrl||out.fields.videoUrl;out.fields.remoteUrl=r.remoteUrl||out.fields.remoteUrl;out.fields.providerUrlExpiresAt=r.providerUrlExpiresAt||out.fields.providerUrlExpiresAt;out.fields.cost=r.cost??out.fields.cost;out.fields.error=r.error||null;out.fields.progress=Number(r.pct??out.fields.progress)||0;}
+  async function outputRecord(n){return n.videoRecord?.uid?n.videoRecord:n.fields.generationId?await Studio.getVideo(n.fields.generationId):{id:n.id,uid:Studio.current().uid,videoUrl:n.fields.videoUrl,ratio:n.fields.ratio};}
+  async function showOutput(n){try{MagicVideoViewer.show(await outputRecord(n),{mode:'output'});}catch(e){notify(e.message);}}
   function paintOutput(n){
     const download=$('.output-download',n.el);download.hidden=!n.fields.videoUrl;
-    if(n.fields.videoUrl){download.href=n.fields.videoUrl;download.download='magic-'+(n.fields.generationId||n.id)+'.mp4';download.textContent=n.fields.providerUrlExpiresAt&&Date.now()>=n.fields.providerUrlExpiresAt?'Ссылка могла истечь':'Скачать видео';download.title='Ссылка провайдера временная. Сохрани файл на компьютер.';}
+    $('.output-expand',n.el).hidden=!n.fields.videoUrl;
+    if(n.fields.videoUrl){download.textContent=n.fields.providerUrlExpiresAt&&Date.now()>=n.fields.providerUrlExpiresAt?'Ссылка могла истечь':'Скачать видео';download.title='Сохрани видео на компьютер.';}
     const job=jobs.get(n.id),status=n.fields.status||'',src=incoming(n.id)[0],phase=submittingSources.get(src?.id),sending=status==='submitting'&&phase==='sending',loading=sending||!!job&&['queued','running','processing'].includes(status||'running'),video=$('.output-video',n.el);
     n.el.classList.toggle('is-loading',loading);n.el.setAttribute('aria-busy',String(loading));$('.loading-view',n.el).hidden=!loading;$('.output-message',n.el).hidden=loading||!!n.fields.videoUrl;$('.play-mark',n.el).hidden=loading||!!n.fields.videoUrl;
     $('.cancel-generation',n.el).hidden=!job||!loading;$('.resume-generation',n.el).hidden=!n.fields.trackingPaused||!n.fields.requestId;
-    video.hidden=!n.fields.videoUrl;if(!n.fields.videoUrl&&video.hasAttribute('src')){video.pause();video.removeAttribute('src');}if(n.fields.videoUrl&&video.src!==n.fields.videoUrl)video.src=n.fields.videoUrl;
+    video.hidden=!n.fields.videoUrl;if(!n.fields.videoUrl&&video.hasAttribute('src')){video.pause();video.removeAttribute('src');n.previewSource?.release();n.previewSource=null;n.previewKey=null;}
+    if(n.fields.videoUrl){
+      if(n.fields.provider!=='openrouter'){if(video.src!==n.fields.videoUrl)video.src=n.fields.videoUrl;}
+      else{const key=n.fields.generationId+'|'+n.fields.videoUrl;if(n.previewKey!==key){n.previewKey=key;n.previewSource?.release();n.previewSource=null;outputRecord(n).then(r=>Studio.resolveVideoSource(r)).then(source=>{if(nodes.get(n.id)!==n||n.previewKey!==key){source.release();return;}n.previewSource=source;video.src=source.url;}).catch(e=>{if(nodes.get(n.id)===n){video.title=e.message;notify(e.message);}});}}
+    }
     if(loading){
       const pct=Number(job?.progress??n.fields.progress)||0;$('.loading-percent',n.el).textContent=sending?'…':(pct?Math.round(pct)+'%':'…');
-      $('.loading-label',n.el).textContent=sending?'Отправка · ожидание ID задачи':status==='queued'?'BytePlus · в очереди':'Seedance 2.5 · generating';
+      $('.loading-label',n.el).textContent=sending?'Отправка · ожидание ID задачи':status==='queued'?MagicProviders.providerName(n.fields.provider)+' · в очереди':'Seedance 2.5 · generating';
       const track=$('.loading-track',n.el);track.setAttribute('aria-valuenow',String(pct));track.style.setProperty('--progress',(pct||3)+'%');
     }else if(!n.fields.videoUrl){
       $('output',n.el).textContent=phase==='preparing'?'Подготовка референсов…':n.fields.trackingPaused?'Отслеживание приостановлено':['submission_unknown','submitting'].includes(status)?'Запуск не подтверждён':status==='failed'?'FAILED':status==='cancelled'?'Cancelled':status==='completed'?'Completed':status==='queued'?'В очереди':src?'Ready to generate':'No source';
@@ -1189,7 +1479,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     }
     $('.node-state',n.el).textContent=n.fields.videoUrl?'Ready':status|| (src?`Source ${src.id}`:'Waiting');
   }
-  function updateGenerateButtons(){const label=id=>submittingSources.get(id)==='preparing'?'Подготовка…':submittingSources.has(id)?'Отправка…':'Generating…';const c=$('#composer-generate');if(c){const loading=submittingSources.has(composerNode)||[...jobs.values()].some(j=>j.source===composerNode);c.disabled=loading;c.textContent=loading?label(composerNode):'✦ Generate';}for(const n of nodes.values()){const button=$('[data-generate]',n.el);if(!button)continue;const running=submittingSources.has(n.id)||[...jobs.values()].some(j=>j.source===n.id);button.disabled=running;button.textContent=running?label(n.id):n.type==='text'?'✦ Generate text':'✦ Generate';}}
+  function updateGenerateButtons(){const provider=Studio.activeVideoProvider(),tag=$('#composer-provider');if(tag)tag.textContent=provider?MagicProviders.providerName(provider):'API отключён';const label=id=>submittingSources.get(id)==='preparing'?'Подготовка…':submittingSources.has(id)?'Отправка…':'Generating…';const c=$('#composer-generate');if(c){const loading=submittingSources.has(composerNode)||[...jobs.values()].some(j=>j.source===composerNode);c.disabled=loading||!provider;c.textContent=loading?label(composerNode):!provider?'Подключить API':'✦ Generate';}for(const n of nodes.values()){const button=$('[data-generate]',n.el);if(!button)continue;const running=submittingSources.has(n.id)||[...jobs.values()].some(j=>j.source===n.id);button.disabled=running||!provider;button.textContent=running?label(n.id):n.type==='text'?'✦ Generate text':'✦ Generate';}}
   async function trackOutput(output,source,record){
     if(jobs.has(output.id))return;
     const controller=new AbortController(),job={source:source.id,videoId:record.id,progress:Number(record.pct)||0,controller};
@@ -1214,12 +1504,16 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     finishEdit();const prompt=compiledPrompt(source).trim();if(!prompt){notify('Добавь промпт перед генерацией.');return;}
     submittingSources.set(source.id,'preparing');updateGenerateButtons();for(const out of nodes.values())if(out.type==='output')paintOutput(out);
     try{
-      if(!await Studio.providerCredentials('byteplus'))throw new Error('Подключи BytePlus в My settings → Integrations.');
+      const provider=Studio.activeVideoProvider(),credentials=provider&&await Studio.providerCredentials(provider);if(!credentials)throw new Error('Подключи и включи API в My settings.');
       const ids=[...new Set([...incoming(source.id,'media').flatMap(n=>n.assets),...source.assets])],localRefs=ids.map(id=>assets.get(id));
       if(localRefs.some(a=>!a||a.uploading||a.error))throw new Error('Дождись локального сохранения референсов или добавь недоступный файл повторно.');
       if(localRefs.length>15)throw new Error('Для одной генерации допускается до 15 референсов.');
-      const refs=[];for(const a of localRefs)refs.push(await Studio.ensureRemoteAsset(a));
+      const refs=[];for(const a of localRefs)refs.push(await Studio.ensureRemoteAsset(a,{provider}));
       if(new Blob([JSON.stringify(refs.map(a=>a.referenceUrl))]).size>59*1024*1024)throw new Error('Референсы слишком большие для API. Уменьши изображения или добавь их по ссылке.');
+      const images=refs.filter(a=>a.kind==='image').map(a=>a.referenceUrl),videos=refs.filter(a=>a.kind==='video').map(a=>a.referenceUrl);
+      const options={model:Studio.videoModelFor(provider,source.fields.model),duration:Number(source.fields.duration)||8,resolution:source.fields.resolution,aspect_ratio:source.fields.ratio,generate_audio:source.fields.generateAudio!=='false'};
+      await Studio.prepareVideoRequest(provider,{...options,prompt,reference_images:images,reference_videos:videos});
+      if(Studio.activeVideoProvider()!==provider)throw new Error('Провайдер изменился во время подготовки. Запусти генерацию заново.');
       const count=[1,2,4].includes(Number(source.fields.batch))?Number(source.fields.batch):1,runs=[];
       submittingSources.set(source.id,'sending');updateGenerateButtons();
       const existing=[...edges.values()].filter(e=>e.from===source.id&&nodes.get(e.to)?.type==='output').map(e=>nodes.get(e.to));
@@ -1234,13 +1528,11 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
         }
         selected.clear();selected.add(source.id);refreshContent();updateStatus();
       },`${nodeName(source)} · ${count} результатов`);
-      const images=refs.filter(a=>a.kind==='image').map(a=>a.referenceUrl),videos=refs.filter(a=>a.kind==='video').map(a=>a.referenceUrl);
-      const options={model:source.fields.model,duration:Number(source.fields.duration)||8,resolution:source.fields.resolution,aspect_ratio:source.fields.ratio,generate_audio:source.fields.generateAudio!=='false'};
       await Promise.all(runs.map(async output=>{
-        const record=await Studio.createVideoRecord({spaceId:SPACE_ID,spaceName:SPACE.name,sourceNodeId:source.id,outputNodeId:output.id,prompt,provider:'byteplus',model:options.model,resolution:options.resolution,ratio:options.aspect_ratio,seconds:options.duration,referenceCount:refs.length,hasRef:refs.length>0,generateAudio:options.generate_audio});
+        const record=await Studio.createVideoRecord({spaceId:SPACE_ID,spaceName:SPACE.name,sourceNodeId:source.id,outputNodeId:output.id,prompt,provider,transport:credentials.mode,gatewayUrl:credentials.workerUrl||null,model:options.model,resolution:options.resolution,ratio:options.aspect_ratio,seconds:options.duration,referenceCount:refs.length,hasRef:refs.length>0,generateAudio:options.generate_audio});
         applyVideoRecord(output,{...record,status:'submitting'});paintOutput(output);saveSession();
         try{
-          const submitted=await Studio.submitGeneration(record.id,{...options,prompt,reference_images:images,reference_videos:videos,asset_receipts:Object.fromEntries(refs.filter(a=>a.assetToken).map(a=>[a.referenceUrl.slice(8),a.assetToken]))},'byteplus');
+          const submitted=await Studio.submitGeneration(record.id,{...options,prompt,reference_images:images,reference_videos:videos,asset_receipts:Object.fromEntries(refs.filter(a=>a.assetToken).map(a=>[a.referenceUrl.slice(8),a.assetToken]))},provider);
           applyVideoRecord(output,submitted);saveSession();trackOutput(output,source,submitted);
         }catch(error){
           const definite=error.httpStatus>=400&&error.httpStatus<500;
@@ -1257,7 +1549,11 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     const t=types[data.type];if(!t)return;const n={...data,fields:{...defaultFields(data.type),...data.fields},assets:[...(data.assets||[])],el:document.createElement('article')};
     if(n.type==='generation'){n.fields.model=MagicDomain.normalizeBytePlusModel(n.fields.model,window.MAGIC_APP_CONFIG?.defaultVideoModel);n.fields.referenceMode='reference';n.fields.duration=String(Math.max(4,Math.min(30,Number(n.fields.duration)||8)));if(!['480p','720p','1080p'].includes(n.fields.resolution))n.fields.resolution='720p';if(n.fields.ratio==='Авто')n.fields.ratio='adaptive';}n.fields.name=n.fields.name??nodeName(n);n.el.className='node';n.el.dataset.node=n.id;n.el.dataset.type=n.type;n.el.tabIndex=0;n.el.setAttribute('aria-label',`${t.title} ${n.id}`);
     n.el.innerHTML=`<header class="node-header"><span class="node-icon ${t.color}">${t.icon}</span><h2 class="node-title" title="Двойной клик — переименовать"></h2><input class="node-name-input" data-field="name" maxlength="80" aria-label="Название ноды" hidden><button class="rename-node" title="Переименовать" aria-label="Переименовать ноду">✎</button><span class="node-id">${n.id}</span></header>${['generation','text','output'].includes(n.type)?`<button class="port in" data-direction="in" data-node="${n.id}" aria-label="Вход ${n.id}" title="Вход ${n.id}"></button>`:''}${n.type!=='output'?`<button class="port out" data-direction="out" data-node="${n.id}" aria-label="Выход ${n.id}" title="Выход ${n.id}"></button>`:''}<div class="node-body">${n.type==='media'?mediaBody(n.id):n.type==='text'?textBody(n.id):n.type==='generation'?generationBody(n.id):n.type==='preset'?presetBody(n.id):outputBody()}</div><footer class="node-footer"><span class="node-state"></span><code>${n.type==='media'?'media out':n.type==='text'?'text out':n.type==='generation'?'inputs / result':'media in'}</code></footer>`;
-    nodes.set(n.id,n);nodeLayer.append(n.el);moveNode(n,n.x,n.y);resizeObserver.observe(n.el);syncFields(n);
+    if(n.fields.kind==='camera'){
+      n.el.dataset.camera='true';$('.node-icon',n.el).textContent='◎';$('footer code',n.el).textContent='camera prompt';
+      const clip=MagicCameraMovements.get(n.fields.cameraId),preview=$('.camera-node-preview',n.el);
+      if(clip&&preview){const video=$('video',preview);preview.hidden=false;video.src=clip.url;video.setAttribute('aria-label','Camera movement · '+clip.name);video.onerror=()=>{$('.camera-node-error',preview).hidden=false;};}
+    }nodes.set(n.id,n);nodeLayer.append(n.el);moveNode(n,n.x,n.y);resizeObserver.observe(n.el);syncFields(n);
     n.el.querySelector('[data-add-url]')?.addEventListener('click',()=>addUrlReference(n));
     n.el.addEventListener('change',e=>{if(e.target.matches('[data-upload]')){const files=Array.from(e.target.files);mutate(`Добавлены медиа в ${n.id}`,()=>addFiles(n,files),files.map(f=>f.name).join(', '));e.target.value='';if(panel==='settings')renderPanel();}});
     $('.node-title',n.el).addEventListener('dblclick',()=>renameNode(n));
@@ -1265,6 +1561,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     const nameInput=$('.node-name-input',n.el);nameInput.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key==='Escape'){e.preventDefault();endRename(n,e.key==='Escape');n.el.focus();}});nameInput.addEventListener('blur',()=>{if(!nameInput.hidden)endRename(n);});
     $('.save-node-preset',n.el)?.addEventListener('click',()=>saveNodePreset(n));
     $('[data-generate]',n.el)?.addEventListener('click',()=>startGeneration(n));
+    $('.output-expand',n.el)?.addEventListener('click',()=>showOutput(n));$('.output-video',n.el)?.addEventListener('dblclick',()=>showOutput(n));$('.output-download',n.el)?.addEventListener('click',async()=>{try{await Studio.downloadVideo(await outputRecord(n));}catch(e){notify(e.message);}});
     $('.cancel-generation',n.el)?.addEventListener('click',()=>cancelGeneration(n.id));$('.resume-generation',n.el)?.addEventListener('click',()=>resumeOutput(n));$('.preset-excerpt',n.el)?.addEventListener('click',()=>{selectNode(n.id);openPanel('settings');});$('.preset-excerpt',n.el)?.addEventListener('keydown',e=>{if(e.key==='Enter'){selectNode(n.id);openPanel('settings');}});
     n.el.addEventListener('toggle',schedule,true);
     n.el.addEventListener('dragover',e=>{if(hasFiles(e)&&['media','generation'].includes(n.type)){e.preventDefault();e.stopPropagation();n.el.classList.add('file-over');e.dataTransfer.dropEffect='copy';}});
@@ -1274,6 +1571,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
   }
   function syncFields(n,except=null){if(n.type==='preset'){$('.preset-heading',n.el).textContent=n.fields.heading||nodeName(n);$('.preset-excerpt',n.el).textContent=n.fields.text||'Нажми, чтобы добавить промпт пресета…';}$('.node-title',n.el).textContent=nodeName(n);n.el.setAttribute('aria-label',nodeName(n));for(const input of n.el.querySelectorAll('[data-field]'))if(input!==except)input.value=n.fields[input.dataset.field]??'';if(composerNode===n.id)for(const el of $('#generation-composer').querySelectorAll('[data-panel-field]'))if(el!==except&&el!==document.activeElement)el.value=n.fields[el.dataset.panelField]??'';}
   function addNode(type,position,fields={},files=[]){
+    const cameraNode=type==='generation'&&!position?[...nodes.values()].find(n=>n.fields.kind==='camera'):null;if(cameraNode)position={x:cameraNode.x+cameraNode.el.offsetWidth+100,y:cameraNode.y};
     const id=types[type].prefix+(++counters[type]),p=position||center();const n=buildNode({id,type,x:p.x,y:p.y,fields,assets:[]});
     if(!position){n.x-=n.el.offsetWidth/2;n.y-=Math.min(n.el.offsetHeight,450)/2;let k=0;while([...nodes.values()].some(o=>o!==n&&Math.abs(o.x-n.x)<35&&Math.abs(o.y-n.y)<35)&&k++<25){n.x+=40;n.y+=35;}}
     moveNode(n,n.x,n.y);n.el.style.zIndex=String(++highestZ);selected.clear();selected.add(id);selectedEdge=null;if(files.length)addFiles(n,files);else refreshContent();updateStatus();schedule();return n;
@@ -1299,7 +1597,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
   function assetElement(id,owner,removable,source){
     const a=assets.get(id);if(!a)return document.createElement('span');const wrap=document.createElement('div');wrap.className='asset-preview';
     if(a.url){const media=document.createElement(a.kind==='image'?'img':'video');media.src=a.url;media.draggable=false;if(a.kind==='image')media.alt=a.name;else{media.controls=true;media.muted=true;media.preload='metadata';media.playsInline=true;}media.addEventListener('error',()=>{media.hidden=true;const error=document.createElement('div');error.className='asset-unavailable';error.textContent='Формат не поддерживается браузером';wrap.prepend(error);},{once:true});wrap.append(media);}else{const unavailable=document.createElement('div');unavailable.className='asset-unavailable';unavailable.textContent='Добавь файл повторно';wrap.append(unavailable);}
-    const cap=document.createElement('div');cap.className='asset-caption';const name=document.createElement('span');name.textContent=a.name+(a.uploading?' · uploading…':'');name.title=a.name;cap.append(name);if(a.kind==='image')cap.append(portraitButton(a));
+    const cap=document.createElement('div');cap.className='asset-caption';const name=document.createElement('span');name.textContent=a.name+(a.uploading?' · uploading…':'');name.title=a.name;cap.append(name);if(a.kind==='image'&&Studio.activeVideoProvider()!=='openrouter')cap.append(portraitButton(a));
     if(removable){const b=document.createElement('button');b.className='asset-remove';b.textContent='×';b.setAttribute('aria-label',`Убрать ${a.name}`);b.addEventListener('click',()=>mutate(`Убрано медиа из ${owner.id}`,()=>{owner.assets=owner.assets.filter(i=>i!==id);refreshContent();schedule();},a.name));cap.append(b);}wrap.append(cap);
     if(source){const text=document.createElement('div');text.className='reference-source';text.textContent=source;wrap.append(text);}return wrap;
   }
@@ -1318,11 +1616,11 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
   function renderWires(){edgeLayer.replaceChildren();for(const e of edges.values()){const a=portPoint(e.from,'out'),b=portPoint(e.to,'in');if(!a||!b)continue;const g=document.createElementNS(svgNS,'g');g.dataset.edge=e.id;g.setAttribute('class','edge-group'+(selectedEdge===e.id?' selected':''));const p=document.createElementNS(svgNS,'path');p.setAttribute('class','edge-visible '+(nodes.get(e.from).type==='text'?'text':nodes.get(e.from).type==='generation'?'result':''));p.setAttribute('d',curve(a,b));const hit=document.createElementNS(svgNS,'path');hit.setAttribute('class','edge-hit');hit.setAttribute('d',curve(a,b));hit.setAttribute('tabindex','0');hit.setAttribute('role','button');hit.setAttribute('aria-label',`Связь ${e.from} → ${e.to}`);hit.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();ev.stopPropagation();selectEdge(e.id);}});g.append(p,hit);edgeLayer.append(g);}renderDraft();}
   function renderDraft(){draftPath.toggleAttribute('hidden',!draft);if(!draft)return;const start=portPoint(draft.node,draft.direction);if(!start){cancelDraft();return;}const end=draft.point||start;draftPath.setAttribute('d',draft.direction==='out'?curve(start,end):curve(end,start));}
   function cancelDraft(){viewport.classList.remove('is-wiring');draft=null;document.querySelectorAll('.port.pending').forEach(p=>p.classList.remove('pending'));draftPath.setAttribute('hidden','');}
-  function validLink(from,to,ignore=null){const a=nodes.get(from),b=nodes.get(to);if(!a||!b)return 'Выбери существующие ноды.';if(a.id===b.id)return 'Нельзя соединить ноду с собой.';if(!((['media','text','preset'].includes(a.type)&&b.type==='generation')||(a.type==='preset'&&b.type==='text')||(['generation','text'].includes(a.type)&&b.type==='output')))return 'Допустимые связи: Media / Text / Preset → Video; Preset → Text; Video / Text → Output.';if([...edges.values()].some(e=>e.id!==ignore&&e.from===from&&e.to===to))return 'Эта связь уже существует.';return '';}
+  function validLink(from,to,ignore=null){const a=nodes.get(from),b=nodes.get(to);if(!a||!b)return 'Выбери существующие ноды.';if(a.id===b.id)return 'Нельзя соединить ноду с собой.';if(a.fields.kind==='camera'&&b.type!=='generation')return 'Camera movement подключается к Video generation.';if(!((['media','text','preset'].includes(a.type)&&b.type==='generation')||(a.type==='preset'&&b.type==='text')||(['generation','text'].includes(a.type)&&b.type==='output')))return 'Допустимые связи: Media / Text / Preset → Video; Preset → Text; Video / Text → Output.';if([...edges.values()].some(e=>e.id!==ignore&&e.from===from&&e.to===to))return 'Эта связь уже существует.';return '';}
   function connectRaw(from,to,editingId=null){const error=validLink(from,to,editingId);if(error)return error;for(const e of edges.values())if(e.id!==editingId&&e.to===to&&(nodes.get(to).type==='output'||(nodes.get(from).type==='text'&&nodes.get(e.from).type==='text')))edges.delete(e.id);const id=editingId||'E'+(++edgeSequence);edges.set(id,{id,from,to});refreshContent();schedule();updateStatus();return '';}
   function finishLink(port){if(!draft)return;const id=port.dataset.node,dir=port.dataset.direction;if(draft.node===id&&draft.direction===dir)return;if(dir===draft.direction){notify('Соединяй выход со входом.');cancelDraft();return;}const from=dir==='in'?draft.node:id,to=dir==='in'?id:draft.node;const error=validLink(from,to);cancelDraft();if(error){notify(error);return;}mutate(`Создана связь ${from} → ${to}`,()=>connectRaw(from,to));if(panel==='settings')renderPanel();}
   function beginPort(port){if(draft){finishLink(port);return;}clearSelection();viewport.classList.add('is-wiring');draft={node:port.dataset.node,direction:port.dataset.direction,point:portPoint(port.dataset.node,port.dataset.direction)};port.classList.add('pending');renderDraft();}
-  function deleteSelection(){if(!selected.size&&!selectedEdge)return;const label=selectedEdge?'Удалена связь':`Удалены ноды: ${[...selected].join(', ')}`;mutate(label,()=>{cancelDraft();if(selectedEdge){edges.delete(selectedEdge);selectedEdge=null;}else for(const id of selected){const n=nodes.get(id);if(!n)continue;resizeObserver.unobserve(n.el);n.el.remove();nodes.delete(id);for(const e of edges.values())if(e.from===id||e.to===id)edges.delete(e.id);}selected.clear();refreshContent();schedule();updateStatus();});if(panel==='settings')renderPanel();}
+  function deleteSelection(){if(!selected.size&&!selectedEdge)return;const label=selectedEdge?'Удалена связь':`Удалены ноды: ${[...selected].join(', ')}`;mutate(label,()=>{cancelDraft();if(selectedEdge){edges.delete(selectedEdge);selectedEdge=null;}else for(const id of selected){const n=nodes.get(id);if(!n)continue;resizeObserver.unobserve(n.el);n.previewSource?.release();n.el.remove();nodes.delete(id);for(const e of edges.values())if(e.from===id||e.to===id)edges.delete(e.id);}selected.clear();refreshContent();schedule();updateStatus();});if(panel==='settings')renderPanel();}
   function fitView(){if(!nodes.size){camera.x=0;camera.y=0;camera.zoom=1;setCamera();return;}let x=Infinity,y=Infinity,right=-Infinity,bottom=-Infinity;for(const n of nodes.values()){x=Math.min(x,n.x);y=Math.min(y,n.y);right=Math.max(right,n.x+n.el.offsetWidth);bottom=Math.max(bottom,n.y+n.el.offsetHeight);}const r=viewport.getBoundingClientRect(),leftPad=35,topPad=95,availableW=Math.max(180,r.width-(panel?440:120)),availableH=Math.max(200,r.height-250);camera.zoom=Math.max(.15,Math.min(1.25,availableW/(right-x),availableH/(bottom-y)));camera.x=leftPad+availableW/2-(x+right)/2*camera.zoom;camera.y=topPad+availableH/2-(y+bottom)/2*camera.zoom;setCamera();saveSession();}
   function drawMinimap(){if(!mapVisible)return;const r=viewport.getBoundingClientRect(),view={x:-camera.x/camera.zoom,y:-camera.y/camera.zoom,w:r.width/camera.zoom,h:r.height/camera.zoom};let minX=view.x,minY=view.y,maxX=view.x+view.w,maxY=view.y+view.h;for(const n of nodes.values()){minX=Math.min(minX,n.x);minY=Math.min(minY,n.y);maxX=Math.max(maxX,n.x+n.el.offsetWidth);maxY=Math.max(maxY,n.y+n.el.offsetHeight);}if(!mapDrag){const padding=Math.max(80,(maxX-minX)*.07);minX-=padding;minY-=padding;maxX+=padding;maxY+=padding;const scale=Math.min(240/(maxX-minX),124/(maxY-minY));mapGeometry={minX,minY,scale,ox:(260-(maxX-minX)*scale)/2,oy:(144-(maxY-minY)*scale)/2};}const g=mapGeometry;if(!g)return;const x=v=>g.ox+(v-g.minX)*g.scale,y=v=>g.oy+(v-g.minY)*g.scale;const group=$('#minimap-nodes');group.replaceChildren();for(const n of nodes.values()){const rect=document.createElementNS(svgNS,'rect');rect.setAttribute('x',x(n.x));rect.setAttribute('y',y(n.y));rect.setAttribute('width',Math.max(2,n.el.offsetWidth*g.scale));rect.setAttribute('height',Math.max(2,n.el.offsetHeight*g.scale));rect.setAttribute('rx','1');rect.setAttribute('class',`mini-node ${n.type}${selected.has(n.id)?' selected':''}`);group.append(rect);}const rect=$('#minimap-view');rect.setAttribute('x',x(view.x));rect.setAttribute('y',y(view.y));rect.setAttribute('width',view.w*g.scale);rect.setAttribute('height',view.h*g.scale);}
   function minimapPoint(e){const r=$('#minimap').getBoundingClientRect(),g=mapGeometry;return {x:((e.clientX-r.left)/r.width*260-g.ox)/g.scale+g.minX,y:((e.clientY-r.top)/r.height*144-g.oy)/g.scale+g.minY};}
@@ -1403,6 +1701,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
   let cameraSaveTimer;
   viewport.addEventListener('wheel',e=>{if(e.target.closest('textarea,select,video,input,.linked-text'))return;e.preventDefault();if(e.ctrlKey||e.metaKey)zoomAt(camera.zoom*Math.exp(-Math.max(-100,Math.min(100,e.deltaY*(e.deltaMode===1?16:e.deltaMode===2?viewport.clientHeight:1)))*.0012),e.clientX,e.clientY);else{camera.x-=e.shiftKey?e.deltaY:e.deltaX;camera.y-=e.shiftKey?0:e.deltaY;setCamera();clearTimeout(cameraSaveTimer);cameraSaveTimer=setTimeout(saveSession,300);}},{passive:false});
   window.addEventListener('keydown',e=>{
+    if(document.querySelector('dialog[open]'))return;
     if(inputTarget(e.target)||document.querySelector('dialog[open]'))return;
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();e.shiftKey?redo():undo();return;}
     if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();redo();return;}
@@ -1419,7 +1718,8 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
   viewport.addEventListener('dragleave',e=>{if(!viewport.contains(e.relatedTarget))viewport.classList.remove('file-over');});
   viewport.addEventListener('drop',e=>{e.preventDefault();viewport.classList.remove('file-over');uploadToCanvas(Array.from(e.dataTransfer.files),worldPoint(e.clientX,e.clientY));});
   window.addEventListener('dragover',e=>{if(hasFiles(e))e.preventDefault();});window.addEventListener('drop',e=>e.preventDefault());window.addEventListener('resize',schedule);
-  window.addEventListener('pagehide',()=>{finishEdit();saveSession();for(const job of jobs.values())job.controller?.abort();jobs.clear();});document.addEventListener('visibilitychange',()=>{if(document.hidden){finishEdit();saveSession();}});window.addEventListener('pageshow',e=>{if(e.persisted)for(const n of nodes.values())if(n.type==='output')resumeOutput(n);});
+  window.addEventListener('magic-integration-changed',()=>{renderComposer();refreshContent();});window.addEventListener('storage',e=>{if(e.key?.startsWith('magic.credentials.'+Studio.current().uid+'.')){renderComposer();refreshContent();}});
+  window.addEventListener('pagehide',()=>{for(const n of nodes.values())n.previewSource?.release();finishEdit();saveSession();for(const job of jobs.values())job.controller?.abort();jobs.clear();});document.addEventListener('visibilitychange',()=>{if(document.hidden){finishEdit();saveSession();}});window.addEventListener('pageshow',e=>{if(e.persisted)for(const n of nodes.values())if(n.type==='output')resumeOutput(n);});
   function validSnapshot(s){return s&&Array.isArray(s.nodes)&&Array.isArray(s.edges)&&s.nodes.every(n=>types[n.type]&&/^[MTGOP]\d+$/.test(n.id)&&Number.isFinite(n.x)&&Number.isFinite(n.y)&&Array.isArray(n.assets))&&new Set(s.nodes.map(n=>n.id)).size===s.nodes.length&&s.edges.every(e=>/^E\d+$/.test(e.id)&&s.nodes.some(n=>n.id===e.from)&&s.nodes.some(n=>n.id===e.to));}
   function closePortMenu(){const menu=$('#port-menu');if(menu)menu.hidden=true;portMenuContext=null;}
   function openPortMenu(port,drop=null){
@@ -1428,7 +1728,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     const point=drop?.point||{x:dir==='out'?n.x+n.el.offsetWidth+100:n.x-390,y:n.y};
     portMenuContext={node:n.id,direction:dir,point};
     const label=document.createElement('small');label.textContent=dir==='in'?'Добавить источник':'Продолжить схему';menu.append(label);
-    for(const type of MagicDomain.compatible(n.type,dir)){
+    for(const type of MagicDomain.compatible(n.fields.kind==='camera'?'camera':n.type,dir)){
       const button=document.createElement('button');button.textContent={media:'▧ Media',text:'T Text',preset:'▱ Preset',generation:'✦ Video generation',output:'▷ Output'}[type];
       button.onclick=()=>{closePortMenu();mutate('Создана связанная нода',()=>{const created=addNode(type,point);connectRaw(dir==='out'?n.id:created.id,dir==='out'?created.id:n.id);});};menu.append(button);
     }
@@ -1447,14 +1747,14 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     host.style.left=left+'px';host.style.top=top+'px';host.style.bottom='auto';host.style.transform='none';
   }
 
-  function renderComposer(){const host=$('#generation-composer');if(!host)return;const n=selected.size===1?nodes.get([...selected][0]):null;if(!n||n.type!=='generation'){host.hidden=true;composerNode=null;return;}host.hidden=false;if(composerNode!==n.id){composerNode=n.id;host.dataset.panelNode=n.id;host.innerHTML=`<div class="composer-top"><div class="composer-references"></div><button id="composer-expand" class="icon-button" aria-label="Развернуть панель" title="Развернуть">⤢</button></div><textarea id="composer-prompt" data-panel-field="${n.type==='text'?'instruction':'prompt'}" placeholder="Добавь референсы, опиши идею. Используй @image1 и @video1 для обращения к медиа." aria-label="Промпт" rows="3"></textarea><div id="composer-presets"></div><div class="composer-bottom"><label class="model-choice"><span>◇</span><select data-panel-field="model" aria-label="Модель">${n.type==='generation'?'<option value="dreamina-seedance-2-5-260628">Seedance 2.5</option>':'<option value="none">Text · модель не подключена</option>'}</select></label>${n.type==='generation'?`<select data-panel-field="referenceMode" class="reference-mode" aria-label="Режим референсов"><option value="reference">Omni Reference</option></select><details class="composer-settings"><summary id="composer-settings-label">Settings</summary><div class="settings-popover"><div class="settings-heading"><strong>Settings</strong><span class="settings-heading-actions"><button type="button" id="settings-auto" class="switch-button" title="Вернуть стандартные параметры">Сбросить</button><button type="button" id="settings-close" class="icon-button" aria-label="Закрыть настройки">×</button></span></div><label>Разрешение</label><div class="settings-segments" role="group" aria-label="Разрешение">${['480p','720p','1080p'].map(v=>`<button type="button" data-setting="resolution" data-value="${v}">${v}</button>`).join('')}</div><label>Длительность <span id="duration-label">Авто</span><input type="range" data-panel-field="duration" min="4" max="30" step="1" aria-label="Длительность видео"></label><div class="range-ends"><span>4s</span><span>30s</span></div><label>Формат</label><div class="settings-segments ratios" role="group" aria-label="Формат">${['21:9','16:9','4:3','1:1','3:4','9:16'].map(v=>`<button type="button" data-setting="ratio" data-value="${v}">${v}</button>`).join('')}</div><label class="audio-setting">Аудио<select data-panel-field="generateAudio" aria-label="Аудио"><option value="true">Со звуком</option><option value="false">Без звука</option></select></label></div></details>`:''}<span class="composer-spacer"></span>${n.type==='generation'?'<select data-panel-field="batch" class="batch-choice" aria-label="Количество вариантов"><option value="1">1x</option><option value="2">2x</option><option value="4">4x</option></select>':''}<span class="demo-label">BytePlus</span><button id="composer-generate" class="pill solid">✦ Generate</button></div><details class="compiled-details"><summary>Итоговый промпт <span id="prompt-source-count"></span></summary><pre id="compiled-prompt"></pre></details><span class="composer-node-name"></span>`;
+  function renderComposer(){const host=$('#generation-composer');if(!host)return;const n=selected.size===1?nodes.get([...selected][0]):null;if(!n||n.type!=='generation'){host.hidden=true;composerNode=null;return;}host.hidden=false;if(composerNode!==n.id){composerNode=n.id;host.dataset.panelNode=n.id;host.innerHTML=`<div class="composer-top"><div class="composer-references"></div><button id="composer-expand" class="icon-button" aria-label="Развернуть панель" title="Развернуть">⤢</button></div><textarea id="composer-prompt" data-panel-field="${n.type==='text'?'instruction':'prompt'}" placeholder="Добавь референсы, опиши идею. Используй @image1 и @video1 для обращения к медиа." aria-label="Промпт" rows="3"></textarea><div id="composer-presets"></div><div class="composer-bottom"><label class="model-choice"><span>◇</span><select data-panel-field="model" aria-label="Модель">${n.type==='generation'?'<option value="dreamina-seedance-2-5-260628">Seedance 2.5</option>':'<option value="none">Text · модель не подключена</option>'}</select></label>${n.type==='generation'?`<select data-panel-field="referenceMode" class="reference-mode" aria-label="Режим референсов"><option value="reference">Omni Reference</option></select><details class="composer-settings"><summary id="composer-settings-label">Settings</summary><div class="settings-popover"><div class="settings-heading"><strong>Settings</strong><span class="settings-heading-actions"><button type="button" id="settings-auto" class="switch-button" title="Вернуть стандартные параметры">Сбросить</button><button type="button" id="settings-close" class="icon-button" aria-label="Закрыть настройки">×</button></span></div><label>Разрешение</label><div class="settings-segments" role="group" aria-label="Разрешение">${['480p','720p','1080p'].map(v=>`<button type="button" data-setting="resolution" data-value="${v}">${v}</button>`).join('')}</div><label>Длительность <span id="duration-label">Авто</span><input type="range" data-panel-field="duration" min="4" max="30" step="1" aria-label="Длительность видео"></label><div class="range-ends"><span>4s</span><span>30s</span></div><label>Формат</label><div class="settings-segments ratios" role="group" aria-label="Формат">${['21:9','16:9','4:3','1:1','3:4','9:16'].map(v=>`<button type="button" data-setting="ratio" data-value="${v}">${v}</button>`).join('')}</div><label class="audio-setting">Аудио<select data-panel-field="generateAudio" aria-label="Аудио"><option value="true">Со звуком</option><option value="false">Без звука</option></select></label></div></details>`:''}<span class="composer-spacer"></span>${n.type==='generation'?'<select data-panel-field="batch" class="batch-choice" aria-label="Количество вариантов"><option value="1">1x</option><option value="2">2x</option><option value="4">4x</option></select>':''}<span class="demo-label" id="composer-provider">API</span><button id="composer-generate" class="pill solid">✦ Generate</button></div><details class="compiled-details"><summary>Итоговый промпт <span id="prompt-source-count"></span></summary><pre id="compiled-prompt"></pre></details><span class="composer-node-name"></span>`;
       for(const b of host.querySelectorAll('[data-setting]'))b.onclick=()=>{mutate('Изменены параметры генерации',()=>{n.fields[b.dataset.setting]=b.dataset.value;syncFields(n);});renderComposer();};
       $('#composer-generate').onclick=()=>startGeneration(nodes.get(composerNode));$('#composer-expand').onclick=()=>{host.classList.toggle('expanded');positionComposer();$('#composer-expand').setAttribute('aria-label',host.classList.contains('expanded')?'Свернуть панель':'Развернуть панель');};$('#settings-close')?.addEventListener('click',()=>$('.composer-settings',host).open=false);$('#settings-auto')?.addEventListener('click',()=>{mutate('Изменены автоматические параметры',()=>{n.fields.ratio='16:9';n.fields.resolution='720p';n.fields.duration='8';n.fields.generateAudio='true';syncFields(n);});renderComposer();});
     }
-    for(const el of host.querySelectorAll('[data-panel-field]'))if(el!==document.activeElement)el.value=el.type==='range'&&!n.fields.duration?'4':n.fields[el.dataset.panelField]??'';$('.composer-node-name',host).textContent=nodeName(n);if($('#composer-settings-label'))$('#composer-settings-label').textContent=`${n.fields.resolution||'Авто'} · ${n.fields.duration?n.fields.duration+'s':'Auto'} · ${n.fields.ratio||'Авто'}`;if($('#duration-label'))$('#duration-label').textContent=n.fields.duration?n.fields.duration+'s':'Авто';$('#settings-auto')?.setAttribute('aria-pressed',String(!n.fields.duration&&n.fields.resolution==='Авто'&&n.fields.ratio==='Авто'));for(const b of host.querySelectorAll('[data-setting]'))b.setAttribute('aria-pressed',String(n.fields[b.dataset.setting]===b.dataset.value));updateGenerateButtons();refreshComposerAssets();updateLinkedText();positionComposer();
+    for(const el of host.querySelectorAll('[data-panel-field]'))if(el!==document.activeElement)el.value=el.type==='range'&&!n.fields.duration?'4':n.fields[el.dataset.panelField]??'';$('.composer-node-name',host).textContent=nodeName(n);if($('#composer-settings-label'))$('#composer-settings-label').textContent=`${n.fields.resolution||'Авто'} · ${n.fields.duration?n.fields.duration+'s':'Auto'} · ${n.fields.ratio||'Авто'}`;if($('#duration-label'))$('#duration-label').textContent=n.fields.duration?n.fields.duration+'s':'Авто';$('#settings-auto')?.setAttribute('aria-pressed',String(!n.fields.duration&&n.fields.resolution==='Авто'&&n.fields.ratio==='Авто'));const capabilities=Studio.activeVideoProvider()==='openrouter'?Studio.integrationVerified('openrouter')?.capabilities:null;for(const b of host.querySelectorAll('[data-setting]')){b.setAttribute('aria-pressed',String(n.fields[b.dataset.setting]===b.dataset.value));const supported=b.dataset.setting==='resolution'?capabilities?.supported_resolutions:capabilities?.supported_aspect_ratios;b.disabled=!!supported?.length&&!supported.includes(b.dataset.value);b.title=b.disabled?'Этот параметр пока недоступен у OpenRouter':'';}updateGenerateButtons();refreshComposerAssets();updateLinkedText();positionComposer();
   }
-  function refreshComposerAssets(){const n=nodes.get(composerNode);if(!n)return;const host=$('#generation-composer'),container=$('.composer-references',host);if(!container)return;container.replaceChildren();if(n.type==='generation'){const add=document.createElement('label');add.className='ref-upload';add.innerHTML='<span>+</span><small>Ref</small><input type="file" accept="image/*,video/*" multiple hidden aria-label="Добавить референсы">';$('input',add).onchange=e=>{const files=[...e.target.files];mutate('Добавлены референсы',()=>addFiles(n,files));};container.append(add);const link=document.createElement('button');link.className='ref-upload';link.textContent='По ссылке';link.onclick=()=>addUrlReference(n);container.append(link);const list=[...incoming(n.id,'media').flatMap(src=>src.assets.map(id=>({id,src}))),...n.assets.map(id=>({id,src:n}))];const counts={image:0,video:0};for(const {id,src} of list){const a=assets.get(id);if(!a)continue;const alias='@'+a.kind+(++counts[a.kind]),chip=document.createElement('div');chip.className='composer-reference';chip.title=a.name;const visual=document.createElement(a.kind==='image'?'img':'video');if(a.url){visual.src=a.url;visual.muted=true;visual.draggable=false;visual.alt=a.name;chip.append(visual);}else{const lost=document.createElement('span');lost.textContent='!';lost.title='Добавь файл повторно';chip.append(lost);}const token=document.createElement('button');token.textContent=alias;token.title='Вставить '+alias+' в промпт';token.onclick=()=>{const field=n.type==='text'?'instruction':'prompt';mutate('Добавлена ссылка на медиа',()=>{n.fields[field]=(n.fields[field]||'')+' '+alias;syncFields(n);updateLinkedText();});};chip.append(token);if(a.kind==='image')chip.append(portraitButton(a));if(src.id===n.id){const remove=document.createElement('button');remove.className='remove-ref';remove.textContent='×';remove.setAttribute('aria-label','Убрать '+a.name);remove.onclick=()=>mutate('Убрано медиа',()=>{n.assets=n.assets.filter(x=>x!==id);refreshContent();});chip.append(remove);}container.append(chip);}}
-    const presets=$('#composer-presets');presets.replaceChildren();const linked=incoming(n.id,'preset');for(const [index,p]of linked.entries()){const chip=document.createElement('div');chip.className='linked-preset'+(p.fields.enabled==='false'?' disabled':'');const label=document.createElement('span');label.textContent='▱ '+nodeName(p);chip.append(label);for(const [step,text]of [[-1,'↑'],[1,'↓']]){const b=document.createElement('button');b.textContent=text;b.disabled=index+step<0||index+step>=linked.length;b.setAttribute('aria-label',step<0?'Переместить пресет выше':'Переместить пресет ниже');b.onclick=()=>mutate('Изменён порядок пресетов',()=>{const ordered=[...edges.values()],i=ordered.findIndex(e=>e.from===p.id&&e.to===n.id),j=ordered.findIndex(e=>e.from===linked[index+step].id&&e.to===n.id);[ordered[i],ordered[j]]=[ordered[j],ordered[i]];edges.clear();ordered.forEach(e=>edges.set(e.id,e));refreshContent();});chip.append(b);}presets.append(chip);}$('#prompt-source-count').textContent=linked.length?`· пресетов: ${linked.length}`:'';
+  function refreshComposerAssets(){const n=nodes.get(composerNode);if(!n)return;const host=$('#generation-composer'),container=$('.composer-references',host);if(!container)return;container.replaceChildren();if(n.type==='generation'){const add=document.createElement('label');add.className='ref-upload';add.innerHTML='<span>+</span><small>Ref</small><input type="file" accept="image/*,video/*" multiple hidden aria-label="Добавить референсы">';$('input',add).onchange=e=>{const files=[...e.target.files];mutate('Добавлены референсы',()=>addFiles(n,files));};container.append(add);const link=document.createElement('button');link.className='ref-upload';link.textContent='По ссылке';link.onclick=()=>addUrlReference(n);container.append(link);const list=[...incoming(n.id,'media').flatMap(src=>src.assets.map(id=>({id,src}))),...n.assets.map(id=>({id,src:n}))];const counts={image:0,video:0};for(const {id,src} of list){const a=assets.get(id);if(!a)continue;const alias='@'+a.kind+(++counts[a.kind]),chip=document.createElement('div');chip.className='composer-reference';chip.title=a.name;const visual=document.createElement(a.kind==='image'?'img':'video');if(a.url){visual.src=a.url;visual.muted=true;visual.draggable=false;visual.alt=a.name;chip.append(visual);}else{const lost=document.createElement('span');lost.textContent='!';lost.title='Добавь файл повторно';chip.append(lost);}const token=document.createElement('button');token.textContent=alias;token.title='Вставить '+alias+' в промпт';token.onclick=()=>{const field=n.type==='text'?'instruction':'prompt';mutate('Добавлена ссылка на медиа',()=>{n.fields[field]=(n.fields[field]||'')+' '+alias;syncFields(n);updateLinkedText();});};chip.append(token);if(a.kind==='image'&&Studio.activeVideoProvider()!=='openrouter')chip.append(portraitButton(a));if(src.id===n.id){const remove=document.createElement('button');remove.className='remove-ref';remove.textContent='×';remove.setAttribute('aria-label','Убрать '+a.name);remove.onclick=()=>mutate('Убрано медиа',()=>{n.assets=n.assets.filter(x=>x!==id);refreshContent();});chip.append(remove);}container.append(chip);}}
+    const presets=$('#composer-presets');presets.replaceChildren();const linked=incoming(n.id,'preset');for(const [index,p]of linked.entries()){const chip=document.createElement('div');chip.className='linked-preset'+(p.fields.enabled==='false'?' disabled':'');const label=document.createElement('span');label.textContent=(p.fields.kind==='camera'?'◎ ':'▱ ')+nodeName(p);chip.append(label);for(const [step,text]of [[-1,'↑'],[1,'↓']]){const b=document.createElement('button');b.textContent=text;b.disabled=index+step<0||index+step>=linked.length;b.setAttribute('aria-label',step<0?'Переместить пресет выше':'Переместить пресет ниже');b.onclick=()=>mutate('Изменён порядок пресетов',()=>{const ordered=[...edges.values()],i=ordered.findIndex(e=>e.from===p.id&&e.to===n.id),j=ordered.findIndex(e=>e.from===linked[index+step].id&&e.to===n.id);[ordered[i],ordered[j]]=[ordered[j],ordered[i]];edges.clear();ordered.forEach(e=>edges.set(e.id,e));refreshContent();});chip.append(b);}presets.append(chip);}$('#prompt-source-count').textContent=linked.length?`· пресетов: ${linked.length}`:'';
   }
   async function saveNodePreset(n){try{await Studio.ensureTemplates();}catch(e){notify(e.message);return;}const dialog=document.createElement('dialog');dialog.className='studio-dialog';dialog.innerHTML='<header><h2>Сохранить пресет</h2><button type="button" class="icon-button">×</button></header><form class="stack"><label>Название<input name="name" required maxlength="80"></label><label>Папка<select name="folder"></select></label><label>Доступ<select name="scope"><option value="mine">Мой</option></select></label><p class="form-error" role="alert"></p><button class="pill solid" type="submit">Сохранить</button></form>';$('[name=name]',dialog).value=nodeName(n);for(const f of Studio.listFolders())$('[name=folder]',dialog).add(new Option(f.name,f.id));if(Studio.isAdmin())$('[name=scope]',dialog).add(new Option('Общий','common'));$('header button',dialog).onclick=()=>dialog.close();$('form',dialog).onsubmit=async e=>{e.preventDefault();try{await Studio.savePreset({name:$('[name=name]',dialog).value,text:n.fields.text||'',folder:$('[name=folder]',dialog).value,scope:$('[name=scope]',dialog).value});dialog.close();if(panel==='presets')renderPanel();notify('Пресет сохранён в библиотеке');}catch(err){$('.form-error',dialog).textContent=err.message;}};dialog.onclose=()=>dialog.remove();document.body.append(dialog);dialog.showModal();}
 
@@ -1467,6 +1767,15 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
   $('#minimap-wrap').hidden=!mapVisible;$('#toggle-minimap').setAttribute('aria-pressed',String(mapVisible));$('#toggle-minimap').title=mapVisible?'Скрыть мини-карту':'Показать мини-карту';$('#toggle-minimap').setAttribute('aria-label',$('#toggle-minimap').title);setTool('select');setCamera();updateStatus();
   const url=new URL(location.href),presetId=url.searchParams.get('preset');
   if(presetId){await Studio.ensureTemplates();const preset=Studio.listPresets().find(p=>p.id===presetId);if(preset)applyPreset(preset);else notify('Шаблон не найден.');url.searchParams.delete('preset');try{history.replaceState(null,'',url.href);}catch{}}
+  const cameraId=url.searchParams.get('camera');
+  if(cameraId){
+    const clip=MagicCameraMovements.get(cameraId),intent=url.searchParams.get('insert')||'camera-'+cameraId,key='magic.camera.inserted.'+Studio.current().uid+'.'+SPACE_ID,inserted=Studio.read(key,[]);
+    if(clip&&!inserted.includes(intent)&&![...nodes.values()].some(n=>n.fields.cameraInsert===intent)){
+      mutate('Добавлен Camera movement',()=>addNode('preset',null,{name:'Camera · '+clip.name,heading:clip.name,text:clip.prompt,kind:'camera',cameraId:clip.id,cameraInsert:intent,enabled:'true'}));
+      Studio.write(key,[...inserted,intent].slice(-100));notify('Камера добавлена. Соедини её выход с входом Video generation.');
+    }else if(!clip)notify('Движение камеры не найдено.');
+    url.searchParams.delete('camera');url.searchParams.delete('insert');history.replaceState(null,'',url.href);
+  }
   // Existing completed Outputs already contain their media URL. Do not scan /videos.
   for(const n of nodes.values())if(n.type==='output'){
     if(n.fields.generationId&&!n.fields.videoUrl)resumeOutput(n);else paintOutput(n);

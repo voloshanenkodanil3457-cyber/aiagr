@@ -1,12 +1,12 @@
 {
   "name": "magic-canvas",
   "private": true,
-  "version": "0.7.5",
+  "version": "0.8.1",
   "scripts": {
     "build": "python3 source/build.py",
-    "test": "node --test tests/domain.test.cjs tests/worker.test.mjs tests/portraits.test.mjs",
+    "test": "node --test tests/domain.test.cjs tests/worker.test.mjs tests/portraits.test.mjs tests/providers.test.cjs tests/openrouter.test.mjs tests/assets.test.cjs",
     "test:rules": "firebase emulators:exec --only firestore,storage --project demo-magic-tests \"node --test tests/firestore.test.cjs\"",
-    "test:browser": "node tests/browser.test.mjs && node tests/portraits.browser.test.mjs"
+    "test:browser": "node tests/browser.test.mjs && node tests/portraits.browser.test.mjs && node tests/refresh.browser.test.mjs"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "3.0.4",

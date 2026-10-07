@@ -38,7 +38,7 @@ window.Studio=(()=>{
       await new Promise(resolve=>{const off=authM.onAuthStateChanged(auth,async user=>{off();cache.user=user;try{if(user)await hydrateProfile(user);}catch(e){cache.firebaseError=e;}resolve();});});
       if(cache.user&&cache.profile){
         await migrateLegacyCredentials();
-        if(apiGatewayBase())await gatewaySession().catch(e=>notify(e.message,'error'));
+        for(const base of new Set([apiGatewayBase(),openRouterGateway()].filter(Boolean)))await gatewaySession(base).catch(e=>notify(e.message,'error'));
         // Replay durable work from the preceding page/reload, never on each canvas edit.
         await flushPendingWork();
       }
@@ -144,28 +144,52 @@ window.Studio=(()=>{
     }catch(err){console.warn('Integration metadata unavailable; local credentials still work.',err);}
     const localKey=String(localStorage.getItem(credentialKey('apiKey'))||'').trim();
     if(localKey&&!cache.integrations.has('byteplus'))cache.integrations.set('byteplus',{id:`${cache.user.uid}_byteplus`,ownerUid:cache.user.uid,provider:'byteplus',label:'BytePlus ModelArk',connected:true,credentialHint:localKey.slice(0,10)+'…',localOnly:true});
+    const routerKey=localStorage.getItem(credentialKey('openrouter.apiKey'));
+    if(routerKey&&!cache.integrations.has('openrouter'))cache.integrations.set('openrouter',{id:`${cache.user.uid}_openrouter`,ownerUid:cache.user.uid,provider:'openrouter',connected:true,localOnly:true});
   }
   async function getIntegration(provider){await ready();if(!cache.integrations.size&&cache.user)await loadIntegrations();return cache.integrations.get(provider)||null;}
   async function saveIntegration(provider,data){
-    assertFirebase();if(provider!=='byteplus')throw new Error('Этот provider пока не подключён.');
-    const apiKey=String(data.apiKey||'').trim();
+    assertFirebase();if(!['byteplus','openrouter'].includes(provider))throw new Error('Этот provider пока не подключён.');
+    const field=provider==='openrouter'?'openrouter.apiKey':'apiKey';
+    const apiKey=String(data.apiKey||localStorage.getItem(credentialKey(field))||'').trim();
     const workerUrl=String(data.workerUrl||'').trim().replace(/\/$/,'');
-    if(!apiKey&&!workerUrl)throw new Error('Вставь ARK API Key для Direct mode или Cloudflare Worker URL.');
-    if(apiKey)localStorage.setItem(credentialKey('apiKey'),apiKey);else if(workerUrl)localStorage.removeItem(credentialKey('apiKey'));
-    if(workerUrl)localStorage.setItem(credentialKey('gateway'),workerUrl);else localStorage.removeItem(credentialKey('gateway'));localStorage.removeItem(credentialKey('session'));
+    if(workerUrl){const parsed=new URL(workerUrl);if(parsed.protocol!=='https:'||parsed.username||parsed.password||parsed.search||parsed.hash)throw new Error('Worker URL должен быть HTTPS без параметров и пароля.');}
+    if(provider==='openrouter'&&!apiKey)throw new Error('Вставь OpenRouter API key.');
+    if(!apiKey&&!workerUrl)throw new Error('Вставь ARK API Key или Cloudflare Worker URL.');
+    if(apiKey)localStorage.setItem(credentialKey(field),apiKey);
+    const gatewayField=provider==='openrouter'?'openrouter.gateway':'gateway';
+    if(workerUrl)localStorage.setItem(credentialKey(gatewayField),workerUrl);else localStorage.removeItem(credentialKey(gatewayField));localStorage.removeItem(credentialKey('session'));
+    localStorage.removeItem(credentialKey(provider+'.verified'));if(provider==='openrouter')localStorage.removeItem(credentialKey('openrouter.capabilities'));
     
     const id=`${cache.user.uid}_${provider}`,old=cache.integrations.get(provider)||{};
     const hint=workerUrl?workerUrl.replace(/^https?:\/\//,'').slice(0,40):(apiKey.slice(0,10)+'…');
-    const row={ownerUid:cache.user.uid,provider,label:String(data.label||'BytePlus ModelArk'),connected:true,connectionMode:workerUrl?'worker':'direct',credentialHint:hint,updatedAt:now(),createdAt:old.createdAt||now()};
+    const row={ownerUid:cache.user.uid,provider,label:MagicProviders.providerName(provider),connected:true,connectionMode:workerUrl?'worker':'direct',credentialHint:hint,updatedAt:now(),createdAt:old.createdAt||now()};
     try{await api.fsM.setDoc(api.fsM.doc(api.db,'integrations',id),row);}catch(err){console.warn('Could not save integration metadata to Firestore; using local-only mode.',err);row.localOnly=true;}
-    cache.integrations.set(provider,{id,...row});if(workerUrl)await gatewaySession();return {id,...row};
+    cache.integrations.set(provider,{id,...row});if(!activeVideoProvider())setVideoProvider(provider);window.dispatchEvent(new Event('magic-integration-changed'));if(workerUrl)await gatewaySession(workerUrl);return {id,...row};
   }
+  function activeVideoProvider(){
+    const saved=localStorage.getItem(credentialKey('seedanceProvider'));
+    if(saved!==null)return ['byteplus','openrouter'].includes(saved)?saved:null;
+    if(apiGatewayBase()||localStorage.getItem(credentialKey('apiKey')))return 'byteplus';
+    return localStorage.getItem(credentialKey('openrouter.apiKey'))?'openrouter':null;
+  }
+  function setVideoProvider(provider){
+    if(provider&&!['byteplus','openrouter'].includes(provider))throw new Error('Неизвестный провайдер.');
+    const available=provider==='byteplus'?(apiGatewayBase()||localStorage.getItem(credentialKey('apiKey'))):provider==='openrouter'?localStorage.getItem(credentialKey('openrouter.apiKey')):true;
+    if(!available)throw new Error('Сначала подключи API провайдера.');
+    localStorage.setItem(credentialKey('seedanceProvider'),provider||'none');window.dispatchEvent(new Event('magic-integration-changed'));
+  }
+  function integrationVerified(provider){return read(credentialKey(provider+'.verified'),null);}
+  function openRouterGateway(){return String(localStorage.getItem(credentialKey('openrouter.gateway'))||'').replace(/\/$/,'');}
+  function videoModelFor(provider,value){return provider==='openrouter'?MagicProviders.openRouterModel:videoModel(value);}
   async function removeIntegration(provider){
+    if(activeVideoProvider()===provider)setVideoProvider(null);
     if(provider==='byteplus'){
       localStorage.removeItem(credentialKey('apiKey'));
       localStorage.removeItem(credentialKey('gateway'));localStorage.removeItem(credentialKey('session'));
       
-    }
+    }else if(provider==='openrouter'){for(const f of ['openrouter.apiKey','openrouter.gateway','openrouter.capabilities'])localStorage.removeItem(credentialKey(f));}
+    localStorage.removeItem(credentialKey(provider+'.verified'));window.dispatchEvent(new Event('magic-integration-changed'));
     const item=cache.integrations.get(provider);if(item){try{await api.fsM.deleteDoc(api.fsM.doc(api.db,'integrations',item.id));}catch(err){console.warn('Integration metadata delete skipped',err);}}
     cache.integrations.delete(provider);
   }
@@ -179,6 +203,7 @@ window.Studio=(()=>{
       const apiKey=String(localStorage.getItem(credentialKey('apiKey'))||'').trim();
       return apiKey?{apiKey,connected:true,mode:'direct'}:null;
     }
+    if(provider==='openrouter'){const apiKey=String(localStorage.getItem(credentialKey('openrouter.apiKey'))||'').trim(),workerUrl=openRouterGateway();return apiKey?{apiKey,workerUrl,mode:workerUrl?'worker':'direct',connected:true}:null;}
     return null;
   }
   async function providerKey(provider){return (await providerCredentials(provider))?.apiKey||'';}
@@ -200,7 +225,7 @@ window.Studio=(()=>{
   async function responseOrError(r,label='API'){
     const type=r.headers.get('content-type')||'';let data;
     try{data=type.includes('json')?await r.json():await r.text();}catch{data='';}
-    if(!r.ok){const detail=typeof data==='string'?data:(data?.detail?.error?.message||data?.detail?.message||data?.error?.message||data?.error||data?.message||JSON.stringify(data));const message=typeof detail==='string'?detail:JSON.stringify(detail);const hint=r.status===400&&/may contain real person|PrivacyInformation|RealPerson/i.test(message||'')?' BytePlus отклонил портрет. Нажми «Портрет» у этого референса: выбери проверенного человека или разрешённого виртуального персонажа, зарегистрируй фото и дождись Active.':'';const otherHint=r.status===404&&/model|endpoint/i.test(message||'')?' Проверь Model ID и статус Activated в BytePlus → Activation management. Успешная проверка API-ключа не подтверждает доступ к модели.':r.status===429&&/Safe Experience Mode|SetLimitExceeded|set usage limit|set inference limit/i.test(message||'')?' Лимит BytePlus: проверь Safe Experience Mode в Model Activation. Этот запрос не создал новую задачу.':'';const err=new Error(`${label} ${r.status}${message?`: ${message.slice(0,500)}`:''}${hint}${otherHint}`);err.httpStatus=r.status;throw err;}
+    if(!r.ok){const detail=typeof data==='string'?data:(data?.detail?.error?.message||data?.detail?.message||data?.error?.message||data?.error||data?.message||JSON.stringify(data));const message=typeof detail==='string'?detail:JSON.stringify(detail),router=label==='OpenRouter';const hint=!router&&r.status===400&&/may contain real person|PrivacyInformation|RealPerson/i.test(message||'')?' BytePlus отклонил портрет. Нажми «Портрет» у этого референса и подключи проверенную группу.':'';const otherHint=router&&r.status===402?' Проверь баланс и лимит ключа OpenRouter.':!router&&r.status===404&&/model|endpoint/i.test(message||'')?' Проверь Model ID и статус Activated в BytePlus → Activation management. Успешная проверка API-ключа не подтверждает доступ к модели.':!router&&r.status===429&&/Safe Experience Mode|SetLimitExceeded|set usage limit|set inference limit/i.test(message||'')?' Лимит BytePlus: проверь Safe Experience Mode в Model Activation. Этот запрос не создал новую задачу.':'';const err=new Error(`${label} ${r.status}${message?`: ${message.slice(0,500)}`:''}${hint}${otherHint}`);err.httpStatus=r.status;throw err;}
     return data;
   }
 
@@ -214,7 +239,7 @@ window.Studio=(()=>{
     const controller=new AbortController(),ms=Math.max(100,Math.min(300000,Number(CFG.apiRequestTimeoutMs)||90000));
     // Bound both the connection and reading the response body. Never retry a POST.
     return withDeadline((async()=>responseOrError(await fetch(url,{...options,signal:controller.signal}),label))(),ms,
-      `${label}: ответ API не получен за ${Math.ceil(ms/1000)} сек. Если отправлялась генерация, её запуск не подтверждён. Проверь историю BytePlus перед повторением.`,()=>controller.abort());
+      `${label}: ответ API не получен за ${Math.ceil(ms/1000)} сек. Если отправлялась генерация, её запуск не подтверждён. Проверь историю провайдера перед повторением.`,()=>controller.abort());
   }
 
   async function directBytePlus(path,{body}={}){
@@ -244,6 +269,29 @@ window.Studio=(()=>{
     catch(e){if(e instanceof TypeError)throw new Error('Не удалось связаться с Cloudflare Worker. Проверь Worker URL и deploy.');throw e;}
     return new Response(JSON.stringify(data),{status:200,headers:{'Content-Type':'application/json'}});
   }
+  async function openRouterRequest(path,{body,credentials}={}){
+    credentials=credentials||await providerCredentials('openrouter');if(!credentials)throw new Error('Подключи OpenRouter в My settings.');
+    if(credentials.mode==='worker'){
+      const headers={...await gatewayHeaders(null,credentials.workerUrl),'Content-Type':'application/json'};
+      if(credentials.apiKey)headers['X-OpenRouter-Key']=credentials.apiKey;
+      return requestApi(credentials.workerUrl+'/openrouter/'+path,{method:'POST',headers,body:JSON.stringify(body||{})},'OpenRouter');
+    }
+    const endpoint=path==='test'?'/key':path==='models'?'/videos/models':path==='submit'?'/videos':path==='status'?'/videos/'+encodeURIComponent(body.taskId):null;
+    if(!endpoint)throw new Error('Неизвестный OpenRouter route.');
+    try{return await requestApi('https://openrouter.ai/api/v1'+endpoint,{method:path==='submit'?'POST':'GET',headers:{Authorization:'Bearer '+credentials.apiKey,'Content-Type':'application/json','HTTP-Referer':location.origin,'X-Title':'Magic'},...(path==='submit'?{body:JSON.stringify(body.payload)}:{})},'OpenRouter');}
+    catch(e){if(e instanceof TypeError)throw new Error('Браузер не смог связаться с OpenRouter. Проверь сеть или подключи обновлённый Worker.');throw e;}
+  }
+  async function openRouterCapabilities(credentials){
+    const saved=read(credentialKey('openrouter.capabilities'),null),scope=credentials.workerUrl||'direct';
+    if(saved?.scope===scope&&saved.expiresAt>Date.now())return saved.model;
+    const result=await openRouterRequest('models',{credentials}),model=result.data?.find(m=>m.id===MagicProviders.openRouterModel);
+    MagicProviders.validateCapabilities({},model);write(credentialKey('openrouter.capabilities'),{model,scope,expiresAt:Date.now()+3600000});return model;
+  }
+  async function prepareVideoRequest(provider,payload){
+    if(provider!=='openrouter')return payload;
+    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи OpenRouter в My settings.');
+    const body=MagicProviders.buildOpenRouterRequest(payload);return MagicProviders.validateCapabilities(body,await openRouterCapabilities(credentials));
+  }
   async function portraitApi(path,body={}){
     if(!apiGatewayBase())throw new Error('Регистрация портретов требует Worker URL в My settings. AK/SK хранятся только в Worker; обычный Direct API остаётся доступным для остальных референсов.');
     return (await proxy('/byteplus/portraits/'+path,{method:'POST',body})).json();
@@ -260,8 +308,15 @@ window.Studio=(()=>{
     await MagicLocal.put(cache.user.uid,item.id,stored);return {...item,portraitGroupId:groupId||null};
   }
   async function testIntegration(provider){
-    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Сначала настрой Direct ARK API Key или Cloudflare Worker URL.');
-    if(provider==='byteplus'){localStorage.removeItem(credentialKey('session'));const r=await proxy('/byteplus/test',{method:'POST',body:{}});return {...await r.json(),modelAccessVerified:false};}
+    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Сначала подключи API key или Cloudflare Worker URL.');
+    if(credentials.workerUrl){localStorage.removeItem(credentialKey('session.'+credentials.workerUrl));localStorage.removeItem(credentialKey('session'));}
+    if(provider==='byteplus'){localStorage.removeItem(credentialKey('session'));const r=await proxy('/byteplus/test',{method:'POST',body:{}}),result={...await r.json(),modelAccessVerified:false};write(credentialKey(provider+'.verified'),{checkedAt:now()});return result;}
+    if(provider==='openrouter'){
+      const [key,model]=await Promise.all([openRouterRequest('test',{credentials}),openRouterCapabilities(credentials)]);
+      const info=key.data||key,limit=info.limit_remaining??(info.limit==null?null:Number(info.limit)-Number(info.usage||0));
+      const result={ok:true,model:MagicProviders.openRouterModel,modelListed:true,remaining:limit,isFreeTier:!!info.is_free_tier,capabilities:model,checkedAt:now()};
+      write(credentialKey(provider+'.verified'),result);return result;
+    }
     throw new Error('Тест для этого провайдера пока не реализован.');
   }
 
@@ -328,8 +383,8 @@ window.Studio=(()=>{
     const meta={id:assetId,uid:cache.user.uid,spaceId,name,kind,size:0,url:parsed.href,storagePath:null,createdAt:now(),updatedAt:now()};
     await MagicLocal.put(cache.user.uid,assetId,{meta,cloudSaved:false});return meta;
   }
-  async function ensureRemoteAsset(item){
-    if(item.portraitGroupId)return MagicPortraits.ensure(item);
+  async function ensureRemoteAsset(item,{provider=activeVideoProvider()}={}){
+    if(item.portraitGroupId&&provider!=='openrouter')return MagicPortraits.ensure(item);
     // Only the API request carries image bytes. The graph and Firestore keep metadata.
     if(/^https:\/\//.test(item.url||''))return {...item,referenceUrl:item.url};
     const stored=await withDeadline(MagicLocal.get(cache.user.uid,item.id),10000,`Локальное хранилище не ответило. Добавь файл «${item.name}» повторно.`);
@@ -372,7 +427,8 @@ window.Studio=(()=>{
   async function createVideoRecord(data){
     assertFirebase();const me=current();
     const row={id:uid(),uid:me.uid,user:me.name,spaceId:data.spaceId||null,spaceName:data.spaceName||'',sourceNodeId:data.sourceNodeId||null,outputNodeId:data.outputNodeId||null,
-      prompt:data.prompt||'',provider:data.provider||'byteplus',model:videoModel(data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
+      prompt:data.prompt||'',provider:data.provider||'byteplus',model:videoModelFor(data.provider,data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
+      transport:data.transport||'direct',gatewayUrl:data.gatewayUrl||null,
       seconds:Math.max(4,Math.min(30,Number(data.seconds)||8)),referenceCount:Math.max(0,Math.min(15,Number(data.referenceCount)||0)),hasRef:Boolean(data.hasRef),refMode:'reference',generateAudio:data.generateAudio!==false,
       status:'queued',pct:0,cost:null,error:null,requestId:null,videoUrl:null,remoteUrl:null,storagePath:null,createdAt:now(),updatedAt:now(),cloudSaved:false};
     return rememberVideo(row);
@@ -399,8 +455,10 @@ window.Studio=(()=>{
       const videoRef=api.fsM.doc(api.db,'videos',row.id),scoreRef=api.fsM.doc(api.db,'leaderboard',row.uid);
       const {id,cloudSaved,trackingWarning,...data}=row;
       data.schemaVersion=2;data.referenceCount=Math.max(0,Math.min(15,Number(data.referenceCount)||0));data.seconds=Math.max(4,Math.min(30,Number(data.seconds)||8));data.resolution=normalizeResolution(data.resolution);
+      let wasDeleted=false;
       await api.fsM.runTransaction(api.db,async tx=>{
-        const [previous,score]=await Promise.all([tx.get(videoRef),tx.get(scoreRef)]);
+        const [previous,score,deleted]=await Promise.all([tx.get(videoRef),tx.get(scoreRef),tx.get(api.fsM.doc(api.db,'videoDeletions',row.id))]);
+        wasDeleted=deleted.exists();if(wasDeleted)return;
         // The same terminal task can be observed by several tabs. Count it only once.
         if(previous.exists()&&MagicDomain.terminal(previous.data().status))return;
         const before=score.exists()?score.data():{};
@@ -408,6 +466,7 @@ window.Studio=(()=>{
         tx.set(scoreRef,{uid:row.uid,nickname:current().name,xp:(before.xp||0)+(row.status==='completed'?MagicDomain.xp(data):0),
           completed:(before.completed||0)+(row.status==='completed'?1:0),failed:(before.failed||0)+(row.status==='failed'?1:0),lastVideoId:row.id,updatedAt:now()});
       });
+      if(wasDeleted){localStorage.removeItem(jobsPrefix()+row.id);return null;}
       return rememberVideo({...row,cloudSaved:true});
     })();syncingVideos.set(row.id,task);
     try{return await task;}finally{syncingVideos.delete(row.id);}
@@ -426,6 +485,20 @@ window.Studio=(()=>{
     if(!MagicDomain.terminal(row.status))throw new Error('Дождись завершения задачи.');
     await api.fsM.updateDoc(api.fsM.doc(api.db,'videos',id),{archived:true});
     const local=localVideos()[id];if(local)rememberVideo({...local,archived:true});
+  }
+  async function permanentlyDeleteVideo(id){
+    assertFirebase();if(!isAdmin())throw new Error('Удаление из базы доступно только суперадмину.');
+    const pending=syncingVideos.get(id);if(pending)await pending;
+    const ref=api.fsM.doc(api.db,'videos',id);
+    await api.fsM.runTransaction(api.db,async tx=>{
+      const snap=await tx.get(ref),row=snap.exists()?snap.data():localVideos()[id];
+      if(!row)throw new Error('Запись уже удалена или не найдена. Обнови Assets.');
+      if(!MagicDomain.terminal(row.status))throw new Error('Сначала дождись завершения задачи.');
+      // Minimal marker prevents stale browser outboxes from recreating a result or awarding XP twice.
+      tx.set(api.fsM.doc(api.db,'videoDeletions',id),{uid:row.uid});
+      if(snap.exists())tx.delete(ref);
+    });
+    localStorage.removeItem(jobsPrefix()+id);
   }
   async function listLeaderboard(){const snap=await api.fsM.getDocs(api.fsM.collection(api.db,'leaderboard'));return snap.docs.map(d=>({...d.data(),uid:d.id}));}
   async function rebuildLeaderboard(){
@@ -460,9 +533,16 @@ window.Studio=(()=>{
     const preferred=['video_url','videoUrl','url','output_url','output'];for(const k of preferred)if(k in value){const u=extractMediaUrl(value[k]);if(u)return u;}
     for(const k of ['video','videos','content','data','result','results','outputs'])if(k in value){const u=extractMediaUrl(value[k]);if(u)return u;}return null;
   }
-  function statusName(raw){const s=String(raw||'').toUpperCase();if(['COMPLETED','SUCCEEDED','SUCCESS'].includes(s))return'completed';if(['FAILED','ERROR','CANCELLED','CANCELED'].includes(s))return'failed';if(['QUEUED','PENDING'].includes(s))return'queued';return'running';}
-  async function submitGeneration(videoId,payload,provider='byteplus'){
-    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи BytePlus в My settings → Integrations.');
+  function statusName(raw){const s=String(raw||'').toUpperCase();if(['COMPLETED','SUCCEEDED','SUCCESS'].includes(s))return'completed';if(['CANCELLED','CANCELED'].includes(s))return'cancelled';if(['FAILED','ERROR','EXPIRED'].includes(s))return'failed';if(['QUEUED','PENDING'].includes(s))return'queued';return'running';}
+  async function submitGeneration(videoId,payload,provider=activeVideoProvider()){
+    if(provider!==activeVideoProvider())throw Object.assign(new Error('Активный провайдер изменился. Запусти генерацию заново с текущим подключением.'),{httpStatus:400});
+    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи API в My settings → Integrations.');
+    if(provider==='openrouter'){
+      const request=await prepareVideoRequest(provider,payload),data=await openRouterRequest('submit',{body:{payload:request},credentials});
+      if(!data.id)throw new Error('OpenRouter не вернул ID задачи. Проверь историю перед новым запуском.');
+      MagicProviders.contentUrl(data.id);
+      return updateVideo(videoId,{requestId:data.id,taskToken:data.taskToken||null,transport:credentials.mode,gatewayUrl:credentials.workerUrl||null,status:'queued',pct:0});
+    }
     if(provider!=='byteplus')throw new Error('Провайдер пока не подключён к генератору.');
     const body={payload:{...payload,model:videoModel(payload.model),prompt:String(payload.prompt||''),duration:Math.max(4,Math.min(30,Number(payload.duration)||8)),resolution:normalizeResolution(payload.resolution),ratio:normalizeRatio(payload.aspect_ratio||payload.ratio),generate_audio:payload.generate_audio!==false,output_format:'mp4'}};
     if(new Blob([JSON.stringify(body)]).size>60*1024*1024)throw new Error('Референсы превышают размер запроса API. Уменьши изображения или используй HTTPS-ссылки.');
@@ -473,11 +553,11 @@ window.Studio=(()=>{
     return updateVideo(videoId,{requestId,taskToken:data.taskToken||null,status:'queued',pct:0});
   }
   async function persistRemoteVideo(record,result){
-    const remote=extractMediaUrl(result)||record.remoteUrl;
+    const remote=record.provider==='openrouter'?MagicProviders.contentUrl(record.requestId):extractMediaUrl(result)||record.remoteUrl;
     if(!remote)throw new Error('API завершил задачу, но URL видео пока не найден.');
     const videoUrl=remote,storagePath=null,archiveWarning=null;
     const providerTime=Number(result?.updated_at||result?.finished_at);
-    const providerUrlExpiresAt=(providerTime>0?(providerTime<1e12?providerTime*1000:providerTime):now())+24*60*60*1000;
+    const providerUrlExpiresAt=record.provider==='openrouter'?null:(providerTime>0?(providerTime<1e12?providerTime*1000:providerTime):now())+24*60*60*1000;
     const metrics=result?.metrics||result?.usage||result?.data?.metrics||{},rawCost=result?.cost??metrics.cost??record.cost;
     const actualDuration=Number(result?.duration??result?.content?.duration??metrics.duration);
     const patch={status:'completed',pct:100,remoteUrl:remote,videoUrl,storagePath,providerUrlExpiresAt,
@@ -486,16 +566,51 @@ window.Studio=(()=>{
     if(['480p','720p','1080p'].includes(result?.resolution))patch.resolution=result.resolution;
     return updateVideo(record.id,patch);
   }
+  const playbackCache=new Map();
+  async function resolveVideoSource(record){
+    if(!record||(!isAdmin()&&record.uid!==cache.user.uid))throw new Error('Нет доступа к этой генерации.');
+    if(record.provider!=='openrouter'){const url=record.videoUrl||record.remoteUrl;if(!url)throw new Error('Видео ещё не готово.');return {url,release:()=>{}};}
+    const cacheKey=cache.user.uid+'|'+record.id+'|'+record.requestId+'|'+(record.gatewayUrl||'direct');
+    let entry=playbackCache.get(cacheKey);if(entry&&entry.expiresAt<Date.now()){playbackCache.delete(cacheKey);entry=null;}
+    if(!entry){
+      entry={refs:0,expiresAt:Date.now()+25*60000};
+      entry.promise=(async()=>{
+        if(record.transport==='worker'){
+          const gateway=record.gatewayUrl;if(!gateway)throw new Error('У генерации не сохранён Worker URL.');
+          if(record.uid!==cache.user.uid&&![openRouterGateway(),apiGatewayBase()].includes(gateway))throw new Error('Для предпросмотра команды подключи тот же Worker в My settings → OpenRouter.');
+          const data=await openRouterRequest('playback',{credentials:{mode:'worker',workerUrl:gateway},body:{taskId:record.requestId,taskToken:record.taskToken}});entry.expiresAt=Math.min(entry.expiresAt,data.expiresAt||entry.expiresAt);return data.url;
+        }
+        if(record.uid!==cache.user.uid)throw new Error('Этот ролик создан через личный Direct API. Для общего предпросмотра команды используйте OpenRouter через Worker.');
+        const credentials=await providerCredentials('openrouter');if(!credentials?.apiKey)throw new Error('Подключи OpenRouter API key, которым создан этот ролик.');
+        const controller=new AbortController();
+        const blob=await withDeadline((async()=>{const r=await fetch(MagicProviders.contentUrl(record.requestId),{headers:{Authorization:'Bearer '+credentials.apiKey},signal:controller.signal});if(!r.ok){await responseOrError(r,'OpenRouter');}return r.blob();})(),90000,'OpenRouter: загрузка видео не завершилась. Повтори предпросмотр.',()=>controller.abort());
+        const url=URL.createObjectURL(blob);entry.blobUrl=url;return url;
+      })().catch(e=>{playbackCache.delete(cacheKey);throw e;});playbackCache.set(cacheKey,entry);
+    }
+    entry.refs++;let released=false;
+    const release=()=>{if(released)return;released=true;if(--entry.refs===0&&entry.blobUrl){URL.revokeObjectURL(entry.blobUrl);if(playbackCache.get(cacheKey)===entry)playbackCache.delete(cacheKey);}};
+    try{return {url:await entry.promise,release};}catch(e){release();throw e;}
+  }
+  async function downloadVideo(record){
+    const source=await resolveVideoSource(record);let temp;
+    try{
+      let url=source.url;if(!url.startsWith('blob:')){const r=await fetch(url);if(!r.ok)throw new Error('Не удалось скачать видео: '+r.status);temp=URL.createObjectURL(await r.blob());url=temp;}
+      const link=document.createElement('a');link.href=url;link.download='magic-'+safeName(record.id||record.requestId)+'.mp4';link.click();
+    }finally{setTimeout(()=>{if(temp)URL.revokeObjectURL(temp);source.release();},1000);}
+  }
+  window.addEventListener('pagehide',()=>{for(const entry of playbackCache.values())if(entry.blobUrl)URL.revokeObjectURL(entry.blobUrl);playbackCache.clear();});
   async function refreshGeneration(record){
     record=record?.id?record:await getVideo(record);
     if(!record||record.uid!==cache.user.uid)throw new Error('Продолжить можно только свою генерацию.');
     if(MagicDomain.terminal(record.status)||!record.requestId)return record;
-    if(!await providerCredentials(record.provider||'byteplus'))throw new Error('Настрой BytePlus для продолжения задачи.');
-    const response=await proxy('/byteplus/status',{method:'POST',body:{taskId:record.requestId,taskToken:record.taskToken||null}});
-    const data=await response.json(),status=statusName(data.status||data.state);
-    if(status==='failed'){
+    const router=record.provider==='openrouter';
+    let data;
+    if(router){const credentials=record.transport==='worker'?{mode:'worker',workerUrl:record.gatewayUrl}:await providerCredentials('openrouter');if(!credentials)throw new Error('Настрой OpenRouter для продолжения задачи.');data=await openRouterRequest('status',{credentials,body:{taskId:record.requestId,taskToken:record.taskToken}});}
+    else{if(!await providerCredentials(record.provider||'byteplus'))throw new Error('Настрой BytePlus для продолжения задачи.');data=await (await proxy('/byteplus/status',{method:'POST',body:{taskId:record.requestId,taskToken:record.taskToken||null}})).json();}
+    const status=statusName(data.status||data.state);
+    if(['failed','cancelled'].includes(status)){
       const error=data.error?.message||data.error||data.message||'API сообщил об ошибке генерации';
-      return updateVideo(record.id,{status:'failed',error:typeof error==='string'?error:JSON.stringify(error),finishedAt:now()});
+      return updateVideo(record.id,{status,error:typeof error==='string'?error:JSON.stringify(error),finishedAt:now()});
     }
     if(status==='completed')return persistRemoteVideo(record,data);
     return updateVideo(record.id,{status,pct:Number(data.progress??data.pct??record.pct)||0,trackingWarning:null});
@@ -505,7 +620,7 @@ window.Studio=(()=>{
     const finish=()=>{clearTimeout(timer);signal?.removeEventListener('abort',finish);resolve();};
     const timer=setTimeout(finish,ms);signal?.addEventListener('abort',finish,{once:true});
   });}
-  async function watchGeneration(record,onUpdate,{interval=4500,signal}={}){
+  async function watchGeneration(record,onUpdate,{interval=record.provider==='openrouter'?15000:4500,signal}={}){
     let item=record,errors=0;
     while(!signal?.aborted&&!MagicDomain.terminal(item.status)){
       await pause(Math.min(30000,interval*2**errors),signal);if(signal?.aborted)break;
@@ -518,25 +633,25 @@ window.Studio=(()=>{
     }
     return item;
   }
-  let sessionRequest;
-  async function gatewaySession(){
-    const gateway=apiGatewayBase();if(!gateway)return null;
-    const stored=read(credentialKey('session'),null);
+  const sessionRequests=new Map();
+  async function gatewaySession(gateway=apiGatewayBase()){
+    if(!gateway)return null;
+    const sessionKey=credentialKey('session.'+gateway),stored=read(sessionKey,null)||read(credentialKey('session'),null);
     if(stored?.gateway===gateway&&stored.expiresAt>Date.now()+60000)return stored.token;
-    if(sessionRequest)return sessionRequest;
-    sessionRequest=(async()=>{
+    if(sessionRequests.has(gateway))return sessionRequests.get(gateway);
+    const sessionRequest=(async()=>{
       const response=await fetch(gateway+'/byteplus/session',{method:'POST',headers:{Authorization:'Bearer '+await api.auth.currentUser.getIdToken()},signal:AbortSignal.timeout(8000)});
       // Compatibility with the already-deployed, older Worker. Replace its code before
       // inviting the team; the new Worker always requires the membership receipt.
-      if(response.status===404){write(credentialKey('session'),{gateway,token:null,expiresAt:Date.now()+300000});return null;}
+      if(response.status===404){write(sessionKey,{gateway,token:null,expiresAt:Date.now()+300000});return null;}
       const data=await responseOrError(response,'Worker');
-      write(credentialKey('session'),{gateway,token:data.sessionToken,expiresAt:data.expiresAt});return data.sessionToken;
-    })();
-    try{return await sessionRequest;}finally{sessionRequest=null;}
+      write(sessionKey,{gateway,token:data.sessionToken,expiresAt:data.expiresAt});return data.sessionToken;
+    })();sessionRequests.set(gateway,sessionRequest);
+    try{return await sessionRequest;}finally{sessionRequests.delete(gateway);}
   }
-  async function gatewayHeaders(taskToken){
+  async function gatewayHeaders(taskToken,base=apiGatewayBase()){
     const headers={Authorization:'Bearer '+await api.auth.currentUser.getIdToken()};
-    const session=await gatewaySession();if(session)headers['X-Magic-Session']=session;
+    const session=await gatewaySession(base);if(session)headers['X-Magic-Session']=session;
     if(taskToken)headers['X-Task-Token']=taskToken;return headers;
   }
 
@@ -566,8 +681,8 @@ window.Studio=(()=>{
 
   return {ready,requireUser,current,isAdmin,signIn,signUp,logout,updateProfile,uploadProfilePhoto,listUsers,createUser,updateUserRole,uid,read,write,notify,download,element:el,timestamp,
     listFolders,listPresets,canEdit,saveFolder,deleteFolder,savePreset,deletePreset,loadTemplates,ensureTemplates,
-    portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,providerKey,providerCredentials,apiGatewayBase,
+    portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,integrationVerified,activeVideoProvider,setVideoProvider,videoModelFor,prepareVideoRequest,providerKey,providerCredentials,apiGatewayBase,openRouterGateway,
     listSpaces,createSpace,getSpace,renameSpace,duplicateSpace,deleteSpace,saveSpaceState,queueSpaceState,flushSpaceState,flushPendingWork,
-    uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,submitGeneration,refreshGeneration,watchGeneration,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
+    uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,permanentlyDeleteVideo,submitGeneration,refreshGeneration,watchGeneration,resolveVideoSource,downloadVideo,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
     getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
 })();

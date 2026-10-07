@@ -29,7 +29,7 @@ window.MagicDomain = (() => {
   }
   function compatible(type, direction) {
     if (direction === 'in') return { generation: ['media', 'preset'], text: ['preset'], output: ['generation'] }[type] || [];
-    return { generation: ['output'], media: ['generation'], preset: ['generation', 'text'], text: ['generation'] }[type] || [];
+    return { generation: ['output'], media: ['generation'], camera: ['generation'], preset: ['generation', 'text'], text: ['generation'] }[type] || [];
   }
   return { xp, totals, terminal, compatible, resolutions, defaultVideoModel, normalizeBytePlusModel };
 })();

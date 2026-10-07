@@ -72,7 +72,7 @@ service cloud.firestore {
     }
     match /videos/{id} {
       allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
-      allow create: if signedIn() && validResult(request.resource.data) && hasScoreWrite(id);
+      allow create: if signedIn() && !exists(/databases/$(database)/documents/videoDeletions/$(id)) && validResult(request.resource.data) && hasScoreWrite(id);
       allow update: if (
         owns('uid') && !terminal(resource.data.status) && validResult(request.resource.data)
         && request.resource.data.uid == resource.data.uid && hasScoreWrite(id)
@@ -81,8 +81,21 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['archived'])
         && request.resource.data.archived is bool
       );
-      // Archive cards, keep the report and lifetime ranking intact.
-      allow delete: if false;
+      // Only superusers can remove terminal results; preserve a minimal anti-replay marker.
+      allow delete: if isAdmin() && terminal(resource.data.status)
+        && getAfter(/databases/$(database)/documents/videoDeletions/$(id)).data.uid == resource.data.uid;
+    }
+    match /videoDeletions/{id} {
+      allow get: if signedIn() && (
+        !exists(/databases/$(database)/documents/videoDeletions/$(id)) || owns('uid') || isAdmin()
+      );
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly(['uid']) && request.resource.data.uid is string
+        && !existsAfter(/databases/$(database)/documents/videos/$(id))
+        && (!exists(/databases/$(database)/documents/videos/$(id)) || (
+          terminal(get(/databases/$(database)/documents/videos/$(id)).data.status)
+          && request.resource.data.uid == get(/databases/$(database)/documents/videos/$(id)).data.uid
+        ));
     }
 
     match /leaderboard/{uid} {
@@ -97,6 +110,7 @@ service cloud.firestore {
         let path = /databases/$(database)/documents/videos/$(d.lastVideoId);
         let v = getAfter(path).data;
         return signedIn() && request.auth.uid == uid
+          && !exists(/databases/$(database)/documents/videoDeletions/$(d.lastVideoId))
           && (!exists(path) || !terminal(get(path).data.status))
           && validResult(v) && v.uid == uid
           && d.nickname == myProfile().data.displayName

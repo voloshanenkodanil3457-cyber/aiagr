@@ -37,8 +37,8 @@ export async function verifyTaskToken(token,uid,taskId,env){
     ||!await crypto.subtle.verify('HMAC',await receiptKey(env),decode(parts[1]),encoder.encode(parts[0])))throw denied('This task belongs to another user or the receipt expired',403);
 }
 
-export async function issueSessionToken(uid,env){
-  const expiresAt=Date.now()+3600000,body=encode(encoder.encode(JSON.stringify({uid,purpose:'membership',exp:Math.floor(expiresAt/1000)})));
+export async function issueSessionToken(uid,env,role='user'){
+  const expiresAt=Date.now()+3600000,body=encode(encoder.encode(JSON.stringify({uid,role,purpose:'membership',exp:Math.floor(expiresAt/1000)})));
   const signature=await crypto.subtle.sign('HMAC',await receiptKey(env),encoder.encode(body));
   return {sessionToken:body+'.'+encode(new Uint8Array(signature)),expiresAt};
 }
@@ -48,6 +48,7 @@ export async function verifySessionToken(token,uid,env){
   const claims=parse(parts[0]);
   if(claims.uid!==uid||claims.purpose!=='membership'||!Number.isFinite(claims.exp)||claims.exp<=Date.now()/1000
     ||!await crypto.subtle.verify('HMAC',await receiptKey(env),decode(parts[1]),encoder.encode(parts[0])))throw denied('Membership session expired',403);
+  return claims;
 }
 
 // Purpose-separated, user-bound receipts for private portrait groups, assets and H5 sessions.

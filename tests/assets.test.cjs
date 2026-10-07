@@ -1,0 +1,51 @@
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const vm=require('node:vm');
+const {webcrypto}=require('node:crypto');
+
+function app(role='superuser',uid='alice'){
+  const storage={};
+  Object.defineProperties(storage,{getItem:{value:k=>storage[k]??null},setItem:{value:(k,v)=>storage[k]=v},removeItem:{value:k=>delete storage[k]}});
+  const context=vm.createContext({addEventListener:()=>{},console,structuredClone,crypto:webcrypto,localStorage:storage,sessionStorage:storage,queueMicrotask,Blob,URL,AbortController,setTimeout,clearTimeout,location:{origin:'http://localhost'},document:{documentElement:{dataset:{}},querySelector:()=>null},MagicLocal:{get:async()=>null},window:{}});
+  vm.runInContext('window=globalThis',context);
+  vm.runInContext(fs.readFileSync('source/domain.js','utf8'),context);
+  vm.runInContext(fs.readFileSync('tests/firebase-mock.js','utf8'),context);
+  const docs=context.__qa.get('docs',{});docs['users/alice'].role=role;context.__qa.put('docs',docs);
+  context.__test={user:{uid},profile:{uid,role,displayName:uid},api:{db:{},fsM:context.__qa.sdk}};
+  const source=fs.readFileSync('source/app.js','utf8').replace('  init();','  cache.user=__test.user;cache.profile=__test.profile;api=__test.api;readyResolve();');
+  vm.runInContext(source,context);
+  return {s:context.Studio,c:context,docs:()=>JSON.parse(JSON.stringify(context.__qa.get('docs',{})))};
+}
+test('Assets queries all results for superuser and only owned results for user',async()=>{
+  const boss=app(),user=app('user');
+  assert.equal((await boss.s.listVideos()).length,1);
+  assert.equal((await user.s.listVideos()).length,0);
+  assert.deepEqual(JSON.parse(JSON.stringify(user.c.__qa.get('metrics',{}).queries[0].constraints)),[{field:'uid',op:'==',value:'alice'}]);
+});
+test('superuser removes another user result, keeps lifetime score and only a minimal replay marker',async()=>{
+  const a=app();const score=a.docs()['leaderboard/bob'];await a.s.permanentlyDeleteVideo('bob-video');
+  assert.equal(a.docs()['videos/bob-video'],undefined);
+  assert.deepEqual(a.docs()['videoDeletions/bob-video'],{uid:'bob'});
+  assert.deepEqual(a.docs()['leaderboard/bob'],score);
+  assert.equal((await a.s.listVideos()).length,0);
+});
+test('regular user cannot permanently delete even their own result; running results cannot be removed',async()=>{
+  const user=app('user','bob');await assert.rejects(user.s.permanentlyDeleteVideo('bob-video'),/суперадмину/);
+  const boss=app(),d=boss.docs();d['videos/bob-video'].status='running';boss.c.__qa.put('docs',d);
+  await assert.rejects(boss.s.permanentlyDeleteVideo('bob-video'),/завершения/);
+  assert.ok(boss.docs()['videos/bob-video']);assert.equal(boss.docs()['videoDeletions/bob-video'],undefined);
+});
+test('failed result is physically removed and stale local sync cannot recreate it or award XP',async()=>{
+  const a=app(),row=await a.s.createVideoRecord({seconds:8});
+  await a.s.updateVideo(row.id,{status:'failed',error:'Failed fixture'});
+  await a.s.permanentlyDeleteVideo(row.id);assert.equal(a.docs()['videos/'+row.id],undefined);
+  const writes=a.c.__qa.get('metrics',{}).writes;
+  a.c.localStorage.setItem('magic.job.v3.alice.'+row.id,JSON.stringify({...row,status:'completed',cloudSaved:false}));
+  // Same recovery path used when a stale browser tab restarts.
+  await a.s.updateVideo(row.id,{status:'completed'});
+  await new Promise(resolve=>setTimeout(resolve,10));
+  assert.equal(a.docs()['videos/'+row.id],undefined);
+  assert.equal(a.c.localStorage.getItem('magic.job.v3.alice.'+row.id),null);
+  assert.equal(a.c.__qa.get('metrics',{}).writes,writes);
+});
