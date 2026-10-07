@@ -12,3 +12,12 @@ FIREBASE_PROJECT_ID = "aiagr-80390"
 # Set ALLOWED_ORIGIN to your website origin before deploying.
 # ALLOWED_ORIGIN = "https://YOURNAME.github.io"
 # LEGACY_TASK_OWNER_UID = "UID of the owner of old pending tasks, optional"
+
+# Optional portrait library. Activate the corresponding BytePlus rights first.
+# Add BYTEPLUS_ACCESS_KEY_ID / BYTEPLUS_SECRET_ACCESS_KEY as secrets, never here.
+# BYTEPLUS_PROJECT_NAME = "default"
+# PORTRAIT_CALLBACK_URL = "https://voloshanenkodanil3457-cyber.github.io/aiagr/portrait-callback.html"
+# For local photos create a PRIVATE R2 bucket and enable its staging lifecycle.
+# [[r2_buckets]]
+# binding = "PORTRAIT_FILES"
+# bucket_name = "magic-portrait-staging"

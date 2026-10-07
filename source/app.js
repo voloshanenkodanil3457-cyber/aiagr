@@ -200,7 +200,7 @@ window.Studio=(()=>{
   async function responseOrError(r,label='API'){
     const type=r.headers.get('content-type')||'';let data;
     try{data=type.includes('json')?await r.json():await r.text();}catch{data='';}
-    if(!r.ok){const detail=typeof data==='string'?data:(data?.detail?.error?.message||data?.detail?.message||data?.error?.message||data?.error||data?.message||JSON.stringify(data));const message=typeof detail==='string'?detail:JSON.stringify(detail);const hint=r.status===404&&/model|endpoint/i.test(message||'')?' Проверь Model ID и статус Activated в BytePlus → Activation management. Успешная проверка API-ключа не подтверждает доступ к модели.':r.status===429&&/Safe Experience Mode|SetLimitExceeded|set usage limit|set inference limit/i.test(message||'')?' Лимит BytePlus: проверь Safe Experience Mode в Model Activation. Этот запрос не создал новую задачу.':'';const err=new Error(`${label} ${r.status}${message?`: ${message.slice(0,500)}`:''}${hint}`);err.httpStatus=r.status;throw err;}
+    if(!r.ok){const detail=typeof data==='string'?data:(data?.detail?.error?.message||data?.detail?.message||data?.error?.message||data?.error||data?.message||JSON.stringify(data));const message=typeof detail==='string'?detail:JSON.stringify(detail);const hint=r.status===400&&/may contain real person|PrivacyInformation|RealPerson/i.test(message||'')?' BytePlus отклонил портрет. Нажми «Портрет» у этого референса: выбери проверенного человека или разрешённого виртуального персонажа, зарегистрируй фото и дождись Active.':'';const otherHint=r.status===404&&/model|endpoint/i.test(message||'')?' Проверь Model ID и статус Activated в BytePlus → Activation management. Успешная проверка API-ключа не подтверждает доступ к модели.':r.status===429&&/Safe Experience Mode|SetLimitExceeded|set usage limit|set inference limit/i.test(message||'')?' Лимит BytePlus: проверь Safe Experience Mode в Model Activation. Этот запрос не создал новую задачу.':'';const err=new Error(`${label} ${r.status}${message?`: ${message.slice(0,500)}`:''}${hint}${otherHint}`);err.httpStatus=r.status;throw err;}
     return data;
   }
 
@@ -243,6 +243,21 @@ window.Studio=(()=>{
     try{data=await requestApi(base+path,{method,headers:h,body},'Worker');}
     catch(e){if(e instanceof TypeError)throw new Error('Не удалось связаться с Cloudflare Worker. Проверь Worker URL и deploy.');throw e;}
     return new Response(JSON.stringify(data),{status:200,headers:{'Content-Type':'application/json'}});
+  }
+  async function portraitApi(path,body={}){
+    if(!apiGatewayBase())throw new Error('Регистрация портретов требует Worker URL в My settings. AK/SK хранятся только в Worker; обычный Direct API остаётся доступным для остальных референсов.');
+    return (await proxy('/byteplus/portraits/'+path,{method:'POST',body})).json();
+  }
+  async function portraitUpload(file){
+    if(!apiGatewayBase())throw new Error('Подключи Worker URL в My settings.');
+    const headers={...await withDeadline(gatewayHeaders(),15000,'Авторизация Worker не ответила.'),'Content-Type':file.type};
+    return requestApi(apiGatewayBase()+'/byteplus/portraits/upload',{method:'POST',headers,body:file},'Worker');
+  }
+  async function setPortraitGroup(item,groupId){
+    const stored=await MagicLocal.get(cache.user.uid,item.id);
+    if(!stored)throw new Error('Локальная копия референса недоступна. Добавь фото повторно.');
+    stored.meta={...stored.meta,portraitGroupId:groupId||null};stored.cloudSaved=false;
+    await MagicLocal.put(cache.user.uid,item.id,stored);return {...item,portraitGroupId:groupId||null};
   }
   async function testIntegration(provider){
     const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Сначала настрой Direct ARK API Key или Cloudflare Worker URL.');
@@ -314,6 +329,7 @@ window.Studio=(()=>{
     await MagicLocal.put(cache.user.uid,assetId,{meta,cloudSaved:false});return meta;
   }
   async function ensureRemoteAsset(item){
+    if(item.portraitGroupId)return MagicPortraits.ensure(item);
     // Only the API request carries image bytes. The graph and Firestore keep metadata.
     if(/^https:\/\//.test(item.url||''))return {...item,referenceUrl:item.url};
     const stored=await withDeadline(MagicLocal.get(cache.user.uid,item.id),10000,`Локальное хранилище не ответило. Добавь файл «${item.name}» повторно.`);
@@ -550,7 +566,7 @@ window.Studio=(()=>{
 
   return {ready,requireUser,current,isAdmin,signIn,signUp,logout,updateProfile,uploadProfilePhoto,listUsers,createUser,updateUserRole,uid,read,write,notify,download,element:el,timestamp,
     listFolders,listPresets,canEdit,saveFolder,deleteFolder,savePreset,deletePreset,loadTemplates,ensureTemplates,
-    getIntegration,saveIntegration,removeIntegration,testIntegration,providerKey,providerCredentials,apiGatewayBase,
+    portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,providerKey,providerCredentials,apiGatewayBase,
     listSpaces,createSpace,getSpace,renameSpace,duplicateSpace,deleteSpace,saveSpaceState,queueSpaceState,flushSpaceState,flushPendingWork,
     uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,submitGeneration,refreshGeneration,watchGeneration,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
     getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};

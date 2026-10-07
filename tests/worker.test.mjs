@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import worker from '../cloudflare-worker/worker.js';
 import {authenticate,issueTaskToken,verifyTaskToken,issueSessionToken} from '../cloudflare-worker/auth.js';
 const env={FIREBASE_PROJECT_ID:'demo-magic-tests',ARK_API_KEY:'test-only-provider-secret'},originalFetch=globalThis.fetch;
-let lastProviderBody,keys,jwk,providerCalls=0,membershipRole='user',profileReads=0;
+let lastProviderBody,keys,jwk,providerCalls=0,membershipRole='user',profileReads=0,portraitStatus='Active',requestIdOnly=false;
 const b64=value=>Buffer.from(typeof value==='string'?value:JSON.stringify(value)).toString('base64url');
 async function token(uid='alice',patch={}){
  const now=Math.floor(Date.now()/1000),head=b64({alg:'RS256',kid:'test-key'}),payload=b64({aud:env.FIREBASE_PROJECT_ID,iss:'https://securetoken.google.com/'+env.FIREBASE_PROJECT_ID,sub:uid,exp:now+3600,iat:now,auth_time:now,...patch});
@@ -14,7 +14,10 @@ before(async()=>{
  globalThis.fetch=async(url,init)=>{
   if(String(url).includes('service_accounts/v1/jwk'))return Response.json({keys:[jwk]});
   if(String(url).includes('firestore.googleapis.com')){profileReads++;return membershipRole?Response.json({fields:{role:{stringValue:membershipRole}}}):new Response('',{status:404});}
-  if(String(url).includes('bytepluses.com')){providerCalls++;if(init?.body)lastProviderBody=JSON.parse(init.body);return Response.json(init?.method==='POST'?{id:'task-1'}:{status:'running'});}
+  if(String(url).includes('ark.ap-southeast-1.byteplusapi.com')){
+   const action=new URL(url).searchParams.get('Action');return Response.json({Result:action==='CreateAssetGroup'?{Id:'group-worker'}:action==='CreateAsset'?{Id:'asset-worker'}:{Status:portraitStatus,GroupId:'group-worker',AssetType:'Image'}});
+  }
+  if(String(url).includes('bytepluses.com')){providerCalls++;if(init?.body)lastProviderBody=JSON.parse(init.body);return Response.json(init?.method==='POST'?(requestIdOnly?{request_id:'not-a-generation-id'}:{id:'task-1'}):{status:'running'});}
   throw new Error('Unexpected network: '+url);
  };
 });
@@ -79,4 +82,27 @@ test('Spark images reach the provider as Base64; local video/data references are
  assert.equal((await call({reference_videos:['data:video/mp4;base64,aGVsbG8=']})).status,400);
  assert.equal((await call({reference_images:['blob:local-only']})).status,400);
  assert.equal(providerCalls,before);
+});
+
+test('authenticated portrait routes enforce Active and receipt ownership before inference',async()=>{
+ const assetsEnv={...env,BYTEPLUS_ACCESS_KEY_ID:'test-ak',BYTEPLUS_SECRET_ACCESS_KEY:'test-sk'};
+ const headers={Authorization:'Bearer '+await token(),'X-Magic-Session':(await issueSessionToken('alice',assetsEnv)).sessionToken};
+ const call=(route,body,h=headers)=>worker.fetch(new Request('https://worker.test/byteplus/'+route,{method:'POST',headers:h,body:JSON.stringify(body)}),assetsEnv);
+ const dbBefore=profileReads;
+ const g=await call('portraits/groups/create',{name:'Fictional hero',type:'AIGC'});assert.equal(g.status,200);const group=await g.json();
+ const a=await call('portraits/assets/create',{groupToken:group.token,url:'https://photos.test/ai.jpg',name:'Photo'});assert.equal(a.status,200);const asset=await a.json();
+ const payload={prompt:'Scene',duration:8,resolution:'720p',ratio:'16:9',reference_images:['asset://asset-worker'],asset_receipts:{'asset-worker':asset.token}};
+ const before=providerCalls;portraitStatus='Processing';assert.equal((await call('submit',{payload})).status,409);assert.equal(providerCalls,before);
+ portraitStatus='Active';assert.equal((await call('submit',{payload})).status,200);
+ assert.equal(lastProviderBody.content[1].image_url.url,'asset://asset-worker');assert.equal(lastProviderBody.asset_receipts,undefined);
+ const bob={Authorization:'Bearer '+await token('bob'),'X-Magic-Session':(await issueSessionToken('bob',assetsEnv)).sessionToken};
+ const paid=providerCalls;assert.equal((await call('submit',{payload},bob)).status,403);assert.equal(providerCalls,paid);
+ assert.equal(profileReads,dbBefore,'portrait registration/status must not query Firestore per photo');
+});
+
+test('a provider request ID alone never starts polling as a generation task',async()=>{
+ const headers={Authorization:'Bearer '+await token(),'X-Magic-Session':(await issueSessionToken('alice',env)).sessionToken};
+ requestIdOnly=true;
+ try{const r=await worker.fetch(new Request('https://worker.test/byteplus/submit',{method:'POST',headers,body:JSON.stringify({payload:{prompt:'Scene',duration:8,resolution:'720p',ratio:'16:9'}})}),env);assert.equal(r.status,502);assert.equal((await r.json()).taskToken,undefined);}
+ finally{requestIdOnly=false;}
 });

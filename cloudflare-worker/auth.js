@@ -49,3 +49,19 @@ export async function verifySessionToken(token,uid,env){
   if(claims.uid!==uid||claims.purpose!=='membership'||!Number.isFinite(claims.exp)||claims.exp<=Date.now()/1000
     ||!await crypto.subtle.verify('HMAC',await receiptKey(env),decode(parts[1]),encoder.encode(parts[0])))throw denied('Membership session expired',403);
 }
+
+// Purpose-separated, user-bound receipts for private portrait groups, assets and H5 sessions.
+export async function issueResourceToken(uid,purpose,resource,env,ttl=60*86400){
+  const claims={uid,purpose,resource,exp:Math.floor(Date.now()/1000)+ttl};
+  const body=encode(encoder.encode(JSON.stringify(claims)));
+  const signature=await crypto.subtle.sign('HMAC',await receiptKey(env),encoder.encode(body));
+  return body+'.'+encode(new Uint8Array(signature));
+}
+export async function verifyResourceToken(token,uid,purpose,env){
+  if(typeof token!=='string'||token.length>8192)throw denied('Portrait ownership receipt required',403);
+  const parts=token.split('.');if(parts.length!==2)throw denied('Invalid portrait receipt',403);
+  const claims=parse(parts[0]);
+  if((uid!==null&&claims.uid!==uid)||claims.purpose!==purpose||!claims.resource||!Number.isFinite(claims.exp)||claims.exp<=Date.now()/1000
+    ||!await crypto.subtle.verify('HMAC',await receiptKey(env),decode(parts[1]),encoder.encode(parts[0])))throw denied('Portrait receipt expired or belongs to another user',403);
+  return claims.resource;
+}

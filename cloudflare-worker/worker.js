@@ -1,4 +1,5 @@
 import {authenticate,issueTaskToken,verifyTaskToken,issueSessionToken,verifySessionToken} from './auth.js';
+import {portraitRoute,servePortraitFile,validatePortraitReferences} from './portraits.js';
 
 const BYTEPLUS_BASE = 'https://ark.ap-southeast.bytepluses.com/api/v3';
 const DEFAULT_MODEL = 'dreamina-seedance-2-5-260628';
@@ -88,8 +89,9 @@ function validatePayload(p) {
   if(p.first_frame_url||p.last_frame_url)fail('Only Omni Reference mode is supported');
   if((p.reference_images&&!Array.isArray(p.reference_images))||(p.reference_videos&&!Array.isArray(p.reference_videos)))fail('Invalid references');
   const refs=[...(p.reference_images||[]),...(p.reference_videos||[])];
-  const imageSource=url=>typeof url==='string'&&(/^https:\/\//.test(url)||/^data:image\/(jpeg|png|webp|bmp|tiff|gif|heic|heif);base64,[A-Za-z0-9+/]+={0,2}$/.test(url));
-  if(refs.length>15||(p.reference_images||[]).some(url=>!imageSource(url))||(p.reference_videos||[]).some(url=>typeof url!=='string'||!url.startsWith('https://')))fail('Use up to 15 references: HTTPS URLs or Base64 images; videos require HTTPS');
+  const assetSource=url=>typeof url==='string'&&/^asset:\/\/[a-zA-Z0-9_-]{3,160}$/.test(url);
+  const imageSource=url=>typeof url==='string'&&(assetSource(url)||/^https:\/\//.test(url)||/^data:image\/(jpeg|png|webp|bmp|tiff|gif|heic|heif);base64,[A-Za-z0-9+/]+={0,2}$/.test(url));
+  if(refs.length>15||(p.reference_images||[]).some(url=>!imageSource(url))||(p.reference_videos||[]).some(url=>typeof url!=='string'||(!url.startsWith('https://')&&!assetSource(url))))fail('Use up to 15 references: HTTPS URLs, Base64 images or approved asset URIs');
   if(JSON.stringify(p).length>60*1024*1024)fail('Reference request exceeds 60 MiB');
 }
 
@@ -105,6 +107,7 @@ export default {
       if (url.pathname === '/health') {
         return json({ok:true, service:'magic-byteplus-worker', model:configuredModel(env)}, 200, request, env);
       }
+      if(url.pathname.startsWith('/byteplus/portraits/file/') && request.method==='GET')return await servePortraitFile(request,env);
 
       const uid = await authenticate(request, env);
       if(url.pathname==='/byteplus/session' && request.method==='POST'){
@@ -115,6 +118,7 @@ export default {
         return json(await issueSessionToken(uid,env),200,request,env);
       }
       await verifySessionToken(request.headers.get('X-Magic-Session'),uid,env);
+      if(url.pathname.startsWith('/byteplus/portraits/') && request.method==='POST')return json(await portraitRoute(request,env,uid),200,request,env);
 
       if (url.pathname === '/byteplus/test' && request.method === 'POST') {
         const data = await byteplus('/contents/generations/tasks?page_num=1&page_size=1', {method:'GET'}, env);
@@ -125,9 +129,10 @@ export default {
         const body = await readJson(request);
         const payload = body.payload || body;
         validatePayload(payload);
+        await validatePortraitReferences(payload,uid,env);
         const reqBody = buildGenerationBody(payload, env);
         const data = await byteplus('/contents/generations/tasks', {method:'POST', body:JSON.stringify(reqBody)}, env);
-        const id = data.id || data.request_id;
+        const id = data.id;
         if (!id) return json({error:'Provider did not return a task ID'},502,request,env);
         return json({...data, taskToken:await issueTaskToken(uid,id,env)}, 200, request, env);
       }
