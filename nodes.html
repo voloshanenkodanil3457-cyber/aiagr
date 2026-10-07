@@ -1095,14 +1095,17 @@ window.Studio=(()=>{
   function nativeVideoDownload(url,filename){
     const parsed=new URL(url,location.href);
     if(parsed.protocol!=='https:'&&parsed.protocol!=='http:')throw new Error('Недопустимая ссылка видео.');
-    const dialog=el('dialog',undefined,'studio-dialog download-fallback-dialog'),header=el('header'),close=el('button','×','icon-button');
-    header.append(el('h2','Сохранить видео'),close);close.onclick=()=>dialog.close();
-    const note=el('p','Сервер видео запрещает скачивание через запрос с сайта. Открой оригинал и выбери в плеере ⋮ → Скачать или нажми Ctrl+S.','panel-note');
-    const link=el('a','Открыть видео для сохранения','ui-button primary');link.href=parsed.href;link.download=filename;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
-    dialog.append(header,note,link);dialog.onclose=()=>dialog.remove();dialog.addEventListener('keydown',e=>e.stopPropagation());document.body.append(dialog);dialog.showModal();
+    const link=document.createElement('a');link.href=parsed.href;link.download=filename;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
+    document.body.append(link);link.click();link.remove();
     return {method:'native',url:parsed.href};
   }
   async function downloadVideo(record){
+    if(!record||(!isAdmin()&&record.uid!==cache.user.uid))throw new Error('Нет доступа к этой генерации.');
+    // Follow the provider link during the click, without a CORS fetch or another dialog.
+    if(record.provider!=='openrouter'){
+      const url=record.videoUrl||record.remoteUrl;if(!url)throw new Error('Видео ещё не готово.');
+      return nativeVideoDownload(url,'magic-'+safeName(record.id||record.requestId)+'.mp4');
+    }
     const source=await resolveVideoSource(record);let temp;
     const filename='magic-'+safeName(record.id||record.requestId)+'.mp4';
     try{
