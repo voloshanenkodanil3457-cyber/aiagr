@@ -591,12 +591,46 @@ window.Studio=(()=>{
     const release=()=>{if(released)return;released=true;if(--entry.refs===0&&entry.blobUrl){URL.revokeObjectURL(entry.blobUrl);if(playbackCache.get(cacheKey)===entry)playbackCache.delete(cacheKey);}};
     try{return {url:await entry.promise,release};}catch(e){release();throw e;}
   }
+  function nativeVideoDownload(url,filename){
+    const parsed=new URL(url,location.href);
+    if(parsed.protocol!=='https:'&&parsed.protocol!=='http:')throw new Error('Недопустимая ссылка видео.');
+    const dialog=el('dialog',undefined,'studio-dialog download-fallback-dialog'),header=el('header'),close=el('button','×','icon-button');
+    header.append(el('h2','Сохранить видео'),close);close.onclick=()=>dialog.close();
+    const note=el('p','Сервер видео запрещает скачивание через запрос с сайта. Открой оригинал и выбери в плеере ⋮ → Скачать или нажми Ctrl+S.','panel-note');
+    const link=el('a','Открыть видео для сохранения','ui-button primary');link.href=parsed.href;link.download=filename;link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
+    dialog.append(header,note,link);dialog.onclose=()=>dialog.remove();dialog.addEventListener('keydown',e=>e.stopPropagation());document.body.append(dialog);dialog.showModal();
+    return {method:'native',url:parsed.href};
+  }
   async function downloadVideo(record){
     const source=await resolveVideoSource(record);let temp;
+    const filename='magic-'+safeName(record.id||record.requestId)+'.mp4';
     try{
-      let url=source.url;if(!url.startsWith('blob:')){const r=await fetch(url);if(!r.ok)throw new Error('Не удалось скачать видео: '+r.status);temp=URL.createObjectURL(await r.blob());url=temp;}
-      const link=document.createElement('a');link.href=url;link.download='magic-'+safeName(record.id||record.requestId)+'.mp4';link.click();
-    }finally{setTimeout(()=>{if(temp)URL.revokeObjectURL(temp);source.release();},1000);}
+      let url=source.url;
+      if(!url.startsWith('blob:')){
+        // BytePlus playback URLs may allow <video> but deny cross-origin fetch.
+        // Its existing authenticated Worker media route streams the file with CORS.
+        const configured=apiGatewayBase(),gateway=record.gatewayUrl||configured;
+        const throughWorker=record.provider!=='openrouter'&&record.uid===cache.user.uid&&record.requestId&&record.taskToken&&gateway
+          && gateway===configured;
+        const target=throughWorker?gateway+'/byteplus/media/'+encodeURIComponent(record.requestId):url;
+        const headers=throughWorker?await gatewayHeaders(record.taskToken,gateway):undefined;
+        const controller=new AbortController();let blob;
+        try{
+          blob=await withDeadline((async()=>{
+            const r=await fetch(target,{headers,signal:controller.signal});
+            if(!r.ok){const e=new Error(r.status===404||r.status===410?'Ссылка видео истекла или файл удалён у провайдера.':'Не удалось скачать видео: '+r.status);e.httpStatus=r.status;throw e;}
+            return r.blob();
+          })(),90000,'Загрузка видео не завершилась. Попробуй ещё раз.',()=>controller.abort());
+        }catch(e){
+          const external=new URL(url,location.href).origin!==location.origin;
+          if(external&&(e instanceof TypeError||e.httpStatus===404&&throughWorker))return nativeVideoDownload(url,filename);
+          throw e;
+        }
+        temp=URL.createObjectURL(blob);url=temp;
+      }
+      const link=document.createElement('a');link.href=url;link.download=filename;document.body.append(link);link.click();link.remove();
+      return {method:'download'};
+    }finally{setTimeout(()=>{if(temp)URL.revokeObjectURL(temp);source.release();},60000);}
   }
   window.addEventListener('pagehide',()=>{for(const entry of playbackCache.values())if(entry.blobUrl)URL.revokeObjectURL(entry.blobUrl);playbackCache.clear();});
   async function refreshGeneration(record){
