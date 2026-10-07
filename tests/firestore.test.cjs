@@ -1,6 +1,6 @@
 const {test,before,after,beforeEach}=require('node:test');
 const {initializeTestEnvironment,assertSucceeds,assertFails}=require('@firebase/rules-unit-testing');
-const {doc,getDoc,setDoc,updateDoc,collection,query,where,getDocs,writeBatch}=require('firebase/firestore');
+const {doc,getDoc,setDoc,updateDoc,deleteDoc,collection,query,where,getDocs,writeBatch}=require('firebase/firestore');
 const {ref,uploadBytes,getBytes}=require('firebase/storage');
 const fs=require('node:fs');let env;
 const db=uid=>env.authenticatedContext(uid,{email:uid+'@example.test'}).firestore();
@@ -86,4 +86,18 @@ test('an Auth token alone cannot create a team profile or access the application
   await assertFails(setDoc(doc(db('outsider'),'users','outsider'),{email:'outsider@example.test',displayName:'outsider',role:'user'}));
   await assertFails(setDoc(doc(db('outsider'),'spaces','new'),{ownerUid:'outsider'}));
   await assertFails(getDocs(collection(db('outsider'),'leaderboard')));
+});
+
+test('only superuser deletes terminal results atomically and stale results cannot return',async()=>{
+  const erase=(uid,id,owner)=>{const d=db(uid),b=writeBatch(d);b.set(doc(d,'videoDeletions',id),{uid:owner});b.delete(doc(d,'videos',id));return b.commit();};
+  await assertFails(deleteDoc(doc(db('boss'),'videos','bob')));
+  await assertFails(erase('bob','bob','bob'));
+  await assertFails(erase('boss','bob','alice'));
+  await assertSucceeds(erase('boss','bob','bob'));
+  await assertSucceeds(getDoc(doc(db('bob'),'videoDeletions','bob')));
+  await assertFails(getDocs(collection(db('bob'),'videoDeletions')));
+  await assertFails(deleteDoc(doc(db('boss'),'videoDeletions','bob')));
+  await assertFails(resultBatch('bob','bob',10,{seconds:4,resolution:'480p',referenceCount:1}).commit());
+  await env.withSecurityRulesDisabled(ctx=>setDoc(doc(ctx.firestore(),'videos','running'),{uid:'alice',status:'running'}));
+  await assertFails(erase('boss','running','alice'));
 });

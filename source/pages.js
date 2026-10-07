@@ -83,16 +83,25 @@
     async function reload(){videos=await S.listVideos();if(mode==='inputs')inputs=await S.listInputAssets();render();}
     function videoCard(v){
       const card=E('article',undefined,'asset-card'),media=E('div',undefined,'asset-media');
-      if(v.videoUrl){const video=E('video');video.src=v.videoUrl;video.controls=true;video.preload='metadata';media.append(video);}else media.append(E('div',statusLabel(v.status),'asset-placeholder '+String(v.status||'')));
+      if(v.videoUrl){
+        const trigger=E('button',undefined,'asset-preview-trigger');trigger.setAttribute('aria-label','Предпросмотр видео · '+(v.user||'User'));trigger.style.height='100%';trigger.onclick=()=>MagicVideoViewer.show(v);
+        if(v.provider!=='openrouter'){const video=E('video');video.src=v.videoUrl;video.muted=true;video.playsInline=true;video.preload='metadata';trigger.append(video);}else trigger.append(E('span','READY','asset-placeholder completed'));
+        trigger.append(E('span','▷','asset-preview-play'));media.append(trigger);
+      }else media.append(E('div',statusLabel(v.status),'asset-placeholder '+String(v.status||'')));
       if(v.cost!=null)media.append(E('span','$'+Number(v.cost).toFixed(2),'asset-cost'));
       if(v.seconds>0)media.append(E('span',v.seconds+'s','asset-duration'));
       const body=E('div',undefined,'asset-body');body.append(E('p',(v.prompt||'Без промпта').slice(0,180)),E('small',`${v.model||'model'} · ${v.resolution||''} ${v.ratio||''}`));
       const tags=E('div',undefined,'asset-tags');tags.append(E('span',v.user||'User'),E('span',fmtDate(v.createdAt)));
       if(v.archived)tags.append(E('span','В архиве'));const actions=E('div',undefined,'asset-actions');
-      if(v.videoUrl){const save=E('a','Скачать видео','ui-button small');save.href=v.videoUrl;save.target='_blank';save.rel='noopener';save.download='magic-'+v.id+'.mp4';actions.append(save);if(v.providerUrlExpiresAt)body.append(E('small',Date.now()>=v.providerUrlExpiresAt?'Ссылка провайдера могла истечь; отчёт сохранён.':'Ссылка ориентировочно до '+new Date(v.providerUrlExpiresAt).toLocaleString('ru-RU'),'asset-warning'));}
+      if(v.videoUrl){const preview=E('button','Предпросмотр','ui-button small');preview.onclick=()=>MagicVideoViewer.show(v);const save=E('button','Скачать видео','ui-button small');save.onclick=async()=>{save.disabled=true;try{await S.downloadVideo(v);}catch(e){S.notify(e.message,'error');}finally{save.disabled=false;}};actions.append(preview,save);if(v.providerUrlExpiresAt)body.append(E('small',Date.now()>=v.providerUrlExpiresAt?'Ссылка провайдера могла истечь; отчёт сохранён.':'Ссылка ориентировочно до '+new Date(v.providerUrlExpiresAt).toLocaleString('ru-RU'),'asset-warning'));}
       if(v.uid===user.uid&&v.spaceId){const open=E('a','Открыть Canvas','ui-button small');open.href=`nodes.html?space=${encodeURIComponent(v.spaceId)}`;actions.append(open);}
       if(v.uid===user.uid&&!MagicDomain.terminal(v.status)&&v.requestId){const refresh=E('button','Проверить статус','ui-button small');refresh.onclick=async()=>{refresh.disabled=true;try{const fresh=await S.refreshGeneration(v);videos=videos.map(x=>x.id===fresh.id?fresh:x);render();}catch(e){S.notify(e.message,'error');}finally{refresh.disabled=false;}};actions.append(refresh);}
       if(v.uid===user.uid&&MagicDomain.terminal(v.status)&&!v.archived){const archive=E('button','В архив','ui-button small ghost');archive.onclick=async()=>{archive.disabled=true;try{await S.deleteVideo(v.id);v.archived=true;render();}catch(e){S.notify(e.message,'error');archive.disabled=false;}};actions.append(archive);}
+      if(S.isAdmin()&&MagicDomain.terminal(v.status)){
+        const remove=E('button','Удалить из базы','ui-button small ghost asset-delete');
+        remove.onclick=async()=>{if(!confirm(`Удалить генерацию пользователя «${v.user||'User'}» из базы навсегда? Запись, промпт, ссылка и ошибка исчезнут из Assets и отчётов. Накопленный рейтинг сохранится. Файл у провайдера и копия в Canvas не удаляются.`))return;remove.disabled=true;try{await S.permanentlyDeleteVideo(v.id);videos=videos.filter(x=>x.id!==v.id);render();S.notify('Генерация удалена из базы.');}catch(e){S.notify(e.message,'error');remove.disabled=false;}};
+        actions.append(remove);
+      }
       if(v.error||v.archiveWarning)body.append(E('small',v.error||v.archiveWarning,'asset-warning'));
       body.append(tags,actions);card.append(media,body);return card;
     }
@@ -117,21 +126,32 @@
   if(page==='presets'){await S.ensureTemplates();mountPresetLibrary($('#preset-library'));}
 
   if(page==='integrations'){
-    const provider='byteplus',key=$('#byteplus-api-key'),worker=$('#byteplus-worker-url'),state=$('#byteplus-state'),connect=$('#byteplus-save'),test=$('#byteplus-test'),remove=$('#byteplus-remove'),card=$('#byteplus-card');
-    const existing=await S.getIntegration(provider),localKey=await S.providerKey(provider),workerUrl=S.apiGatewayBase();
-    worker.value=workerUrl;
-    if(existing?.connected||localKey||workerUrl){key.value='';key.placeholder=localKey?'Ключ сохранён в этом браузере':'ARK key не нужен в Worker mode';state.textContent=workerUrl?'● Worker сохранён — нажми «Проверить»':'● Direct mode сохранён — нажми «Проверить»';state.className='integration-state ok';card.classList.add('connected');remove.hidden=false;test.hidden=false;}
-    $('#byteplus-toggle').onclick=()=>{key.type=key.type==='password'?'text':'password';};
-    connect.onclick=async()=>{connect.disabled=true;try{
-      const apiKey=key.value.trim(),gateway=worker.value.trim();
-      if(!apiKey&&!gateway)throw new Error('Вставь ARK API Key для быстрого Direct mode или Cloudflare Worker URL.');
-      await S.saveIntegration(provider,{apiKey,workerUrl:gateway,label:'BytePlus ModelArk'});key.value='';
-      state.textContent=gateway?'● Cloudflare Worker сохранён. Нажми «Проверить».':'● Direct browser mode сохранён. Нажми «Проверить».';state.className='integration-state ok';card.classList.add('connected');remove.hidden=false;test.hidden=false;
-      S.notify(gateway?'Cloudflare Worker подключён':'ARK API Key сохранён локально для Direct mode');
-    }catch(e){state.textContent='● Ошибка: '+e.message;state.className='integration-state bad';}finally{connect.disabled=false;}};
-    test.onclick=async()=>{test.disabled=true;state.textContent=worker.value.trim()?'Проверяем Cloudflare Worker → BytePlus…':'Проверяем прямой запрос к BytePlus…';try{await S.testIntegration(provider);state.textContent=(S.apiGatewayBase()?'● Worker: API-ключ принят.':'● Direct mode: API-ключ принят.')+' Доступ к Seedance проверяется при генерации.';state.className='integration-state ok';card.classList.add('connected');}catch(e){state.textContent='● Ошибка: '+e.message;state.className='integration-state bad';}finally{test.disabled=false;}};
-    remove.onclick=async()=>{if(!confirm('Отключить BytePlus?'))return;await S.removeIntegration(provider);key.value='';worker.value='';state.textContent='● Не подключено — генерация недоступна';state.className='integration-state';card.classList.remove('connected');remove.hidden=test.hidden=true;};
-    $$('.integration-future [data-provider-connect]').forEach(b=>b.onclick=()=>S.notify('Следующий provider подключается отдельным adapter без переделки Canvas.'));
+    await Promise.all(['byteplus','openrouter'].map(p=>S.getIntegration(p)));
+    async function renderProviders(){
+      const active=S.activeVideoProvider();$('#active-video-provider').textContent=active?MagicProviders.providerName(active):'Отключено';
+      for(const provider of ['byteplus','openrouter']){
+        const credentials=await S.providerCredentials(provider),connected=!!credentials,enabled=provider===active,state=$('#'+provider+'-state'),card=$('#'+provider+'-card'),verified=S.integrationVerified(provider);
+        card.classList.toggle('connected',connected);card.classList.toggle('is-active',enabled);$('#'+provider+'-active').hidden=!enabled;
+        $('#'+provider+'-test').hidden=!connected;$('#'+provider+'-enable').hidden=!connected||enabled;$('#'+provider+'-remove').hidden=!enabled;$('#'+provider+'-delete').hidden=!connected;
+        const key=$('#'+provider+'-api-key');key.placeholder=credentials?.apiKey?'Ключ сохранён в этом браузере':provider==='byteplus'&&credentials?.mode==='worker'?'ARK key хранится в Worker':'Вставь API key';
+        $('#'+provider+'-worker-url').value=provider==='byteplus'?S.apiGatewayBase():S.openRouterGateway();
+        state.className='integration-state'+(verified?' ok':'');
+        state.textContent=!connected?'Не подключено':verified?provider==='openrouter'?'Ключ подтверждён · Seedance 2.5 в каталоге':'API-ключ принят · доступ к модели проверяется при генерации':'Подключение сохранено — нажми «Проверить»';
+        if(connected&&!enabled)state.textContent+=' · отключён';
+      }
+    }
+    for(const provider of ['byteplus','openrouter']){
+      const key=$('#'+provider+'-api-key'),worker=$('#'+provider+'-worker-url'),state=$('#'+provider+'-state');
+      async function run(button,work){button.disabled=true;try{await work();await renderProviders();}catch(e){state.textContent='Ошибка: '+e.message;state.className='integration-state bad';}finally{button.disabled=false;}}
+      $('#'+provider+'-toggle').onclick=()=>{key.type=key.type==='password'?'text':'password';};
+      $('#'+provider+'-save').onclick=e=>run(e.currentTarget,async()=>{await S.saveIntegration(provider,{apiKey:key.value.trim(),workerUrl:worker.value.trim()});key.value='';S.notify('Подключение сохранено. Проверь ключ перед генерацией.');});
+      $('#'+provider+'-test').onclick=e=>run(e.currentTarget,async()=>{state.textContent='Проверяем API…';await S.testIntegration(provider);S.notify(MagicProviders.providerName(provider)+': проверка пройдена');});
+      $('#'+provider+'-enable').onclick=e=>run(e.currentTarget,async()=>{S.setVideoProvider(provider);S.notify('Seedance 2.5 работает через '+MagicProviders.providerName(provider));});
+      $('#'+provider+'-remove').onclick=e=>run(e.currentTarget,async()=>{if(S.activeVideoProvider()===provider)S.setVideoProvider(null);S.notify('Провайдер отключён. Ключ сохранён для следующего подключения.');});
+      $('#'+provider+'-delete').onclick=e=>{if(confirm('Удалить подключение '+MagicProviders.providerName(provider)+' и ключ из этого браузера?'))run(e.currentTarget,async()=>{await S.removeIntegration(provider);key.value='';});};
+    }
+    await renderProviders();
+    window.addEventListener('storage',e=>{if(e.key?.startsWith('magic.credentials.'+user.uid+'.'))renderProviders().catch(e=>S.notify(e.message,'error'));});
   }
 
   if(page==='users'){

@@ -126,9 +126,55 @@ button:disabled, input:disabled, select:disabled, textarea:disabled, [aria-disab
 [data-cursor="unavailable"] { cursor: var(--cursor-unavailable) !important; }
 .file-over { cursor: var(--cursor-drop) !important; }
 }
+
+/* Shared media surfaces use Magic's existing colors and typography. */
+.media-preview-dialog{padding:0;border:1px solid var(--line-strong);border-radius:16px;background:var(--panel);color:var(--text);max-width:94vw;max-height:94vh;box-shadow:var(--shadow);overflow:auto;}
+.media-preview-dialog::backdrop{background:rgb(4 5 8 / .68);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.media-preview-shell{position:relative;padding:14px;display:grid;gap:12px;min-width:min(300px,86vw)}
+.media-preview-close{position:absolute;right:22px;top:22px;z-index:2;border:1px solid #ffffff38;border-radius:50%;width:32px;height:32px;background:#111b;color:white;font-size:23px;line-height:1;}
+.media-preview-stage{max-width:86vw;min-width:0;background:#070709;border:1px solid var(--line);border-radius:10px;overflow:hidden;display:grid;place-items:center;position:relative;margin:auto;}
+.media-preview-stage video{width:100%;height:100%;min-height:0;object-fit:contain;display:block;}
+.media-preview-notice{padding:24px;color:#bbbcc4;text-align:center;line-height:1.6;font-size:12px;position:absolute;inset:0;display:grid;place-items:center;background:#0b0b10db;}
+.media-preview-actions{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+.media-preview-actions button[aria-expanded=true]{background:var(--blue-soft);border-color:var(--blue);color:var(--blue)}
+.media-preview-details{border:1px solid var(--line);border-radius:10px;background:var(--bg-soft);padding:14px;max-height:24vh;overflow:auto;overscroll-behavior:contain;}
+.media-preview-prompt{display:block;white-space:pre-wrap;word-break:break-word;text-align:left;font-size:12px;line-height:1.7;width:100%;border:0;background:none;color:var(--text);padding:0;}
+.media-preview-prompt:hover{color:var(--blue)}
+.media-preview-info{margin:0;display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 24px;font-size:12px;line-height:1.5;}
+.media-preview-info dt{color:var(--muted)}.media-preview-info dd{margin:0;overflow-wrap:anywhere;}
+.output-expand{position:absolute;right:8px;top:8px;z-index:3;width:30px;height:30px;border-radius:8px;border:1px solid #ffffff30;background:#111b;color:white;font-size:18px;}
+.output-video::-webkit-media-controls-fullscreen-button,.media-preview-stage video::-webkit-media-controls-fullscreen-button{display:none}
+.canvas-page .output-download{border:0;cursor:pointer;}
+.asset-preview-trigger{padding:0;border:0;width:100%;background:#202024;color:var(--text);cursor:pointer;text-align:inherit;}
+.asset-preview-trigger:focus-visible{outline:2px solid var(--blue);outline-offset:-3px}
+.asset-preview-trigger video{pointer-events:none;object-fit:contain;}
+.asset-preview-play{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:42px;height:42px;border:1px solid #ffffff65;border-radius:50%;background:#0d0d11aa;color:white;display:grid;place-items:center;font-size:18px;opacity:.85;}
+.asset-preview-trigger:hover .asset-preview-play{background:var(--blue);border-color:var(--blue);opacity:1;}
+.provider-selection{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:0 0 18px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);}
+.provider-selection span{color:var(--muted);font-size:12px;}.provider-selection strong{margin-left:auto;color:var(--blue);font-size:12px;}
+.provider-enabled-badge{display:inline-flex;align-items:center;padding:4px 8px;border-radius:6px;background:var(--blue-soft);color:var(--blue);font-size:10px;margin-top:8px;}
+.integration-card.is-active{border-color:var(--blue);}.integration-card .integration-actions{flex-wrap:wrap;justify-content:flex-end;}.integration-actions .ui-button{font-size:11px;padding:7px 10px;}
+.integration-model-row{margin-top:12px;padding-top:12px;border-top:1px solid var(--line);display:flex;align-items:center;gap:12px;font-size:11px;}.integration-model-row strong{color:var(--muted);font-weight:500;}.integration-model-row code{margin-left:auto;overflow-wrap:anywhere;color:var(--text);}
+.integration-delete{font-size:10px;color:var(--muted);padding:0;border:0;background:none;margin:14px 0 0 48px;}.integration-delete:hover{color:var(--red);}
+.camera-library-header{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:24px;margin-bottom:24px;}
+.camera-library-heading{display:grid;grid-template-columns:minmax(240px,1fr) minmax(340px,1.5fr);gap:32px;margin-bottom:24px;}
+.camera-library-heading h1{font-size:30px;letter-spacing:-.04em;margin:6px 0 12px;}.camera-library-heading p:not(.eyebrow){color:var(--muted);font-size:12px;line-height:1.7;max-width:410px;}
+.camera-library-tools{display:grid;gap:16px;}.camera-library-stats{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line-strong);border-radius:10px;overflow:hidden;}.camera-library-stats>div{padding:14px;border-right:1px solid var(--line);}.camera-library-stats>div:last-child{border:0;}.camera-library-stats strong{display:block;font-size:23px;}.camera-library-stats small{font-size:10px;}
+.camera-library-stats{grid-template-columns:repeat(3,minmax(0,1fr));}.camera-library-stats small{overflow-wrap:anywhere;line-height:1.5;}
+.camera-library-tools label{display:grid;gap:8px;color:var(--muted);font-size:10px;letter-spacing:.05em;}.camera-library-tools input{height:44px;width:100%;font-size:12px;letter-spacing:normal;}
+.camera-filters{display:flex;gap:7px;flex-wrap:wrap;}.camera-filter{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--line-strong);border-radius:8px;background:var(--panel-2);font-size:11px;font-weight:600;}.camera-filter small{font-size:9px;}.camera-filter[aria-pressed=true]{border-color:var(--blue);color:var(--blue);background:var(--blue-soft);}.camera-filter[aria-pressed=true] small{color:var(--blue);}
+.camera-results{display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:11px;margin:0 0 12px;}.camera-results a{color:var(--muted);font-size:10px;}.camera-results a:hover{color:var(--blue);}
+.camera-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;}.camera-card{background:var(--panel);border:1px solid var(--line);border-radius:13px;overflow:hidden;min-width:0;}.camera-card:hover{border-color:var(--line-strong);}.camera-preview{aspect-ratio:16/9;background:#08080b;position:relative;}.camera-preview video{width:100%;height:100%;display:block;object-fit:contain;}.camera-preview-error{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);font-size:11px;pointer-events:none;}
+.camera-card-body{padding:16px;display:grid;gap:13px;}.camera-shot-meta{display:flex;justify-content:space-between;gap:8px;font-size:9px;color:var(--muted);letter-spacing:.04em;text-transform:uppercase;}.camera-shot-meta span:last-child{color:var(--blue);}.camera-card h2{font-size:16px;line-height:1.35;min-height:43px;letter-spacing:-.015em;}.camera-card-prompt{font-size:11px;line-height:1.65;max-height:154px;min-height:154px;overflow:auto;overscroll-behavior:contain;border:1px solid var(--line);border-left:2px solid var(--blue);border-radius:7px;background:var(--bg-soft);padding:11px;}.camera-card-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;}.camera-card-actions .ui-button{font-size:10px;padding:9px 6px;white-space:nowrap;}
+.camera-space-dialog select{width:100%;}.camera-space-dialog .panel-note{line-height:1.6;}.node[data-camera=true]{border-color:#317dab;}.node[data-camera=true] .preset-heading{color:var(--blue);}.node[data-camera=true] .node-icon{color:var(--blue);}
+.camera-node-preview{margin:10px 0;}.camera-node-preview video{display:block;width:100%;aspect-ratio:16/9;object-fit:contain;background:#08080b;border-radius:8px;}.camera-node-preview small{display:block;font-size:10px;margin-top:6px;color:var(--muted);}.asset-delete{color:var(--red);}.asset-actions{flex-wrap:wrap;}
+@media(min-width:1700px){.camera-grid{grid-template-columns:repeat(4,minmax(0,1fr));}.camera-card-prompt{max-height:138px;min-height:138px;}}
+@media(max-width:1300px){.camera-grid{grid-template-columns:repeat(3,minmax(0,1fr));}}
+@media(max-width:1000px){.camera-grid{grid-template-columns:repeat(2,minmax(0,1fr));}.camera-library-heading{grid-template-columns:1fr;gap:20px;}.integration-head{flex-wrap:wrap;}.integration-head .integration-copy{min-width:150px;}}
+@media(max-width:540px){.camera-grid{grid-template-columns:1fr;}.camera-library-header{padding:18px;}.camera-library-heading h1{font-size:25px;}.camera-filter{padding:8px;}.media-preview-shell{padding:10px;}.media-preview-info{grid-template-columns:1fr;gap:3px;}.media-preview-info dd{margin-bottom:10px;}.media-preview-actions .ui-button{font-size:11px;}.provider-selection strong{margin-left:0;}.integration-model-row{display:block;}.integration-model-row code{display:block;margin-top:6px;}.integration-help{margin-left:0;}}
 </style></head><body data-page="users"><aside class="app-sidebar">
       <a class="brand" href="index.html"><span class="brand-logo"></span><span class="brand-copy"><strong>Magic</strong><small>AI Ad Creatives</small></span></a>
-      <section class="nav-group"><span class="nav-label">CREATE</span><nav class="app-nav"><a href="index.html"><span class="nav-icon">▦</span><span>Dashboard</span></a><a href="spaces.html"><span class="nav-icon">⌘</span><span>Canvas</span></a><a href="flows.html"><span class="nav-icon">✣</span><span>Flows</span></a><a href="assets.html"><span class="nav-icon">▧</span><span>Assets</span></a></nav></section><section class="nav-group"><span class="nav-label">ORGANIZE</span><nav class="app-nav"><a href="projects.html"><span class="nav-icon">□</span><span>Projects</span></a><a href="presets.html"><span class="nav-icon">▤</span><span>Templates</span></a><a href="modifiers.html"><span class="nav-icon">☷</span><span>Modifiers</span></a></nav></section><section class="nav-group"><span class="nav-label">RESULTS</span><nav class="app-nav"><a href="winners.html"><span class="nav-icon">♕</span><span>Winners</span></a></nav></section><section class="nav-group"><span class="nav-label">ACCOUNT</span><nav class="app-nav"><a href="integrations.html"><span class="nav-icon">⚙</span><span>My settings</span></a><a href="users.html" aria-current="page" data-superuser-only hidden><span class="nav-icon">♙</span><span>Users</span></a></nav></section>
+      <section class="nav-group"><span class="nav-label">CREATE</span><nav class="app-nav"><a href="index.html"><span class="nav-icon">▦</span><span>Dashboard</span></a><a href="spaces.html"><span class="nav-icon">⌘</span><span>Canvas</span></a><a href="flows.html"><span class="nav-icon">✣</span><span>Flows</span></a><a href="assets.html"><span class="nav-icon">▧</span><span>Assets</span></a></nav></section><section class="nav-group"><span class="nav-label">ORGANIZE</span><nav class="app-nav"><a href="projects.html"><span class="nav-icon">□</span><span>Projects</span></a><a href="presets.html"><span class="nav-icon">▤</span><span>Templates</span></a><a href="modifiers.html"><span class="nav-icon">☷</span><span>Camera movement</span></a></nav></section><section class="nav-group"><span class="nav-label">RESULTS</span><nav class="app-nav"><a href="winners.html"><span class="nav-icon">♕</span><span>Winners</span></a></nav></section><section class="nav-group"><span class="nav-label">ACCOUNT</span><nav class="app-nav"><a href="integrations.html"><span class="nav-icon">⚙</span><span>My settings</span></a><a href="users.html" aria-current="page" data-superuser-only hidden><span class="nav-icon">♙</span><span>Users</span></a></nav></section>
       <div class="sidebar-user"><small>USER</small><span data-user-email>—</span></div>
     </aside><header class="app-topbar"><span></span><span class="topbar-spacer"></span><div class="topbar-actions"><button class="theme-button" data-theme-toggle title="Сменить тему">★ <span data-theme-state>Dark</span></button><button id="shell-avatar" class="avatar-button" data-user-avatar aria-label="Профиль">M</button></div></header><div id="drawer-backdrop" class="drawer-backdrop"></div>
     <aside id="profile-drawer" class="profile-drawer" aria-label="Профиль">
@@ -195,10 +241,46 @@ window.MagicDomain = (() => {
   }
   function compatible(type, direction) {
     if (direction === 'in') return { generation: ['media', 'preset'], text: ['preset'], output: ['generation'] }[type] || [];
-    return { generation: ['output'], media: ['generation'], preset: ['generation', 'text'], text: ['generation'] }[type] || [];
+    return { generation: ['output'], media: ['generation'], camera: ['generation'], preset: ['generation', 'text'], text: ['generation'] }[type] || [];
   }
   return { xp, totals, terminal, compatible, resolutions, defaultVideoModel, normalizeBytePlusModel };
 })();
+
+(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MagicProviders=api;})(typeof window==='object'?window:globalThis,()=>{
+  'use strict';
+  const openRouterModel='bytedance/seedance-2.5';
+  const fail=message=>{throw Object.assign(new Error(message),{httpStatus:400,status:400});};
+  function source(url,kind){
+    if(typeof url!=='string')return false;
+    try{const u=new URL(url);if(u.protocol==='https:'&&!u.username&&!u.password)return true;}catch{}
+    return kind==='image'&&/^data:image\/(jpeg|png|webp|bmp|tiff|gif|heic|heif);base64,[A-Za-z0-9+/]+={0,2}$/.test(url);
+  }
+  function buildOpenRouterRequest(p={}){
+    const prompt=String(p.prompt||'').trim();if(!prompt||prompt.length>32000)fail('Промпт должен содержать от 1 до 32000 символов.');
+    const images=p.reference_images||[],videos=p.reference_videos||[];
+    if(!Array.isArray(images)||!Array.isArray(videos)||images.length+videos.length>15)fail('Допускается до 15 референсов.');
+    if(images.some(u=>!source(u,'image'))||videos.some(u=>!source(u,'video')))fail('Для OpenRouter нужны HTTPS-ссылки или изображения Base64. BytePlus asset:// не переносится между провайдерами.');
+    const body={model:openRouterModel,prompt,generate_audio:p.generate_audio!==false};
+    if(p.duration!==undefined){const v=Number(p.duration);if(!Number.isInteger(v)||v<4||v>30)fail('Длительность: 4–30 секунд.');body.duration=v;}
+    if(p.resolution)body.resolution=p.resolution;
+    const ratio=p.aspect_ratio||p.ratio;if(ratio&&ratio!=='adaptive')body.aspect_ratio=ratio;
+    if(Number.isInteger(Number(p.seed))&&Number(p.seed)>=0)body.seed=Number(p.seed);
+    const frames=[];for(const [frame_type,url]of [['first_frame',p.first_frame_url],['last_frame',p.last_frame_url]])if(url){if(!source(url,'image'))fail('Неподдерживаемый кадр.');frames.push({type:'image_url',image_url:{url},frame_type});}
+    if(frames.length)body.frame_images=frames;
+    if(images.length||videos.length)body.input_references=[...images.map(url=>({type:'image_url',image_url:{url}})),...videos.map(url=>({type:'video_url',video_url:{url}}))];
+    if(JSON.stringify(body).length>60*1024*1024)fail('Референсы превышают 60 МБ.');return body;
+  }
+  function validateCapabilities(body,model){
+    if(!model||model.id!==openRouterModel)fail('Seedance 2.5 не найдена в доступных видеомоделях OpenRouter. Нажми «Проверить» в My settings.');
+    for(const [field,list,label]of [['duration','supported_durations','Длительность'],['resolution','supported_resolutions','Разрешение'],['aspect_ratio','supported_aspect_ratios','Формат']]){
+      if(body[field]!==undefined&&Array.isArray(model[list])&&model[list].length&&!model[list].includes(body[field]))fail(`${label} ${body[field]} не поддерживается OpenRouter. Доступно: ${model[list].join(', ')}.`);
+    }
+    return body;
+  }
+  function contentUrl(taskId){if(typeof taskId!=='string'||!/^[\w-]{1,180}$/.test(taskId))fail('Некорректный ID задачи OpenRouter.');return 'https://openrouter.ai/api/v1/videos/'+encodeURIComponent(taskId)+'/content';}
+  const providerName=p=>p==='openrouter'?'OpenRouter':'BytePlus';
+  return {openRouterModel,buildOpenRouterRequest,validateCapabilities,contentUrl,providerName};
+});
 
 'use strict';
 // Binary media stays in IndexedDB; small snapshots and the outbox stay in localStorage.
@@ -270,7 +352,7 @@ window.Studio=(()=>{
       await new Promise(resolve=>{const off=authM.onAuthStateChanged(auth,async user=>{off();cache.user=user;try{if(user)await hydrateProfile(user);}catch(e){cache.firebaseError=e;}resolve();});});
       if(cache.user&&cache.profile){
         await migrateLegacyCredentials();
-        if(apiGatewayBase())await gatewaySession().catch(e=>notify(e.message,'error'));
+        for(const base of new Set([apiGatewayBase(),openRouterGateway()].filter(Boolean)))await gatewaySession(base).catch(e=>notify(e.message,'error'));
         // Replay durable work from the preceding page/reload, never on each canvas edit.
         await flushPendingWork();
       }
@@ -376,28 +458,52 @@ window.Studio=(()=>{
     }catch(err){console.warn('Integration metadata unavailable; local credentials still work.',err);}
     const localKey=String(localStorage.getItem(credentialKey('apiKey'))||'').trim();
     if(localKey&&!cache.integrations.has('byteplus'))cache.integrations.set('byteplus',{id:`${cache.user.uid}_byteplus`,ownerUid:cache.user.uid,provider:'byteplus',label:'BytePlus ModelArk',connected:true,credentialHint:localKey.slice(0,10)+'…',localOnly:true});
+    const routerKey=localStorage.getItem(credentialKey('openrouter.apiKey'));
+    if(routerKey&&!cache.integrations.has('openrouter'))cache.integrations.set('openrouter',{id:`${cache.user.uid}_openrouter`,ownerUid:cache.user.uid,provider:'openrouter',connected:true,localOnly:true});
   }
   async function getIntegration(provider){await ready();if(!cache.integrations.size&&cache.user)await loadIntegrations();return cache.integrations.get(provider)||null;}
   async function saveIntegration(provider,data){
-    assertFirebase();if(provider!=='byteplus')throw new Error('Этот provider пока не подключён.');
-    const apiKey=String(data.apiKey||'').trim();
+    assertFirebase();if(!['byteplus','openrouter'].includes(provider))throw new Error('Этот provider пока не подключён.');
+    const field=provider==='openrouter'?'openrouter.apiKey':'apiKey';
+    const apiKey=String(data.apiKey||localStorage.getItem(credentialKey(field))||'').trim();
     const workerUrl=String(data.workerUrl||'').trim().replace(/\/$/,'');
-    if(!apiKey&&!workerUrl)throw new Error('Вставь ARK API Key для Direct mode или Cloudflare Worker URL.');
-    if(apiKey)localStorage.setItem(credentialKey('apiKey'),apiKey);else if(workerUrl)localStorage.removeItem(credentialKey('apiKey'));
-    if(workerUrl)localStorage.setItem(credentialKey('gateway'),workerUrl);else localStorage.removeItem(credentialKey('gateway'));localStorage.removeItem(credentialKey('session'));
+    if(workerUrl){const parsed=new URL(workerUrl);if(parsed.protocol!=='https:'||parsed.username||parsed.password||parsed.search||parsed.hash)throw new Error('Worker URL должен быть HTTPS без параметров и пароля.');}
+    if(provider==='openrouter'&&!apiKey)throw new Error('Вставь OpenRouter API key.');
+    if(!apiKey&&!workerUrl)throw new Error('Вставь ARK API Key или Cloudflare Worker URL.');
+    if(apiKey)localStorage.setItem(credentialKey(field),apiKey);
+    const gatewayField=provider==='openrouter'?'openrouter.gateway':'gateway';
+    if(workerUrl)localStorage.setItem(credentialKey(gatewayField),workerUrl);else localStorage.removeItem(credentialKey(gatewayField));localStorage.removeItem(credentialKey('session'));
+    localStorage.removeItem(credentialKey(provider+'.verified'));if(provider==='openrouter')localStorage.removeItem(credentialKey('openrouter.capabilities'));
     
     const id=`${cache.user.uid}_${provider}`,old=cache.integrations.get(provider)||{};
     const hint=workerUrl?workerUrl.replace(/^https?:\/\//,'').slice(0,40):(apiKey.slice(0,10)+'…');
-    const row={ownerUid:cache.user.uid,provider,label:String(data.label||'BytePlus ModelArk'),connected:true,connectionMode:workerUrl?'worker':'direct',credentialHint:hint,updatedAt:now(),createdAt:old.createdAt||now()};
+    const row={ownerUid:cache.user.uid,provider,label:MagicProviders.providerName(provider),connected:true,connectionMode:workerUrl?'worker':'direct',credentialHint:hint,updatedAt:now(),createdAt:old.createdAt||now()};
     try{await api.fsM.setDoc(api.fsM.doc(api.db,'integrations',id),row);}catch(err){console.warn('Could not save integration metadata to Firestore; using local-only mode.',err);row.localOnly=true;}
-    cache.integrations.set(provider,{id,...row});if(workerUrl)await gatewaySession();return {id,...row};
+    cache.integrations.set(provider,{id,...row});if(!activeVideoProvider())setVideoProvider(provider);window.dispatchEvent(new Event('magic-integration-changed'));if(workerUrl)await gatewaySession(workerUrl);return {id,...row};
   }
+  function activeVideoProvider(){
+    const saved=localStorage.getItem(credentialKey('seedanceProvider'));
+    if(saved!==null)return ['byteplus','openrouter'].includes(saved)?saved:null;
+    if(apiGatewayBase()||localStorage.getItem(credentialKey('apiKey')))return 'byteplus';
+    return localStorage.getItem(credentialKey('openrouter.apiKey'))?'openrouter':null;
+  }
+  function setVideoProvider(provider){
+    if(provider&&!['byteplus','openrouter'].includes(provider))throw new Error('Неизвестный провайдер.');
+    const available=provider==='byteplus'?(apiGatewayBase()||localStorage.getItem(credentialKey('apiKey'))):provider==='openrouter'?localStorage.getItem(credentialKey('openrouter.apiKey')):true;
+    if(!available)throw new Error('Сначала подключи API провайдера.');
+    localStorage.setItem(credentialKey('seedanceProvider'),provider||'none');window.dispatchEvent(new Event('magic-integration-changed'));
+  }
+  function integrationVerified(provider){return read(credentialKey(provider+'.verified'),null);}
+  function openRouterGateway(){return String(localStorage.getItem(credentialKey('openrouter.gateway'))||'').replace(/\/$/,'');}
+  function videoModelFor(provider,value){return provider==='openrouter'?MagicProviders.openRouterModel:videoModel(value);}
   async function removeIntegration(provider){
+    if(activeVideoProvider()===provider)setVideoProvider(null);
     if(provider==='byteplus'){
       localStorage.removeItem(credentialKey('apiKey'));
       localStorage.removeItem(credentialKey('gateway'));localStorage.removeItem(credentialKey('session'));
       
-    }
+    }else if(provider==='openrouter'){for(const f of ['openrouter.apiKey','openrouter.gateway','openrouter.capabilities'])localStorage.removeItem(credentialKey(f));}
+    localStorage.removeItem(credentialKey(provider+'.verified'));window.dispatchEvent(new Event('magic-integration-changed'));
     const item=cache.integrations.get(provider);if(item){try{await api.fsM.deleteDoc(api.fsM.doc(api.db,'integrations',item.id));}catch(err){console.warn('Integration metadata delete skipped',err);}}
     cache.integrations.delete(provider);
   }
@@ -411,6 +517,7 @@ window.Studio=(()=>{
       const apiKey=String(localStorage.getItem(credentialKey('apiKey'))||'').trim();
       return apiKey?{apiKey,connected:true,mode:'direct'}:null;
     }
+    if(provider==='openrouter'){const apiKey=String(localStorage.getItem(credentialKey('openrouter.apiKey'))||'').trim(),workerUrl=openRouterGateway();return apiKey?{apiKey,workerUrl,mode:workerUrl?'worker':'direct',connected:true}:null;}
     return null;
   }
   async function providerKey(provider){return (await providerCredentials(provider))?.apiKey||'';}
@@ -432,7 +539,7 @@ window.Studio=(()=>{
   async function responseOrError(r,label='API'){
     const type=r.headers.get('content-type')||'';let data;
     try{data=type.includes('json')?await r.json():await r.text();}catch{data='';}
-    if(!r.ok){const detail=typeof data==='string'?data:(data?.detail?.error?.message||data?.detail?.message||data?.error?.message||data?.error||data?.message||JSON.stringify(data));const message=typeof detail==='string'?detail:JSON.stringify(detail);const hint=r.status===400&&/may contain real person|PrivacyInformation|RealPerson/i.test(message||'')?' BytePlus отклонил портрет. Нажми «Портрет» у этого референса: выбери проверенного человека или разрешённого виртуального персонажа, зарегистрируй фото и дождись Active.':'';const otherHint=r.status===404&&/model|endpoint/i.test(message||'')?' Проверь Model ID и статус Activated в BytePlus → Activation management. Успешная проверка API-ключа не подтверждает доступ к модели.':r.status===429&&/Safe Experience Mode|SetLimitExceeded|set usage limit|set inference limit/i.test(message||'')?' Лимит BytePlus: проверь Safe Experience Mode в Model Activation. Этот запрос не создал новую задачу.':'';const err=new Error(`${label} ${r.status}${message?`: ${message.slice(0,500)}`:''}${hint}${otherHint}`);err.httpStatus=r.status;throw err;}
+    if(!r.ok){const detail=typeof data==='string'?data:(data?.detail?.error?.message||data?.detail?.message||data?.error?.message||data?.error||data?.message||JSON.stringify(data));const message=typeof detail==='string'?detail:JSON.stringify(detail),router=label==='OpenRouter';const hint=!router&&r.status===400&&/may contain real person|PrivacyInformation|RealPerson/i.test(message||'')?' BytePlus отклонил портрет. Нажми «Портрет» у этого референса и подключи проверенную группу.':'';const otherHint=router&&r.status===402?' Проверь баланс и лимит ключа OpenRouter.':!router&&r.status===404&&/model|endpoint/i.test(message||'')?' Проверь Model ID и статус Activated в BytePlus → Activation management. Успешная проверка API-ключа не подтверждает доступ к модели.':!router&&r.status===429&&/Safe Experience Mode|SetLimitExceeded|set usage limit|set inference limit/i.test(message||'')?' Лимит BytePlus: проверь Safe Experience Mode в Model Activation. Этот запрос не создал новую задачу.':'';const err=new Error(`${label} ${r.status}${message?`: ${message.slice(0,500)}`:''}${hint}${otherHint}`);err.httpStatus=r.status;throw err;}
     return data;
   }
 
@@ -446,7 +553,7 @@ window.Studio=(()=>{
     const controller=new AbortController(),ms=Math.max(100,Math.min(300000,Number(CFG.apiRequestTimeoutMs)||90000));
     // Bound both the connection and reading the response body. Never retry a POST.
     return withDeadline((async()=>responseOrError(await fetch(url,{...options,signal:controller.signal}),label))(),ms,
-      `${label}: ответ API не получен за ${Math.ceil(ms/1000)} сек. Если отправлялась генерация, её запуск не подтверждён. Проверь историю BytePlus перед повторением.`,()=>controller.abort());
+      `${label}: ответ API не получен за ${Math.ceil(ms/1000)} сек. Если отправлялась генерация, её запуск не подтверждён. Проверь историю провайдера перед повторением.`,()=>controller.abort());
   }
 
   async function directBytePlus(path,{body}={}){
@@ -476,6 +583,29 @@ window.Studio=(()=>{
     catch(e){if(e instanceof TypeError)throw new Error('Не удалось связаться с Cloudflare Worker. Проверь Worker URL и deploy.');throw e;}
     return new Response(JSON.stringify(data),{status:200,headers:{'Content-Type':'application/json'}});
   }
+  async function openRouterRequest(path,{body,credentials}={}){
+    credentials=credentials||await providerCredentials('openrouter');if(!credentials)throw new Error('Подключи OpenRouter в My settings.');
+    if(credentials.mode==='worker'){
+      const headers={...await gatewayHeaders(null,credentials.workerUrl),'Content-Type':'application/json'};
+      if(credentials.apiKey)headers['X-OpenRouter-Key']=credentials.apiKey;
+      return requestApi(credentials.workerUrl+'/openrouter/'+path,{method:'POST',headers,body:JSON.stringify(body||{})},'OpenRouter');
+    }
+    const endpoint=path==='test'?'/key':path==='models'?'/videos/models':path==='submit'?'/videos':path==='status'?'/videos/'+encodeURIComponent(body.taskId):null;
+    if(!endpoint)throw new Error('Неизвестный OpenRouter route.');
+    try{return await requestApi('https://openrouter.ai/api/v1'+endpoint,{method:path==='submit'?'POST':'GET',headers:{Authorization:'Bearer '+credentials.apiKey,'Content-Type':'application/json','HTTP-Referer':location.origin,'X-Title':'Magic'},...(path==='submit'?{body:JSON.stringify(body.payload)}:{})},'OpenRouter');}
+    catch(e){if(e instanceof TypeError)throw new Error('Браузер не смог связаться с OpenRouter. Проверь сеть или подключи обновлённый Worker.');throw e;}
+  }
+  async function openRouterCapabilities(credentials){
+    const saved=read(credentialKey('openrouter.capabilities'),null),scope=credentials.workerUrl||'direct';
+    if(saved?.scope===scope&&saved.expiresAt>Date.now())return saved.model;
+    const result=await openRouterRequest('models',{credentials}),model=result.data?.find(m=>m.id===MagicProviders.openRouterModel);
+    MagicProviders.validateCapabilities({},model);write(credentialKey('openrouter.capabilities'),{model,scope,expiresAt:Date.now()+3600000});return model;
+  }
+  async function prepareVideoRequest(provider,payload){
+    if(provider!=='openrouter')return payload;
+    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи OpenRouter в My settings.');
+    const body=MagicProviders.buildOpenRouterRequest(payload);return MagicProviders.validateCapabilities(body,await openRouterCapabilities(credentials));
+  }
   async function portraitApi(path,body={}){
     if(!apiGatewayBase())throw new Error('Регистрация портретов требует Worker URL в My settings. AK/SK хранятся только в Worker; обычный Direct API остаётся доступным для остальных референсов.');
     return (await proxy('/byteplus/portraits/'+path,{method:'POST',body})).json();
@@ -492,8 +622,15 @@ window.Studio=(()=>{
     await MagicLocal.put(cache.user.uid,item.id,stored);return {...item,portraitGroupId:groupId||null};
   }
   async function testIntegration(provider){
-    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Сначала настрой Direct ARK API Key или Cloudflare Worker URL.');
-    if(provider==='byteplus'){localStorage.removeItem(credentialKey('session'));const r=await proxy('/byteplus/test',{method:'POST',body:{}});return {...await r.json(),modelAccessVerified:false};}
+    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Сначала подключи API key или Cloudflare Worker URL.');
+    if(credentials.workerUrl){localStorage.removeItem(credentialKey('session.'+credentials.workerUrl));localStorage.removeItem(credentialKey('session'));}
+    if(provider==='byteplus'){localStorage.removeItem(credentialKey('session'));const r=await proxy('/byteplus/test',{method:'POST',body:{}}),result={...await r.json(),modelAccessVerified:false};write(credentialKey(provider+'.verified'),{checkedAt:now()});return result;}
+    if(provider==='openrouter'){
+      const [key,model]=await Promise.all([openRouterRequest('test',{credentials}),openRouterCapabilities(credentials)]);
+      const info=key.data||key,limit=info.limit_remaining??(info.limit==null?null:Number(info.limit)-Number(info.usage||0));
+      const result={ok:true,model:MagicProviders.openRouterModel,modelListed:true,remaining:limit,isFreeTier:!!info.is_free_tier,capabilities:model,checkedAt:now()};
+      write(credentialKey(provider+'.verified'),result);return result;
+    }
     throw new Error('Тест для этого провайдера пока не реализован.');
   }
 
@@ -560,8 +697,8 @@ window.Studio=(()=>{
     const meta={id:assetId,uid:cache.user.uid,spaceId,name,kind,size:0,url:parsed.href,storagePath:null,createdAt:now(),updatedAt:now()};
     await MagicLocal.put(cache.user.uid,assetId,{meta,cloudSaved:false});return meta;
   }
-  async function ensureRemoteAsset(item){
-    if(item.portraitGroupId)return MagicPortraits.ensure(item);
+  async function ensureRemoteAsset(item,{provider=activeVideoProvider()}={}){
+    if(item.portraitGroupId&&provider!=='openrouter')return MagicPortraits.ensure(item);
     // Only the API request carries image bytes. The graph and Firestore keep metadata.
     if(/^https:\/\//.test(item.url||''))return {...item,referenceUrl:item.url};
     const stored=await withDeadline(MagicLocal.get(cache.user.uid,item.id),10000,`Локальное хранилище не ответило. Добавь файл «${item.name}» повторно.`);
@@ -604,7 +741,8 @@ window.Studio=(()=>{
   async function createVideoRecord(data){
     assertFirebase();const me=current();
     const row={id:uid(),uid:me.uid,user:me.name,spaceId:data.spaceId||null,spaceName:data.spaceName||'',sourceNodeId:data.sourceNodeId||null,outputNodeId:data.outputNodeId||null,
-      prompt:data.prompt||'',provider:data.provider||'byteplus',model:videoModel(data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
+      prompt:data.prompt||'',provider:data.provider||'byteplus',model:videoModelFor(data.provider,data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
+      transport:data.transport||'direct',gatewayUrl:data.gatewayUrl||null,
       seconds:Math.max(4,Math.min(30,Number(data.seconds)||8)),referenceCount:Math.max(0,Math.min(15,Number(data.referenceCount)||0)),hasRef:Boolean(data.hasRef),refMode:'reference',generateAudio:data.generateAudio!==false,
       status:'queued',pct:0,cost:null,error:null,requestId:null,videoUrl:null,remoteUrl:null,storagePath:null,createdAt:now(),updatedAt:now(),cloudSaved:false};
     return rememberVideo(row);
@@ -631,8 +769,10 @@ window.Studio=(()=>{
       const videoRef=api.fsM.doc(api.db,'videos',row.id),scoreRef=api.fsM.doc(api.db,'leaderboard',row.uid);
       const {id,cloudSaved,trackingWarning,...data}=row;
       data.schemaVersion=2;data.referenceCount=Math.max(0,Math.min(15,Number(data.referenceCount)||0));data.seconds=Math.max(4,Math.min(30,Number(data.seconds)||8));data.resolution=normalizeResolution(data.resolution);
+      let wasDeleted=false;
       await api.fsM.runTransaction(api.db,async tx=>{
-        const [previous,score]=await Promise.all([tx.get(videoRef),tx.get(scoreRef)]);
+        const [previous,score,deleted]=await Promise.all([tx.get(videoRef),tx.get(scoreRef),tx.get(api.fsM.doc(api.db,'videoDeletions',row.id))]);
+        wasDeleted=deleted.exists();if(wasDeleted)return;
         // The same terminal task can be observed by several tabs. Count it only once.
         if(previous.exists()&&MagicDomain.terminal(previous.data().status))return;
         const before=score.exists()?score.data():{};
@@ -640,6 +780,7 @@ window.Studio=(()=>{
         tx.set(scoreRef,{uid:row.uid,nickname:current().name,xp:(before.xp||0)+(row.status==='completed'?MagicDomain.xp(data):0),
           completed:(before.completed||0)+(row.status==='completed'?1:0),failed:(before.failed||0)+(row.status==='failed'?1:0),lastVideoId:row.id,updatedAt:now()});
       });
+      if(wasDeleted){localStorage.removeItem(jobsPrefix()+row.id);return null;}
       return rememberVideo({...row,cloudSaved:true});
     })();syncingVideos.set(row.id,task);
     try{return await task;}finally{syncingVideos.delete(row.id);}
@@ -658,6 +799,20 @@ window.Studio=(()=>{
     if(!MagicDomain.terminal(row.status))throw new Error('Дождись завершения задачи.');
     await api.fsM.updateDoc(api.fsM.doc(api.db,'videos',id),{archived:true});
     const local=localVideos()[id];if(local)rememberVideo({...local,archived:true});
+  }
+  async function permanentlyDeleteVideo(id){
+    assertFirebase();if(!isAdmin())throw new Error('Удаление из базы доступно только суперадмину.');
+    const pending=syncingVideos.get(id);if(pending)await pending;
+    const ref=api.fsM.doc(api.db,'videos',id);
+    await api.fsM.runTransaction(api.db,async tx=>{
+      const snap=await tx.get(ref),row=snap.exists()?snap.data():localVideos()[id];
+      if(!row)throw new Error('Запись уже удалена или не найдена. Обнови Assets.');
+      if(!MagicDomain.terminal(row.status))throw new Error('Сначала дождись завершения задачи.');
+      // Minimal marker prevents stale browser outboxes from recreating a result or awarding XP twice.
+      tx.set(api.fsM.doc(api.db,'videoDeletions',id),{uid:row.uid});
+      if(snap.exists())tx.delete(ref);
+    });
+    localStorage.removeItem(jobsPrefix()+id);
   }
   async function listLeaderboard(){const snap=await api.fsM.getDocs(api.fsM.collection(api.db,'leaderboard'));return snap.docs.map(d=>({...d.data(),uid:d.id}));}
   async function rebuildLeaderboard(){
@@ -692,9 +847,16 @@ window.Studio=(()=>{
     const preferred=['video_url','videoUrl','url','output_url','output'];for(const k of preferred)if(k in value){const u=extractMediaUrl(value[k]);if(u)return u;}
     for(const k of ['video','videos','content','data','result','results','outputs'])if(k in value){const u=extractMediaUrl(value[k]);if(u)return u;}return null;
   }
-  function statusName(raw){const s=String(raw||'').toUpperCase();if(['COMPLETED','SUCCEEDED','SUCCESS'].includes(s))return'completed';if(['FAILED','ERROR','CANCELLED','CANCELED'].includes(s))return'failed';if(['QUEUED','PENDING'].includes(s))return'queued';return'running';}
-  async function submitGeneration(videoId,payload,provider='byteplus'){
-    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи BytePlus в My settings → Integrations.');
+  function statusName(raw){const s=String(raw||'').toUpperCase();if(['COMPLETED','SUCCEEDED','SUCCESS'].includes(s))return'completed';if(['CANCELLED','CANCELED'].includes(s))return'cancelled';if(['FAILED','ERROR','EXPIRED'].includes(s))return'failed';if(['QUEUED','PENDING'].includes(s))return'queued';return'running';}
+  async function submitGeneration(videoId,payload,provider=activeVideoProvider()){
+    if(provider!==activeVideoProvider())throw Object.assign(new Error('Активный провайдер изменился. Запусти генерацию заново с текущим подключением.'),{httpStatus:400});
+    const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи API в My settings → Integrations.');
+    if(provider==='openrouter'){
+      const request=await prepareVideoRequest(provider,payload),data=await openRouterRequest('submit',{body:{payload:request},credentials});
+      if(!data.id)throw new Error('OpenRouter не вернул ID задачи. Проверь историю перед новым запуском.');
+      MagicProviders.contentUrl(data.id);
+      return updateVideo(videoId,{requestId:data.id,taskToken:data.taskToken||null,transport:credentials.mode,gatewayUrl:credentials.workerUrl||null,status:'queued',pct:0});
+    }
     if(provider!=='byteplus')throw new Error('Провайдер пока не подключён к генератору.');
     const body={payload:{...payload,model:videoModel(payload.model),prompt:String(payload.prompt||''),duration:Math.max(4,Math.min(30,Number(payload.duration)||8)),resolution:normalizeResolution(payload.resolution),ratio:normalizeRatio(payload.aspect_ratio||payload.ratio),generate_audio:payload.generate_audio!==false,output_format:'mp4'}};
     if(new Blob([JSON.stringify(body)]).size>60*1024*1024)throw new Error('Референсы превышают размер запроса API. Уменьши изображения или используй HTTPS-ссылки.');
@@ -705,11 +867,11 @@ window.Studio=(()=>{
     return updateVideo(videoId,{requestId,taskToken:data.taskToken||null,status:'queued',pct:0});
   }
   async function persistRemoteVideo(record,result){
-    const remote=extractMediaUrl(result)||record.remoteUrl;
+    const remote=record.provider==='openrouter'?MagicProviders.contentUrl(record.requestId):extractMediaUrl(result)||record.remoteUrl;
     if(!remote)throw new Error('API завершил задачу, но URL видео пока не найден.');
     const videoUrl=remote,storagePath=null,archiveWarning=null;
     const providerTime=Number(result?.updated_at||result?.finished_at);
-    const providerUrlExpiresAt=(providerTime>0?(providerTime<1e12?providerTime*1000:providerTime):now())+24*60*60*1000;
+    const providerUrlExpiresAt=record.provider==='openrouter'?null:(providerTime>0?(providerTime<1e12?providerTime*1000:providerTime):now())+24*60*60*1000;
     const metrics=result?.metrics||result?.usage||result?.data?.metrics||{},rawCost=result?.cost??metrics.cost??record.cost;
     const actualDuration=Number(result?.duration??result?.content?.duration??metrics.duration);
     const patch={status:'completed',pct:100,remoteUrl:remote,videoUrl,storagePath,providerUrlExpiresAt,
@@ -718,16 +880,51 @@ window.Studio=(()=>{
     if(['480p','720p','1080p'].includes(result?.resolution))patch.resolution=result.resolution;
     return updateVideo(record.id,patch);
   }
+  const playbackCache=new Map();
+  async function resolveVideoSource(record){
+    if(!record||(!isAdmin()&&record.uid!==cache.user.uid))throw new Error('Нет доступа к этой генерации.');
+    if(record.provider!=='openrouter'){const url=record.videoUrl||record.remoteUrl;if(!url)throw new Error('Видео ещё не готово.');return {url,release:()=>{}};}
+    const cacheKey=cache.user.uid+'|'+record.id+'|'+record.requestId+'|'+(record.gatewayUrl||'direct');
+    let entry=playbackCache.get(cacheKey);if(entry&&entry.expiresAt<Date.now()){playbackCache.delete(cacheKey);entry=null;}
+    if(!entry){
+      entry={refs:0,expiresAt:Date.now()+25*60000};
+      entry.promise=(async()=>{
+        if(record.transport==='worker'){
+          const gateway=record.gatewayUrl;if(!gateway)throw new Error('У генерации не сохранён Worker URL.');
+          if(record.uid!==cache.user.uid&&![openRouterGateway(),apiGatewayBase()].includes(gateway))throw new Error('Для предпросмотра команды подключи тот же Worker в My settings → OpenRouter.');
+          const data=await openRouterRequest('playback',{credentials:{mode:'worker',workerUrl:gateway},body:{taskId:record.requestId,taskToken:record.taskToken}});entry.expiresAt=Math.min(entry.expiresAt,data.expiresAt||entry.expiresAt);return data.url;
+        }
+        if(record.uid!==cache.user.uid)throw new Error('Этот ролик создан через личный Direct API. Для общего предпросмотра команды используйте OpenRouter через Worker.');
+        const credentials=await providerCredentials('openrouter');if(!credentials?.apiKey)throw new Error('Подключи OpenRouter API key, которым создан этот ролик.');
+        const controller=new AbortController();
+        const blob=await withDeadline((async()=>{const r=await fetch(MagicProviders.contentUrl(record.requestId),{headers:{Authorization:'Bearer '+credentials.apiKey},signal:controller.signal});if(!r.ok){await responseOrError(r,'OpenRouter');}return r.blob();})(),90000,'OpenRouter: загрузка видео не завершилась. Повтори предпросмотр.',()=>controller.abort());
+        const url=URL.createObjectURL(blob);entry.blobUrl=url;return url;
+      })().catch(e=>{playbackCache.delete(cacheKey);throw e;});playbackCache.set(cacheKey,entry);
+    }
+    entry.refs++;let released=false;
+    const release=()=>{if(released)return;released=true;if(--entry.refs===0&&entry.blobUrl){URL.revokeObjectURL(entry.blobUrl);if(playbackCache.get(cacheKey)===entry)playbackCache.delete(cacheKey);}};
+    try{return {url:await entry.promise,release};}catch(e){release();throw e;}
+  }
+  async function downloadVideo(record){
+    const source=await resolveVideoSource(record);let temp;
+    try{
+      let url=source.url;if(!url.startsWith('blob:')){const r=await fetch(url);if(!r.ok)throw new Error('Не удалось скачать видео: '+r.status);temp=URL.createObjectURL(await r.blob());url=temp;}
+      const link=document.createElement('a');link.href=url;link.download='magic-'+safeName(record.id||record.requestId)+'.mp4';link.click();
+    }finally{setTimeout(()=>{if(temp)URL.revokeObjectURL(temp);source.release();},1000);}
+  }
+  window.addEventListener('pagehide',()=>{for(const entry of playbackCache.values())if(entry.blobUrl)URL.revokeObjectURL(entry.blobUrl);playbackCache.clear();});
   async function refreshGeneration(record){
     record=record?.id?record:await getVideo(record);
     if(!record||record.uid!==cache.user.uid)throw new Error('Продолжить можно только свою генерацию.');
     if(MagicDomain.terminal(record.status)||!record.requestId)return record;
-    if(!await providerCredentials(record.provider||'byteplus'))throw new Error('Настрой BytePlus для продолжения задачи.');
-    const response=await proxy('/byteplus/status',{method:'POST',body:{taskId:record.requestId,taskToken:record.taskToken||null}});
-    const data=await response.json(),status=statusName(data.status||data.state);
-    if(status==='failed'){
+    const router=record.provider==='openrouter';
+    let data;
+    if(router){const credentials=record.transport==='worker'?{mode:'worker',workerUrl:record.gatewayUrl}:await providerCredentials('openrouter');if(!credentials)throw new Error('Настрой OpenRouter для продолжения задачи.');data=await openRouterRequest('status',{credentials,body:{taskId:record.requestId,taskToken:record.taskToken}});}
+    else{if(!await providerCredentials(record.provider||'byteplus'))throw new Error('Настрой BytePlus для продолжения задачи.');data=await (await proxy('/byteplus/status',{method:'POST',body:{taskId:record.requestId,taskToken:record.taskToken||null}})).json();}
+    const status=statusName(data.status||data.state);
+    if(['failed','cancelled'].includes(status)){
       const error=data.error?.message||data.error||data.message||'API сообщил об ошибке генерации';
-      return updateVideo(record.id,{status:'failed',error:typeof error==='string'?error:JSON.stringify(error),finishedAt:now()});
+      return updateVideo(record.id,{status,error:typeof error==='string'?error:JSON.stringify(error),finishedAt:now()});
     }
     if(status==='completed')return persistRemoteVideo(record,data);
     return updateVideo(record.id,{status,pct:Number(data.progress??data.pct??record.pct)||0,trackingWarning:null});
@@ -737,7 +934,7 @@ window.Studio=(()=>{
     const finish=()=>{clearTimeout(timer);signal?.removeEventListener('abort',finish);resolve();};
     const timer=setTimeout(finish,ms);signal?.addEventListener('abort',finish,{once:true});
   });}
-  async function watchGeneration(record,onUpdate,{interval=4500,signal}={}){
+  async function watchGeneration(record,onUpdate,{interval=record.provider==='openrouter'?15000:4500,signal}={}){
     let item=record,errors=0;
     while(!signal?.aborted&&!MagicDomain.terminal(item.status)){
       await pause(Math.min(30000,interval*2**errors),signal);if(signal?.aborted)break;
@@ -750,25 +947,25 @@ window.Studio=(()=>{
     }
     return item;
   }
-  let sessionRequest;
-  async function gatewaySession(){
-    const gateway=apiGatewayBase();if(!gateway)return null;
-    const stored=read(credentialKey('session'),null);
+  const sessionRequests=new Map();
+  async function gatewaySession(gateway=apiGatewayBase()){
+    if(!gateway)return null;
+    const sessionKey=credentialKey('session.'+gateway),stored=read(sessionKey,null)||read(credentialKey('session'),null);
     if(stored?.gateway===gateway&&stored.expiresAt>Date.now()+60000)return stored.token;
-    if(sessionRequest)return sessionRequest;
-    sessionRequest=(async()=>{
+    if(sessionRequests.has(gateway))return sessionRequests.get(gateway);
+    const sessionRequest=(async()=>{
       const response=await fetch(gateway+'/byteplus/session',{method:'POST',headers:{Authorization:'Bearer '+await api.auth.currentUser.getIdToken()},signal:AbortSignal.timeout(8000)});
       // Compatibility with the already-deployed, older Worker. Replace its code before
       // inviting the team; the new Worker always requires the membership receipt.
-      if(response.status===404){write(credentialKey('session'),{gateway,token:null,expiresAt:Date.now()+300000});return null;}
+      if(response.status===404){write(sessionKey,{gateway,token:null,expiresAt:Date.now()+300000});return null;}
       const data=await responseOrError(response,'Worker');
-      write(credentialKey('session'),{gateway,token:data.sessionToken,expiresAt:data.expiresAt});return data.sessionToken;
-    })();
-    try{return await sessionRequest;}finally{sessionRequest=null;}
+      write(sessionKey,{gateway,token:data.sessionToken,expiresAt:data.expiresAt});return data.sessionToken;
+    })();sessionRequests.set(gateway,sessionRequest);
+    try{return await sessionRequest;}finally{sessionRequests.delete(gateway);}
   }
-  async function gatewayHeaders(taskToken){
+  async function gatewayHeaders(taskToken,base=apiGatewayBase()){
     const headers={Authorization:'Bearer '+await api.auth.currentUser.getIdToken()};
-    const session=await gatewaySession();if(session)headers['X-Magic-Session']=session;
+    const session=await gatewaySession(base);if(session)headers['X-Magic-Session']=session;
     if(taskToken)headers['X-Task-Token']=taskToken;return headers;
   }
 
@@ -798,9 +995,9 @@ window.Studio=(()=>{
 
   return {ready,requireUser,current,isAdmin,signIn,signUp,logout,updateProfile,uploadProfilePhoto,listUsers,createUser,updateUserRole,uid,read,write,notify,download,element:el,timestamp,
     listFolders,listPresets,canEdit,saveFolder,deleteFolder,savePreset,deletePreset,loadTemplates,ensureTemplates,
-    portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,providerKey,providerCredentials,apiGatewayBase,
+    portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,integrationVerified,activeVideoProvider,setVideoProvider,videoModelFor,prepareVideoRequest,providerKey,providerCredentials,apiGatewayBase,openRouterGateway,
     listSpaces,createSpace,getSpace,renameSpace,duplicateSpace,deleteSpace,saveSpaceState,queueSpaceState,flushSpaceState,flushPendingWork,
-    uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,submitGeneration,refreshGeneration,watchGeneration,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
+    uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,permanentlyDeleteVideo,submitGeneration,refreshGeneration,watchGeneration,resolveVideoSource,downloadVideo,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
     getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
 })();
 
@@ -893,6 +1090,92 @@ window.MagicPortraits = (() => {
     return dialog;
   }
   return {ensure:prepare,manage};
+})();
+
+(function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MagicCameraMovements=api;})(typeof window==='object'?window:globalThis,()=>{
+  const rows=[
+    ['01','Pan/Tilt','Static shot','01-static-shot-hq','Camera: locked-off static shot. Movement: hold one fixed camera position for the full clip. Speed: still and steady. Framing: keep the same angle, height, lens distance and composition. End: finish with the same framing and camera position.'],
+    ['02','Pan/Tilt','Pan right','02-pan-right-hq','Camera: pan right. Movement: rotate the camera horizontally from left to right from one fixed point. Speed: smooth constant rotation. Framing: keep the horizon level while new space enters from the right side of the frame. End: settle on a clear final composition.'],
+    ['02B','Pan/Tilt','Pan left','2b-pan-left-hq','Camera: pan left. Movement: rotate the camera horizontally from right to left from one fixed point. Speed: smooth constant rotation. Framing: keep the horizon level while new space enters from the left side of the frame. End: settle on a clear final composition.'],
+    ['03','Pan/Tilt','Whip pan right','03-whip-pan-right-hq','Camera: whip pan right. Movement: rotate rapidly from the starting direction toward a new target on the right. Speed: fast snap with brief motion blur during the rotation. Framing: begin on one readable composition and land on a second readable target. End: settle into a sharp final frame.'],
+    ['03B','Pan/Tilt','Whip pan left','3b-whip-pan-left-hq','Camera: whip pan left. Movement: rotate rapidly from the starting direction toward a new target on the left. Speed: fast snap with brief motion blur during the rotation. Framing: begin on one readable composition and land on a second readable target. End: settle into a sharp final frame.'],
+    ['04','Pan/Tilt','Tilt up','04-tilt-up-hq','Camera: tilt up. Movement: rotate the camera upward from one fixed point. Speed: smooth constant tilt. Framing: keep the vertical subject or architecture centered as the frame travels upward. End: land on the upper target.'],
+    ['04B','Pan/Tilt','Tilt down','4b-tilt-down-hq','Camera: tilt down. Movement: rotate the camera downward from one fixed point. Speed: smooth constant tilt. Framing: keep the vertical subject or architecture centered as the frame travels downward. End: land on the lower target.'],
+    ['05','Zoom/Lens','Slow zoom in','05-slow-zoom-in-hq','Camera: slow zoom in. Movement: slowly increase lens focal length toward a tighter frame. Speed: gradual and even. Framing: keep the main visual target readable as it becomes larger in frame. End: finish on a stable tighter composition.'],
+    ['05B','Zoom/Lens','Slow zoom out','5b-slow-zoom-out-hq','Camera: slow zoom out. Movement: slowly decrease lens focal length toward a wider frame. Speed: gradual and even. Framing: keep the main visual target readable as more surrounding space appears. End: finish on a stable wider composition.'],
+    ['06','Zoom/Lens','Fast zoom in','06-fast-zoom-in-v2-hq','Camera: fast zoom in. Movement: quickly increase lens focal length toward the main visual target. Speed: quick decisive zoom. Framing: keep the target centered or clearly readable during the scale change. End: finish on a stable tighter composition.'],
+    ['06B','Zoom/Lens','Fast zoom out','06b-fast-zoom-out-v2-hq','Camera: fast zoom out. Movement: quickly decrease lens focal length away from the main visual target. Speed: quick decisive zoom. Framing: keep the target readable as the surrounding space appears. End: finish on a stable wider composition.'],
+    ['07A','Zoom/Lens','Crash zoom in','07a-crash-zoom-in-v2-hq','Camera: crash zoom in. Movement: snap the lens rapidly toward the main visual target. Speed: very fast and punchy. Framing: keep the target readable through the sudden scale change. End: land on a bold tighter composition.'],
+    ['07B','Zoom/Lens','Crash zoom out','07b-crash-zoom-out-v2-hq','Camera: crash zoom out. Movement: snap the lens rapidly away from the main visual target. Speed: very fast and punchy. Framing: keep the target readable as the surrounding space appears. End: land on a bold wider composition.'],
+    ['08','Dolly/Track','Dolly in','08-dolly-in-hq','Camera: dolly in. Movement: move the camera physically forward in a straight line toward the main subject. Speed: smooth controlled push. Framing: keep camera height, lens direction and subject position consistent while distance closes. End: finish in a tighter composition.'],
+    ['09','Dolly/Track','Dolly out','09-dolly-out-hq','Camera: dolly out. Movement: move the camera physically backward in a straight line away from the main subject. Speed: smooth controlled retreat. Framing: keep lens direction and camera height consistent while more environment enters frame. End: finish in a wider composition.'],
+    ['10','Physical Moves','Truck right','10-truck-right-hq','Camera: truck right. Movement: move the camera physically to the right on a straight horizontal path. Speed: smooth constant lateral travel. Framing: keep the lens facing the same direction while the scene slides across frame. End: finish on a clean lateral composition.'],
+    ['10B','Physical Moves','Truck left','10b-truck-left-hq','Camera: truck left. Movement: move the camera physically to the left on a straight horizontal path. Speed: smooth constant lateral travel. Framing: keep the lens facing the same direction while the scene slides across frame. End: finish on a clean lateral composition.'],
+    ['11A','Physical Moves','Pedestal up','11a-pedestal-up-hq','Camera: pedestal up. Movement: move the entire camera vertically upward in a straight line. Speed: smooth constant lift. Framing: keep the lens level and pointed in the same direction during the vertical move. End: finish with the higher framing clearly readable.'],
+    ['11B','Physical Moves','Pedestal down','11b-pedestal-down-hq','Camera: pedestal down. Movement: move the entire camera vertically downward in a straight line. Speed: smooth constant descent. Framing: keep the lens level and pointed in the same direction during the vertical move. End: finish with the lower framing clearly readable.'],
+    ['12','Physical Moves','Slider right','12-slider-right-hq','Camera: slider right. Movement: slide the camera a small distance to the right. Speed: slow controlled constant motion. Framing: keep foreground, subject and background layers readable as parallax shifts. End: finish on a refined composition with the new right-side angle visible.'],
+    ['12B','Physical Moves','Slider left','12b-slider-left-hq','Camera: slider left. Movement: slide the camera a small distance to the left. Speed: slow controlled constant motion. Framing: keep foreground, subject and background layers readable as parallax shifts. End: finish on a refined composition with the new left-side angle visible.'],
+    ['13','Physical Moves','Push past / pass-by shot','13-push-past-pass-by-shot-hq','Camera: push past. Movement: move forward past a visible foreground object, edge or opening. Speed: smooth forward glide. Framing: let the foreground pass close to the lens while the space beyond becomes clearer. End: arrive inside or beyond the foreground layer.'],
+    ['14','Physical Moves','Arc right','14-arc-right-hq','Camera: arc right. Movement: move on a shallow curved path around the main subject toward the right side. Speed: smooth measured curve. Framing: keep distance, height and subject readability consistent while the angle changes. End: finish from a new right-side angle.'],
+    ['14B','Physical Moves','Arc left','14b-arc-left-hq','Camera: arc left. Movement: move on a shallow curved path around the main subject toward the left side. Speed: smooth measured curve. Framing: keep distance, height and subject readability consistent while the angle changes. End: finish from a new left-side angle.'],
+    ['15','Physical Moves','Orbit clockwise','15-orbit-clockwise-hq','Camera: clockwise orbit. Movement: circle clockwise around the main subject at a consistent radius. Speed: smooth controlled orbit. Framing: keep the subject centered while the background rotates around them. End: complete the intended arc or full circle with stable framing.'],
+    ['15B','Physical Moves','Orbit counterclockwise','15b-orbit-counterclockwise-hq','Camera: counterclockwise orbit. Movement: circle counterclockwise around the main subject at a consistent radius. Speed: smooth controlled orbit. Framing: keep the subject centered while the background rotates around them. End: complete the intended arc or full circle with stable framing.'],
+    ['16','Dolly/Track','Tracking shot','16-tracking-shot-hq',"Camera: tracking shot. Movement: move through the scene with the main subject. Speed: match the subject's pace. Framing: keep the subject consistently readable while the environment moves around them. End: maintain a clear moving composition."],
+    ['17','Dolly/Track','Follow shot / over-the-shoulder','17-follow-shot-over-the-shoulder-hq',"Camera: follow shot from behind. Movement: move behind the subject along their route at shoulder height. Speed: match the subject's pace. Framing: keep the back, shoulder or head as the foreground guide while the route ahead stays readable. End: continue following with the subject leading the frame."],
+    ['18','Dolly/Track','Reverse tracking / walk-and-talk','18-reverse-tracking-walk-and-talk-hq',"Camera: reverse tracking shot. Movement: move backward in front of the walking subject. Speed: match the subject's forward pace. Framing: keep front-facing face and body framing stable as the background moves behind them. End: hold a clear front-facing moving composition."],
+    ['19','Dolly/Track','Side tracking','19-side-tracking-hq',"Camera: side tracking shot. Movement: move parallel beside the subject along their direction of travel. Speed: match the subject's motion. Framing: keep the subject in side profile or three-quarter profile at a stable distance. End: continue the parallel movement with clear horizontal motion."],
+    ['20','Dolly/Track','Low tracking','20-low-tracking-v2-hq','Camera: low tracking shot. Movement: move at ground or below-waist height alongside the subject\'s movement path. Speed: match the subject, footsteps or wheels. Framing: keep the low detail readable while the ground plane moves through frame. End: finish with the low perspective clearly maintained.'],
+    ['21','Dolly/Track','Vehicle tracking','21-vehicle-tracking-hq',"Camera: vehicle tracking shot. Movement: move with the vehicle along its route. Speed: match the vehicle's pace. Framing: keep the vehicle stable in frame while the road or environment moves past. End: maintain a clear moving vehicle composition."],
+    ['22','Dolly/Track','Chase shot','22-chase-shot-hq','Camera: chase shot. Movement: follow a moving subject quickly along the action route. Speed: fast, reactive and physically close. Framing: keep the subject visible while allowing energetic reframing. End: stay connected to the subject in motion.'],
+    ['23','Human Camera','Handheld shot','23-handheld-shot-hq','Camera: handheld shot. Movement: hold the camera at human operator height with natural body movement. Speed: responsive and organic. Framing: keep the subject readable while the frame has subtle sway and micro-adjustments. End: finish with a natural handheld composition.'],
+    ['24','Human Camera','Body-mounted camera / Snorricam','24-snorricam-v2-hq',"Camera: body-mounted Snorricam. Movement: keep the camera fixed relative to the subject's torso or face while the subject moves. Speed: match the subject's body motion. Framing: keep the subject close, centered and facing the camera as the background moves around them. End: finish with the subject still locked in frame."],
+    ['25','Drone/Crane','Crane up','25-crane-up-hq','Camera: crane up. Movement: travel smoothly upward through open space. Speed: slow controlled vertical lift. Framing: keep the subject or location readable as the camera rises. End: finish with the higher scale clearly visible.'],
+    ['25B','Drone/Crane','Crane down','25b-crane-down-hq','Camera: crane down. Movement: travel smoothly downward through open space. Speed: slow controlled vertical descent. Framing: keep the subject or location readable as the camera descends. End: finish with the lower subject or destination clearly visible.'],
+    ['26','Drone/Crane','Drone push in','26-drone-push-in-hq','Camera: drone push in. Movement: fly smoothly forward through open space toward the subject or destination. Speed: controlled aerial glide. Framing: keep the route and destination readable as the camera approaches. End: arrive at a closer aerial composition.'],
+    ['26B','Drone/Crane','Drone pull back','26b-drone-pull-back-hq','Camera: drone pull back. Movement: fly smoothly backward away from the subject or destination. Speed: controlled aerial retreat. Framing: keep the subject readable as more landscape appears. End: finish on a wider aerial composition.'],
+    ['27','Drone/Crane','Helicopter shot','27-helicopter-shot-hq','Camera: helicopter-style aerial shot. Movement: move from high altitude along a broad gradual flight path. Speed: steady controlled aerial motion. Framing: keep the landscape or distant moving subject readable at wide scale. End: finish on a stable high-altitude composition.'],
+    ['S1','Specials','First-person view','s1-first-person-view-hq',"Camera: first-person view. Movement: move forward at human eye height from the character's perspective. Speed: natural walking or reaching pace. Framing: use visible hands, arms or body edges as the viewer's physical reference. End: arrive at the next point of action from the same point of view."],
+    ['S2','Specials','Tilt-shift','s2-tilt-shift-hq','Camera: tilt-shift miniature view. Movement: hold or glide from a high angled view over the scene. Speed: small precise movement. Framing: keep a narrow band of sharp focus across the key subject area with soft blur above and below. End: finish with the miniature-scale view intact.'],
+    ['S3','Specials','Infinite zoom','s3-infinite-zoom-hq','Camera: infinite zoom. Movement: zoom continuously inward toward the exact center target. Speed: smooth accelerating zoom. Framing: keep the circular target centered as it expands. End: finish when the next visual world fills the frame.'],
+    ['S4','Specials','Earth zoom out','s4-earth-zoom-out-hq','Camera: earth zoom out. Movement: pull upward from the starting point through street, city, landscape and planet scale. Speed: rapid expanding zoom out. Framing: keep the original location centered as scale grows. End: finish on a planet-scale view with the starting point still implied at center.'],
+    ['S5','Specials','Time-lapse','s5-time-lapse-hq','Camera: locked-camera time-lapse. Movement: hold one fixed camera position while time moves rapidly forward. Speed: fast time compression with a stable camera. Framing: keep the same composition and horizon as motion passes through the frame. End: finish from the same camera angle with visible passage of time.'],
+    ['S6','Specials','Pass-through objects','s6-pass-through-objects-hq','Camera: pass-through movement. Movement: move forward toward a visible object, surface or barrier and continue into the space beyond. Speed: smooth centered glide. Framing: keep the opening or surface centered as the transition point. End: arrive inside the revealed space beyond.']
+  ];
+  const clips=Object.freeze(rows.map(([id,category,name,slug,prompt])=>Object.freeze({id,category,name,prompt,url:'https://aicameramovements.com/previews/hq/'+slug+'.mp4'})));
+  const categories=['Dolly/Track','Zoom/Lens','Drone/Crane','Pan/Tilt','Physical Moves','Human Camera','Specials'];
+  const get=id=>clips.find(c=>c.id===id);
+  function filter(query='',category='all'){const q=query.trim().toLowerCase();return clips.filter(c=>(category==='all'||c.category===category)&&[c.name,c.category,c.prompt,c.id].join(' ').toLowerCase().includes(q));}
+  return {clips,categories,get,filter};
+});
+
+window.MagicVideoViewer=(()=>{
+  const E=(tag,text,cls)=>Studio.element(tag,text,cls);
+  async function copy(text){
+    try{await navigator.clipboard.writeText(text);}catch{const input=E('textarea');input.value=text;input.style.cssText='position:fixed;opacity:0;pointer-events:none';(document.querySelector('dialog[open]')||document.body).append(input);input.select();if(!document.execCommand('copy')){input.remove();throw new Error('Не удалось скопировать промпт.');}input.remove();}
+    Studio.notify('Промпт скопирован');
+  }
+  function show(record,{mode='assets'}={}){
+    document.querySelector('.media-preview-dialog')?.close();
+    const dialog=E('dialog',undefined,'media-preview-dialog');dialog.dataset.previewMode=mode;dialog.setAttribute('aria-label',mode==='assets'?'Предпросмотр генерации':'Предпросмотр видео');
+    const shell=E('div',undefined,'media-preview-shell'),close=E('button','×','media-preview-close');close.setAttribute('aria-label','Закрыть предпросмотр');close.onclick=()=>dialog.close();
+    const stage=E('div',undefined,'media-preview-stage'),video=E('video'),notice=E('p','Загружаем видео…','media-preview-notice');video.controls=true;video.playsInline=true;video.setAttribute('controlsList','nofullscreen');video.setAttribute('disablePictureInPicture','');video.hidden=true;stage.append(video,notice);shell.append(close,stage);
+    const actions=E('div',undefined,'media-preview-actions'),download=E('button','↓ Скачать видео','ui-button primary');download.onclick=async()=>{download.disabled=true;try{await Studio.downloadVideo(record);}catch(e){Studio.notify(e.message,'error');}finally{download.disabled=false;}};actions.append(download);
+    if(mode==='assets'){
+      const promptToggle=E('button','Промпт','ui-button'),infoToggle=E('button','Описание','ui-button'),promptPanel=E('div',undefined,'media-preview-details'),infoPanel=E('div',undefined,'media-preview-details');promptPanel.hidden=infoPanel.hidden=true;promptPanel.id='video-preview-prompt';infoPanel.id='video-preview-info';
+      const prompt=E('button',record.prompt||'Промпт не сохранён','media-preview-prompt');prompt.title='Нажми, чтобы скопировать полный промпт';prompt.setAttribute('aria-label','Скопировать полный промпт');prompt.onclick=()=>copy(record.prompt||'').catch(e=>Studio.notify(e.message,'error'));promptPanel.append(prompt);
+      const dl=E('dl',undefined,'media-preview-info');
+      for(const [label,value]of [['Создал',record.user||record.uid||'—'],['Дата',Studio.timestamp(record.createdAt)?new Date(Studio.timestamp(record.createdAt)).toLocaleString('ru-RU'):'—'],['Модель',record.model||'—'],['Провайдер',MagicProviders.providerName(record.provider)],['Формат',record.ratio||'—'],['Качество / разрешение',record.resolution||'—'],['Длительность',record.seconds?record.seconds+' сек.':'—'],['Аудио',record.generateAudio===false?'Без звука':'Со звуком']]){dl.append(E('dt',label),E('dd',value));}infoPanel.append(dl);
+      for(const [toggle,panel]of [[promptToggle,promptPanel],[infoToggle,infoPanel]]){toggle.setAttribute('aria-controls',panel.id);toggle.setAttribute('aria-expanded','false');toggle.onclick=()=>{panel.hidden=!panel.hidden;toggle.setAttribute('aria-expanded',String(!panel.hidden));};}
+      actions.prepend(promptToggle,infoToggle);shell.append(actions,promptPanel,infoPanel);
+    }else shell.append(actions);
+    dialog.append(shell);document.body.append(dialog);let source,closed=false;
+    const resize=()=>{const [w,h]=String(record.ratio||'16:9').split(':').map(Number),ratio=video.videoWidth&&video.videoHeight?video.videoWidth/video.videoHeight:w/h||16/9,maxHeight=innerHeight*(mode==='assets'?.58:.76),width=Math.min(innerWidth*.86,maxHeight*ratio,video.videoWidth||1280);stage.style.width=width+'px';stage.style.aspectRatio=String(ratio);if(mode==='assets')dialog.style.width=Math.min(innerWidth*.94,Math.max(width+30,Math.min(620,innerWidth*.9)))+'px';};
+    dialog.onclose=()=>{closed=true;video.pause();video.removeAttribute('src');video.load();source?.release();removeEventListener('resize',resize);dialog.remove();};dialog.onclick=e=>{if(e.target===dialog)dialog.close();};dialog.addEventListener('keydown',e=>e.stopPropagation());
+    video.onloadedmetadata=resize;video.onerror=()=>{notice.hidden=false;notice.textContent='Не удалось воспроизвести видео. Ссылка могла истечь или формат недоступен.';};addEventListener('resize',resize);resize();dialog.showModal();
+    Studio.resolveVideoSource(record).then(result=>{if(closed){result.release();return;}source=result;notice.hidden=true;video.hidden=false;video.src=result.url;video.play().catch(()=>{});}).catch(e=>{if(!closed){notice.textContent=e.message;download.disabled=true;}});
+    return dialog;
+  }
+  return {show,copy};
 })();
 
 'use strict';
@@ -996,16 +1279,25 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     async function reload(){videos=await S.listVideos();if(mode==='inputs')inputs=await S.listInputAssets();render();}
     function videoCard(v){
       const card=E('article',undefined,'asset-card'),media=E('div',undefined,'asset-media');
-      if(v.videoUrl){const video=E('video');video.src=v.videoUrl;video.controls=true;video.preload='metadata';media.append(video);}else media.append(E('div',statusLabel(v.status),'asset-placeholder '+String(v.status||'')));
+      if(v.videoUrl){
+        const trigger=E('button',undefined,'asset-preview-trigger');trigger.setAttribute('aria-label','Предпросмотр видео · '+(v.user||'User'));trigger.style.height='100%';trigger.onclick=()=>MagicVideoViewer.show(v);
+        if(v.provider!=='openrouter'){const video=E('video');video.src=v.videoUrl;video.muted=true;video.playsInline=true;video.preload='metadata';trigger.append(video);}else trigger.append(E('span','READY','asset-placeholder completed'));
+        trigger.append(E('span','▷','asset-preview-play'));media.append(trigger);
+      }else media.append(E('div',statusLabel(v.status),'asset-placeholder '+String(v.status||'')));
       if(v.cost!=null)media.append(E('span','$'+Number(v.cost).toFixed(2),'asset-cost'));
       if(v.seconds>0)media.append(E('span',v.seconds+'s','asset-duration'));
       const body=E('div',undefined,'asset-body');body.append(E('p',(v.prompt||'Без промпта').slice(0,180)),E('small',`${v.model||'model'} · ${v.resolution||''} ${v.ratio||''}`));
       const tags=E('div',undefined,'asset-tags');tags.append(E('span',v.user||'User'),E('span',fmtDate(v.createdAt)));
       if(v.archived)tags.append(E('span','В архиве'));const actions=E('div',undefined,'asset-actions');
-      if(v.videoUrl){const save=E('a','Скачать видео','ui-button small');save.href=v.videoUrl;save.target='_blank';save.rel='noopener';save.download='magic-'+v.id+'.mp4';actions.append(save);if(v.providerUrlExpiresAt)body.append(E('small',Date.now()>=v.providerUrlExpiresAt?'Ссылка провайдера могла истечь; отчёт сохранён.':'Ссылка ориентировочно до '+new Date(v.providerUrlExpiresAt).toLocaleString('ru-RU'),'asset-warning'));}
+      if(v.videoUrl){const preview=E('button','Предпросмотр','ui-button small');preview.onclick=()=>MagicVideoViewer.show(v);const save=E('button','Скачать видео','ui-button small');save.onclick=async()=>{save.disabled=true;try{await S.downloadVideo(v);}catch(e){S.notify(e.message,'error');}finally{save.disabled=false;}};actions.append(preview,save);if(v.providerUrlExpiresAt)body.append(E('small',Date.now()>=v.providerUrlExpiresAt?'Ссылка провайдера могла истечь; отчёт сохранён.':'Ссылка ориентировочно до '+new Date(v.providerUrlExpiresAt).toLocaleString('ru-RU'),'asset-warning'));}
       if(v.uid===user.uid&&v.spaceId){const open=E('a','Открыть Canvas','ui-button small');open.href=`nodes.html?space=${encodeURIComponent(v.spaceId)}`;actions.append(open);}
       if(v.uid===user.uid&&!MagicDomain.terminal(v.status)&&v.requestId){const refresh=E('button','Проверить статус','ui-button small');refresh.onclick=async()=>{refresh.disabled=true;try{const fresh=await S.refreshGeneration(v);videos=videos.map(x=>x.id===fresh.id?fresh:x);render();}catch(e){S.notify(e.message,'error');}finally{refresh.disabled=false;}};actions.append(refresh);}
       if(v.uid===user.uid&&MagicDomain.terminal(v.status)&&!v.archived){const archive=E('button','В архив','ui-button small ghost');archive.onclick=async()=>{archive.disabled=true;try{await S.deleteVideo(v.id);v.archived=true;render();}catch(e){S.notify(e.message,'error');archive.disabled=false;}};actions.append(archive);}
+      if(S.isAdmin()&&MagicDomain.terminal(v.status)){
+        const remove=E('button','Удалить из базы','ui-button small ghost asset-delete');
+        remove.onclick=async()=>{if(!confirm(`Удалить генерацию пользователя «${v.user||'User'}» из базы навсегда? Запись, промпт, ссылка и ошибка исчезнут из Assets и отчётов. Накопленный рейтинг сохранится. Файл у провайдера и копия в Canvas не удаляются.`))return;remove.disabled=true;try{await S.permanentlyDeleteVideo(v.id);videos=videos.filter(x=>x.id!==v.id);render();S.notify('Генерация удалена из базы.');}catch(e){S.notify(e.message,'error');remove.disabled=false;}};
+        actions.append(remove);
+      }
       if(v.error||v.archiveWarning)body.append(E('small',v.error||v.archiveWarning,'asset-warning'));
       body.append(tags,actions);card.append(media,body);return card;
     }
@@ -1030,21 +1322,32 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
   if(page==='presets'){await S.ensureTemplates();mountPresetLibrary($('#preset-library'));}
 
   if(page==='integrations'){
-    const provider='byteplus',key=$('#byteplus-api-key'),worker=$('#byteplus-worker-url'),state=$('#byteplus-state'),connect=$('#byteplus-save'),test=$('#byteplus-test'),remove=$('#byteplus-remove'),card=$('#byteplus-card');
-    const existing=await S.getIntegration(provider),localKey=await S.providerKey(provider),workerUrl=S.apiGatewayBase();
-    worker.value=workerUrl;
-    if(existing?.connected||localKey||workerUrl){key.value='';key.placeholder=localKey?'Ключ сохранён в этом браузере':'ARK key не нужен в Worker mode';state.textContent=workerUrl?'● Worker сохранён — нажми «Проверить»':'● Direct mode сохранён — нажми «Проверить»';state.className='integration-state ok';card.classList.add('connected');remove.hidden=false;test.hidden=false;}
-    $('#byteplus-toggle').onclick=()=>{key.type=key.type==='password'?'text':'password';};
-    connect.onclick=async()=>{connect.disabled=true;try{
-      const apiKey=key.value.trim(),gateway=worker.value.trim();
-      if(!apiKey&&!gateway)throw new Error('Вставь ARK API Key для быстрого Direct mode или Cloudflare Worker URL.');
-      await S.saveIntegration(provider,{apiKey,workerUrl:gateway,label:'BytePlus ModelArk'});key.value='';
-      state.textContent=gateway?'● Cloudflare Worker сохранён. Нажми «Проверить».':'● Direct browser mode сохранён. Нажми «Проверить».';state.className='integration-state ok';card.classList.add('connected');remove.hidden=false;test.hidden=false;
-      S.notify(gateway?'Cloudflare Worker подключён':'ARK API Key сохранён локально для Direct mode');
-    }catch(e){state.textContent='● Ошибка: '+e.message;state.className='integration-state bad';}finally{connect.disabled=false;}};
-    test.onclick=async()=>{test.disabled=true;state.textContent=worker.value.trim()?'Проверяем Cloudflare Worker → BytePlus…':'Проверяем прямой запрос к BytePlus…';try{await S.testIntegration(provider);state.textContent=(S.apiGatewayBase()?'● Worker: API-ключ принят.':'● Direct mode: API-ключ принят.')+' Доступ к Seedance проверяется при генерации.';state.className='integration-state ok';card.classList.add('connected');}catch(e){state.textContent='● Ошибка: '+e.message;state.className='integration-state bad';}finally{test.disabled=false;}};
-    remove.onclick=async()=>{if(!confirm('Отключить BytePlus?'))return;await S.removeIntegration(provider);key.value='';worker.value='';state.textContent='● Не подключено — генерация недоступна';state.className='integration-state';card.classList.remove('connected');remove.hidden=test.hidden=true;};
-    $$('.integration-future [data-provider-connect]').forEach(b=>b.onclick=()=>S.notify('Следующий provider подключается отдельным adapter без переделки Canvas.'));
+    await Promise.all(['byteplus','openrouter'].map(p=>S.getIntegration(p)));
+    async function renderProviders(){
+      const active=S.activeVideoProvider();$('#active-video-provider').textContent=active?MagicProviders.providerName(active):'Отключено';
+      for(const provider of ['byteplus','openrouter']){
+        const credentials=await S.providerCredentials(provider),connected=!!credentials,enabled=provider===active,state=$('#'+provider+'-state'),card=$('#'+provider+'-card'),verified=S.integrationVerified(provider);
+        card.classList.toggle('connected',connected);card.classList.toggle('is-active',enabled);$('#'+provider+'-active').hidden=!enabled;
+        $('#'+provider+'-test').hidden=!connected;$('#'+provider+'-enable').hidden=!connected||enabled;$('#'+provider+'-remove').hidden=!enabled;$('#'+provider+'-delete').hidden=!connected;
+        const key=$('#'+provider+'-api-key');key.placeholder=credentials?.apiKey?'Ключ сохранён в этом браузере':provider==='byteplus'&&credentials?.mode==='worker'?'ARK key хранится в Worker':'Вставь API key';
+        $('#'+provider+'-worker-url').value=provider==='byteplus'?S.apiGatewayBase():S.openRouterGateway();
+        state.className='integration-state'+(verified?' ok':'');
+        state.textContent=!connected?'Не подключено':verified?provider==='openrouter'?'Ключ подтверждён · Seedance 2.5 в каталоге':'API-ключ принят · доступ к модели проверяется при генерации':'Подключение сохранено — нажми «Проверить»';
+        if(connected&&!enabled)state.textContent+=' · отключён';
+      }
+    }
+    for(const provider of ['byteplus','openrouter']){
+      const key=$('#'+provider+'-api-key'),worker=$('#'+provider+'-worker-url'),state=$('#'+provider+'-state');
+      async function run(button,work){button.disabled=true;try{await work();await renderProviders();}catch(e){state.textContent='Ошибка: '+e.message;state.className='integration-state bad';}finally{button.disabled=false;}}
+      $('#'+provider+'-toggle').onclick=()=>{key.type=key.type==='password'?'text':'password';};
+      $('#'+provider+'-save').onclick=e=>run(e.currentTarget,async()=>{await S.saveIntegration(provider,{apiKey:key.value.trim(),workerUrl:worker.value.trim()});key.value='';S.notify('Подключение сохранено. Проверь ключ перед генерацией.');});
+      $('#'+provider+'-test').onclick=e=>run(e.currentTarget,async()=>{state.textContent='Проверяем API…';await S.testIntegration(provider);S.notify(MagicProviders.providerName(provider)+': проверка пройдена');});
+      $('#'+provider+'-enable').onclick=e=>run(e.currentTarget,async()=>{S.setVideoProvider(provider);S.notify('Seedance 2.5 работает через '+MagicProviders.providerName(provider));});
+      $('#'+provider+'-remove').onclick=e=>run(e.currentTarget,async()=>{if(S.activeVideoProvider()===provider)S.setVideoProvider(null);S.notify('Провайдер отключён. Ключ сохранён для следующего подключения.');});
+      $('#'+provider+'-delete').onclick=e=>{if(confirm('Удалить подключение '+MagicProviders.providerName(provider)+' и ключ из этого браузера?'))run(e.currentTarget,async()=>{await S.removeIntegration(provider);key.value='';});};
+    }
+    await renderProviders();
+    window.addEventListener('storage',e=>{if(e.key?.startsWith('magic.credentials.'+user.uid+'.'))renderProviders().catch(e=>S.notify(e.message,'error'));});
   }
 
   if(page==='users'){
@@ -1090,4 +1393,35 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
 
   if(page==='placeholder'){const name=document.body.dataset.module||'Module';$('#placeholder-title').textContent=name;}
 })().catch(error=>{Studio.notify(error.message||String(error),'error');});
+
+(async()=>{
+  if(document.body.dataset.page!=='camera')return;
+  await Studio.ready();if(!await Studio.requireUser())return;
+  const E=Studio.element,C=MagicCameraMovements,grid=document.querySelector('#camera-grid'),search=document.querySelector('#camera-search'),filters=document.querySelector('#camera-filters');let category='all',videos=[];
+  const observer=new IntersectionObserver(entries=>{for(const entry of entries){const video=entry.target;if(entry.isIntersecting&&!document.hidden){if(!video.src)video.src=video.dataset.src;video.play().catch(()=>{});}else video.pause();}},{rootMargin:'40px',threshold:.1});
+  function observe(){videos.forEach(v=>observer.observe(v));}
+  function render(){observer.disconnect();videos.forEach(v=>{v.pause();v.removeAttribute('src');v.load();});videos=[];grid.replaceChildren();const rows=C.filter(search.value,category);
+    document.querySelector('#camera-results').textContent=rows.length+' примеров';document.querySelector('#camera-empty').hidden=rows.length>0;
+    for(const clip of rows){
+      const card=E('article',undefined,'camera-card');card.dataset.cameraId=clip.id;
+      const preview=E('div',undefined,'camera-preview'),video=E('video'),fallback=E('span','Пример недоступен','camera-preview-error');video.dataset.src=clip.url;video.muted=true;video.loop=true;video.playsInline=true;video.preload='metadata';video.controls=true;video.setAttribute('controlsList','nodownload nofullscreen');video.setAttribute('aria-label',clip.name);fallback.hidden=true;video.onerror=()=>fallback.hidden=false;preview.append(video,fallback);videos.push(video);
+      const body=E('div',undefined,'camera-card-body'),meta=E('div',undefined,'camera-shot-meta');meta.append(E('span','Shot '+clip.id),E('span',clip.category));body.append(meta,E('h2',clip.name));
+      const prompt=E('p',clip.prompt,'camera-card-prompt');prompt.tabIndex=0;prompt.setAttribute('aria-label','Промпт '+clip.name);body.append(prompt);
+      const actions=E('div',undefined,'camera-card-actions'),copy=E('button','Copy prompt','ui-button'),use=E('button','Turn into video ↗','ui-button primary');copy.onclick=()=>MagicVideoViewer.copy(clip.prompt).catch(e=>Studio.notify(e.message,'error'));use.onclick=()=>chooseSpace(clip);actions.append(copy,use);body.append(actions);card.append(preview,body);grid.append(card);
+    }observe();
+  }
+  for(const value of ['all',...C.categories]){const count=value==='all'?C.clips.length:C.clips.filter(c=>c.category===value).length,button=E('button',undefined,'camera-filter');button.dataset.category=value;button.append(E('span',value==='all'?'All':value),E('small',String(count)));button.setAttribute('aria-pressed',String(value===category));button.onclick=()=>{category=value;filters.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b===button)));render();};filters.append(button);}
+  async function chooseSpace(clip){
+    const dialog=E('dialog',undefined,'studio-dialog camera-space-dialog'),header=E('header'),close=E('button','×','icon-button');header.append(E('h2','Camera movement · '+clip.name),close);close.setAttribute('aria-label','Закрыть');close.onclick=()=>dialog.close();
+    const body=E('div',undefined,'stack'),description=E('p','Выбери Space. Пресет камеры появится отдельной нодой — соедини её с Video generation.','panel-note'),select=E('select'),label=E('label','Твой Space'),error=E('p','Загружаем Spaces…','form-error'),add=E('button','Добавить пресет камеры','ui-button primary');label.append(select);add.disabled=true;body.append(description,label,error,add);dialog.append(header,body);document.body.append(dialog);dialog.onclose=()=>dialog.remove();dialog.onclick=e=>{if(e.target===dialog)dialog.close();};dialog.showModal();
+    try{const spaces=await Studio.listSpaces();if(!dialog.isConnected)return;
+      if(!spaces.length){error.textContent='Сначала создай свой Canvas Space.';const link=E('a','Открыть Spaces','ui-button');link.href='spaces.html';body.append(link);return;}
+      for(const space of spaces)select.add(new Option(space.name||'Untitled',space.id));error.textContent='';add.disabled=false;
+      add.onclick=()=>{const selected=spaces.find(s=>s.id===select.value);if(!selected||selected.ownerUid!==Studio.current().uid)return;const url=new URL('nodes.html',location.href);url.searchParams.set('space',selected.id);url.searchParams.set('camera',clip.id);url.searchParams.set('insert',Studio.uid());location.href=url.href;};
+    }catch(e){if(dialog.isConnected)error.textContent=e.message;}
+  }
+  search.oninput=render;render();
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)videos.forEach(v=>v.pause());else{observer.disconnect();observe();}});
+  window.addEventListener('pagehide',()=>{observer.disconnect();videos.forEach(v=>v.pause());});
+})().catch(e=>Studio.notify('Camera movement: '+e.message,'error'));
 </script></body></html>

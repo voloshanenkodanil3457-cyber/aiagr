@@ -36,7 +36,7 @@
     writeBatch:()=>{const ops=[];return {set:(r,d,o)=>ops.push(()=>write(r,d,o?.merge)),update:(r,d)=>ops.push(()=>write(r,d,true)),commit:async()=>ops.forEach(fn=>fn())};},
     runTransaction:async(database,callback)=>{
       const previous=window.__qa.transaction||Promise.resolve();let release;window.__qa.transaction=new Promise(r=>release=r);await previous;
-      try{const ops=[];await callback({get:sdk.getDoc,set:(r,d)=>ops.push(()=>write(r,d)),update:(r,d)=>ops.push(()=>write(r,d,true))});ops.forEach(fn=>fn());}finally{release();}
+      try{const ops=[];await callback({get:sdk.getDoc,set:(r,d)=>ops.push(()=>write(r,d)),update:(r,d)=>ops.push(()=>write(r,d,true)),delete:r=>ops.push(()=>sdk.deleteDoc(r))});for(const op of ops)await op();}finally{release();}
     },
     ref,uploadBytes:async()=>{stats('storage');throw new Error('Firebase Storage unavailable on Spark');},getDownloadURL:async r=>location.origin+'/qa-media/'+r.id,deleteObject:async()=>{}
   };

@@ -1,19 +1,19 @@
 from pathlib import Path
 root=Path(__file__).parent
 out=root.parent
-css=(root/'theme.css').read_text()+'\n'+(root/'cursors.css').read_text()
-canvas_css=(root/'canvas-base.css').read_text()
-firebase=(root/'firebase-config.js').read_text()
-app=(root/'domain.js').read_text()+'\n'+(root/'local-store.js').read_text()+'\n'+(root/'app.js').read_text()+'\n'+(root/'portraits.js').read_text()
-library=(root/'library.js').read_text()
-pages=(root/'pages.js').read_text()
-canvas=(root/'canvas.js').read_text()
+css=(root/'theme.css').read_text(encoding="utf-8")+'\n'+(root/'cursors.css').read_text(encoding="utf-8")+'\n'+(root/'media-ui.css').read_text(encoding="utf-8")
+canvas_css=(root/'canvas-base.css').read_text(encoding="utf-8")
+firebase=(root/'firebase-config.js').read_text(encoding="utf-8")
+app='\n'.join((root/f).read_text(encoding="utf-8") for f in ['domain.js','providers.js','local-store.js','app.js','portraits.js','camera-movements.js','video-viewer.js'])
+library=(root/'library.js').read_text(encoding="utf-8")
+pages=(root/'pages.js').read_text(encoding="utf-8")+'\n'+(root/'camera-page.js').read_text(encoding="utf-8")
+canvas=(root/'canvas.js').read_text(encoding="utf-8")
 
 favicon='''<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect x=%273%27 y=%273%27 width=%2726%27 height=%2726%27 rx=%278%27 fill=%27%2317171b%27 stroke=%27%235a5a66%27/%3E%3Cpath d=%27M8 22V10h3.2l4.8 6.4 4.8-6.4H24v12h-3.4v-6.6L16 21l-4.6-5.6V22z%27 fill=%27white%27/%3E%3Cpath d=%27M25 5l.8 2.2L28 8l-2.2.8L25 11l-.8-2.2L22 8l2.2-.8z%27 fill=%27%238ab8ff%27/%3E%3C/svg%3E">'''
 
 NAV=[
  ('CREATE',[('dashboard','▦','Dashboard','index.html'),('spaces','⌘','Canvas','spaces.html'),('flows','✣','Flows','flows.html'),('assets','▧','Assets','assets.html')]),
- ('ORGANIZE',[('projects','□','Projects','projects.html'),('presets','▤','Templates','presets.html'),('modifiers','☷','Modifiers','modifiers.html')]),
+ ('ORGANIZE',[('projects','□','Projects','projects.html'),('presets','▤','Templates','presets.html'),('camera','☷','Camera movement','modifiers.html')]),
  ('RESULTS',[('winners','♕','Winners','winners.html')]),
  ('ACCOUNT',[('integrations','⚙','My settings','integrations.html'),('users','♙','Users','users.html')])
 ]
@@ -64,11 +64,11 @@ def scripts(page_scripts=True):
 def save(name,title,page,active,body,module=None):
     mod=f' data-module="{module}"' if module else ''
     html=head(title)+f'<body data-page="{page}"{mod}>'+shell(active)+f'<main class="app-content"><div class="page-wrap">{body}</div></main>'+scripts()+'</body></html>'
-    (out/name).write_text(html)
+    (out/name).write_text(html, encoding="utf-8")
 
 # Sign in / registration
 signin='''<main class="auth-page"><section class="auth-card"><div class="brand auth-brand"><span class="brand-logo"></span><span class="brand-copy"><strong>Magic</strong><small>AI Ad Creatives</small></span></div><h1 id="auth-title">Войти в Magic</h1><p id="auth-subtitle">Email + пароль</p><p class="auth-access-note">Аккаунт выдаёт суперадмин команды.</p><form id="auth-form" class="stack"><label id="auth-name-wrap" hidden>Имя<input id="auth-name" name="displayName" maxlength="80" autocomplete="name"></label><label>Email<input name="email" type="email" required autocomplete="email" placeholder="you@example.com"></label><label>Пароль<div class="password-row"><input id="auth-password" name="password" type="password" required minlength="6" autocomplete="current-password"><button id="auth-password-toggle" type="button" class="ui-button">Показать</button></div></label><p id="auth-error" class="form-error"></p><button id="auth-submit" type="submit" class="ui-button primary">Войти</button></form></section></main>'''
-(out/'signin.html').write_text(head('Sign in')+f'<body class="auth-body" data-page="signin">{signin}{scripts()}</body></html>')
+(out/'signin.html').write_text(head('Sign in')+f'<body class="auth-body" data-page="signin">{signin}{scripts()}</body></html>', encoding="utf-8")
 
 # Dashboard
 dashboard='''<section class="dashboard-greeting"><h1>Привет, <span data-user-name>user</span>!</h1><p id="dashboard-scope">Отчёт по генерациям</p></section><section class="stat-grid"><article class="stat-card"><span class="stat-icon">✦</span><strong id="stat-generations">0</strong><small>Генерации</small></article><article class="stat-card"><span class="stat-icon">⌘</span><strong id="stat-spaces">0</strong><small>Мои Canvas Spaces</small></article><article class="stat-card"><span class="stat-icon">▤</span><strong id="stat-xp">0</strong><small>XP за готовые видео</small></article><article class="stat-card"><span class="stat-icon">✓</span><strong id="stat-completed">0</strong><small>Готовые видео</small></article></section><section class="dashboard-grid"><article class="panel-card"><h2>Генерации · последние 7 дней</h2><div class="chart-summary"><div><small>В работе</small><strong id="dashboard-running">0</strong></div><div><small>Ошибки</small><strong id="dashboard-failed">0</strong></div><div><small>API cost</small><strong id="dashboard-cost">—</strong><small id="cost-note"></small></div></div><div id="generation-chart" class="generation-chart"></div></article><article class="panel-card"><h2>Последние генерации</h2><div id="dashboard-recent" class="recent-list"></div></article></section>'''
@@ -87,12 +87,22 @@ save('assets.html','Assets','assets','assets',assets)
 presets='''<div class="page-titlebar"><div><h1>Шаблоны промптов</h1><p>Insert into Canvas workflows with one click</p></div></div><section id="preset-library"></section>'''
 save('presets.html','Templates','presets','presets',presets)
 
-# Integrations
-integrations='''<section class="integrations-wrap"><div class="page-titlebar"><div><p class="eyebrow">ИНТЕГРАЦИИ</p><h1>API providers</h1></div></div><p class="integration-intro">Magic поддерживает два режима BytePlus. <b>Direct browser</b> — самый быстрый тест: вставляешь длинный ARK API Key, и браузер пытается обратиться к ModelArk напрямую. <b>Cloudflare Worker</b> — режим для GitHub Pages: ARK key хранится как секрет Worker и не попадает в браузер.</p><article id="byteplus-card" class="integration-card"><div class="integration-head"><div class="provider-logo s">B</div><div class="integration-copy"><strong>BytePlus ModelArk <small>· Seedance 2.5</small></strong><span id="byteplus-state" class="integration-state">● Не подключено — генерация недоступна</span></div><div class="integration-actions"><button id="byteplus-test" class="ui-button" hidden>Проверить</button><button id="byteplus-remove" class="ui-button danger ghost" hidden>Отключить</button></div></div><div class="integration-credentials one-key"><label class="credential-field grow"><span>ARK API KEY · DIRECT TEST</span><input id="byteplus-api-key" type="password" autocomplete="off" placeholder="Необязательно, если используешь Worker"></label><button id="byteplus-toggle" class="ui-button" type="button">👁</button></div><div class="integration-credentials one-key" style="margin-top:10px"><label class="credential-field grow"><span>CLOUDFLARE WORKER URL · RECOMMENDED</span><input id="byteplus-worker-url" type="url" autocomplete="off" placeholder="https://magic-byteplus-api.your-subdomain.workers.dev"></label><button id="byteplus-save" class="ui-button primary" type="button">🔑 Подключить</button></div><p class="integration-help"><b>Для быстрого локального теста:</b> оставь Worker URL пустым и вставь ARK API Key. Если браузер покажет CORS — это ограничение BytePlus, а не ключа. <b>Для GitHub Pages:</b> задеплой папку <code>cloudflare-worker</code>, вставь полученный workers.dev URL сюда, а ARK key в Magic уже не нужен.</p></article><article class="integration-card integration-future"><div class="integration-head"><div class="provider-logo o">F</div><div class="integration-copy"><strong>fal.ai</strong><small>Provider slot · video / image models</small></div><button class="ui-button" data-provider-connect="fal">Adapter позже</button></div></article><article class="integration-card integration-future"><div class="integration-head"><div class="provider-logo o">O</div><div class="integration-copy"><strong>OpenAI / Sora</strong><small>Provider slot для будущих video models</small></div><button class="ui-button" data-provider-connect="openai">Adapter позже</button></div></article><article class="integration-card integration-future"><div class="integration-head"><div class="provider-logo c">C</div><div class="integration-copy"><strong>Custom provider</strong><small>Отдельный auth / submit / poll adapter без переделки Canvas</small></div><button class="ui-button" data-provider-connect="custom">Adapter позже</button></div></article></section>'''
+# Integrations — one active adapter per Seedance model.
+def provider_card(provider, title, logo, key_label, help_text):
+    worker_help='Для общего предпросмотра команды подключи обновлённый Worker. Без него Direct API доступен владельцу ключа.' if provider=='openrouter' else 'Для Direct mode оставь Worker пустым. В Worker mode ARK key хранится в secrets Cloudflare.'
+    return f'''<article id="{provider}-card" class="integration-card"><div class="integration-head"><div class="provider-logo {'c' if provider=='openrouter' else 's'}">{logo}</div><div class="integration-copy"><strong>{title}<small>Seedance 2.5</small></strong><span id="{provider}-state" class="integration-state">Не подключено</span><span id="{provider}-active" class="provider-enabled-badge" hidden>Активный провайдер</span></div><div class="integration-actions"><button id="{provider}-test" class="ui-button" hidden>Проверить</button><button id="{provider}-enable" class="ui-button primary" hidden>Включить</button><button id="{provider}-remove" class="ui-button danger ghost" hidden>Отключить</button></div></div><div class="integration-credentials one-key"><label class="credential-field grow"><span>{key_label}</span><input id="{provider}-api-key" type="password" autocomplete="off" placeholder="Вставь API key"></label><button id="{provider}-toggle" class="ui-button" aria-label="Показать ключ" type="button">👁</button></div><div class="integration-credentials one-key"><label class="credential-field grow"><span>Cloudflare Worker URL · необязательно</span><input id="{provider}-worker-url" type="url" autocomplete="off" placeholder="https://magic-api.your-subdomain.workers.dev"></label><button id="{provider}-save" class="ui-button primary" type="button">Подключить</button></div><p class="integration-help">{help_text} {worker_help}</p><div class="integration-model-row"><strong>Модель</strong><code>{'bytedance/seedance-2.5' if provider=='openrouter' else 'dreamina-seedance-2-5-260628'}</code></div><button id="{provider}-delete" class="integration-delete" hidden>Удалить подключение и локальный ключ</button></article>'''
+integrations='''<section class="integrations-wrap"><div class="page-titlebar"><div><p class="eyebrow">ИНТЕГРАЦИИ</p><h1>API providers</h1></div></div><p class="integration-intro">Подключи API и проверь ключ. Для Seedance 2.5 работает один провайдер: включение второго отключает первый. Сохранённые ключи остаются доступными для переключения.</p><div class="provider-selection"><span>Seedance 2.5 · активное подключение</span><strong id="active-video-provider">—</strong></div>'''
+integrations+=provider_card('openrouter','OpenRouter','O','OPENROUTER API KEY','Проверка подтверждает ключ и наличие Seedance в каталоге; платная генерация не запускается.')
+integrations+=provider_card('byteplus','BytePlus ModelArk','B','ARK API KEY · DIRECT MODE','Можно использовать личный ARK key или Worker с ключом на сервере.')
+integrations+='</section>'
 save('integrations.html','Integrations','integrations','integrations',integrations)
 
+# Camera movement replaces the old Modifiers page.
+camera='''<section class="camera-library-header"><div class="camera-library-heading"><div><p class="eyebrow">MOVEMENT LIBRARY</p><h1>Camera movement</h1><p>Выбери движение камеры, посмотри пример и добавь его отдельным пресетом в свой Canvas.</p></div><div class="camera-library-tools"><div class="camera-library-stats"><div><strong>46</strong><small>видеопримеров</small></div><div><strong>7</strong><small>категорий</small></div><div><strong>1</strong><small>промпт к каждому</small></div></div><label>ПОИСК ДВИЖЕНИЯ<input id="camera-search" type="search" placeholder="Dolly, orbit, tilt, drone…"></label></div></div><div id="camera-filters" class="camera-filters" aria-label="Категории движений"></div></section><div class="camera-results"><span id="camera-results">46 примеров</span><a href="https://aicameramovements.com/" target="_blank" rel="noopener">Видеопримеры: AI Camera Movements ↗</a></div><section id="camera-grid" class="camera-grid"></section><div id="camera-empty" class="empty-card" hidden>Ничего не найдено. Попробуй другое название или категорию.</div>'''
+save('modifiers.html','Camera movement','camera','camera',camera)
+
 # Placeholders
-for name,title,key in [('flows.html','Flows','flows'),('projects.html','Projects','projects'),('modifiers.html','Modifiers','modifiers')]:
+for name,title,key in [('flows.html','Flows','flows'),('projects.html','Projects','projects')]:
     body=f'''<div class="page-titlebar"><div><h1 id="placeholder-title">{title}</h1><p>Раздел заложен в универсальную структуру Magic</p></div></div><section class="placeholder-card"><h2>{title}</h2><p>Эта страница уже подключена к общей навигации, Firebase auth, профилю и теме. Бизнес-логику можно развивать отдельно, не меняя архитектуру Canvas / Assets.</p></section>'''
     save(name,title,'placeholder',key,body,title)
 
@@ -104,16 +114,16 @@ winners='''<div class="page-titlebar"><div><p class="eyebrow">TEAM PLAYGROUND</p
 save('winners.html','Winners','winners','winners',winners)
 
 # Compatibility aliases from the previous prototype.
-(out/'account.html').write_text('<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=integrations.html"><title>Redirect · Magic</title><a href="integrations.html">Open settings</a>')
-(out/'usage-history.html').write_text('<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=assets.html"><title>Redirect · Magic</title><a href="assets.html">Open Assets</a>')
+(out/'account.html').write_text('<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=integrations.html"><title>Redirect · Magic</title><a href="integrations.html">Open settings</a>', encoding="utf-8")
+(out/'usage-history.html').write_text('<!doctype html><meta charset="utf-8"><meta http-equiv="refresh" content="0; url=assets.html"><title>Redirect · Magic</title><a href="assets.html">Open Assets</a>', encoding="utf-8")
 
 (out/'saved-values.html').unlink(missing_ok=True)
 
 # Canvas: inject shell + CSS + scripts into the standalone template.
-canvas_html=(root/'nodes.template.html').read_text()
+canvas_html=(root/'nodes.template.html').read_text(encoding="utf-8")
 canvas_html=canvas_html.replace('<!--STYLE-->',favicon+f'<style>{canvas_css}\n{css}</style>')
 canvas_html=canvas_html.replace('<!--SHELL-->',shell('spaces',True))
 canvas_html=canvas_html.replace('<!--SCRIPTS-->','<script>'+firebase+'\n'+app+'\n'+library+'\n'+canvas+'</script>')
-(out/'nodes.html').write_text(canvas_html)
+(out/'nodes.html').write_text(canvas_html, encoding="utf-8")
 
 print('Built Magic pages:', ', '.join(p.name for p in out.glob('*.html')))
