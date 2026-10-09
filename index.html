@@ -174,7 +174,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled, [aria-disab
 @media(max-width:540px){.camera-grid{grid-template-columns:1fr;}.camera-library-header{padding:18px;}.camera-library-heading h1{font-size:25px;}.camera-filter{padding:8px;}.media-preview-shell{padding:10px;}.media-preview-info{grid-template-columns:1fr;gap:3px;}.media-preview-info dd{margin-bottom:10px;}.media-preview-actions .ui-button{font-size:11px;}.provider-selection strong{margin-left:0;}.integration-model-row{display:block;}.integration-model-row code{display:block;margin-top:6px;}.integration-help{margin-left:0;}}
 </style></head><body data-page="dashboard"><aside class="app-sidebar">
       <a class="brand" href="index.html"><span class="brand-logo"></span><span class="brand-copy"><strong>Magic</strong><small>AI Ad Creatives</small></span></a>
-      <section class="nav-group"><span class="nav-label">CREATE</span><nav class="app-nav"><a href="index.html" aria-current="page"><span class="nav-icon">▦</span><span>Dashboard</span></a><a href="spaces.html"><span class="nav-icon">⌘</span><span>Canvas</span></a><a href="flows.html"><span class="nav-icon">✣</span><span>Flows</span></a><a href="assets.html"><span class="nav-icon">▧</span><span>Assets</span></a></nav></section><section class="nav-group"><span class="nav-label">ORGANIZE</span><nav class="app-nav"><a href="projects.html"><span class="nav-icon">□</span><span>Projects</span></a><a href="presets.html"><span class="nav-icon">▤</span><span>Templates</span></a><a href="modifiers.html"><span class="nav-icon">☷</span><span>Camera movement</span></a></nav></section><section class="nav-group"><span class="nav-label">RESULTS</span><nav class="app-nav"><a href="winners.html"><span class="nav-icon">♕</span><span>Winners</span></a></nav></section><section class="nav-group"><span class="nav-label">ACCOUNT</span><nav class="app-nav"><a href="integrations.html"><span class="nav-icon">⚙</span><span>My settings</span></a><a href="users.html" data-superuser-only hidden><span class="nav-icon">♙</span><span>Users</span></a></nav></section>
+      <section class="nav-group"><span class="nav-label">CREATE</span><nav class="app-nav"><a href="index.html" aria-current="page"><span class="nav-icon">▦</span><span>Dashboard</span></a><a href="spaces.html"><span class="nav-icon">⌘</span><span>Canvas</span></a><a href="flows.html"><span class="nav-icon">✣</span><span>Flows</span></a><a href="assets.html"><span class="nav-icon">▧</span><span>Assets</span></a></nav></section><section class="nav-group"><span class="nav-label">ORGANIZE</span><nav class="app-nav"><a href="projects.html"><span class="nav-icon">□</span><span>Projects</span></a><a href="presets.html"><span class="nav-icon">▤</span><span>Templates</span></a><a href="modifiers.html"><span class="nav-icon">☷</span><span>Camera movement</span></a></nav></section><section class="nav-group"><span class="nav-label">RESULTS</span><nav class="app-nav"><a href="cost.html"><span class="nav-icon">$</span><span>Cost</span></a></nav></section><section class="nav-group"><span class="nav-label">ACCOUNT</span><nav class="app-nav"><a href="integrations.html"><span class="nav-icon">⚙</span><span>My settings</span></a><a href="users.html" data-superuser-only hidden><span class="nav-icon">♙</span><span>Users</span></a></nav></section>
       <div class="sidebar-user"><small>USER</small><span data-user-email>—</span></div>
     </aside><header class="app-topbar"><span></span><span class="topbar-spacer"></span><div class="topbar-actions"><button class="theme-button" data-theme-toggle title="Сменить тему">★ <span data-theme-state>Dark</span></button><button id="shell-avatar" class="avatar-button" data-user-avatar aria-label="Профиль">M</button></div></header><div id="drawer-backdrop" class="drawer-backdrop"></div>
     <aside id="profile-drawer" class="profile-drawer" aria-label="Профиль">
@@ -184,7 +184,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled, [aria-disab
       <form id="profile-form" class="stack"><label>ИМЯ<input name="displayName" required maxlength="80"></label><label>TELEGRAM<input name="telegram" maxlength="120" placeholder="@username"></label><div class="drawer-actions"><button type="button" class="ui-button" id="profile-cancel">Отмена</button><button class="ui-button primary" type="submit">Сохранить</button></div></form>
       <section id="drawer-admin" class="drawer-admin" hidden><h3>Суперадмин · пользователи</h3><form class="stack"><label>Email<input name="email" type="email" required></label><label>Имя<input name="name" required maxlength="80"></label><label>Временный пароль<input name="password" type="password" minlength="6" required></label><label>Роль<select name="role"><option value="user">Пользователь</option><option value="superuser">Суперадмин</option></select></label><button type="submit" class="ui-button primary">Создать пользователя</button></form><a href="users.html" class="ui-button">Управлять ролями →</a></section>
       <button data-logout class="ui-button danger ghost drawer-logout">Выйти</button>
-    </aside><main class="app-content"><div class="page-wrap"><section class="dashboard-greeting"><h1>Привет, <span data-user-name>user</span>!</h1><p id="dashboard-scope">Отчёт по генерациям</p></section><section class="stat-grid"><article class="stat-card"><span class="stat-icon">✦</span><strong id="stat-generations">0</strong><small>Генерации</small></article><article class="stat-card"><span class="stat-icon">⌘</span><strong id="stat-spaces">0</strong><small>Мои Canvas Spaces</small></article><article class="stat-card"><span class="stat-icon">▤</span><strong id="stat-xp">0</strong><small>XP за готовые видео</small></article><article class="stat-card"><span class="stat-icon">✓</span><strong id="stat-completed">0</strong><small>Готовые видео</small></article></section><section class="dashboard-grid"><article class="panel-card"><h2>Генерации · последние 7 дней</h2><div class="chart-summary"><div><small>В работе</small><strong id="dashboard-running">0</strong></div><div><small>Ошибки</small><strong id="dashboard-failed">0</strong></div><div><small>API cost</small><strong id="dashboard-cost">—</strong><small id="cost-note"></small></div></div><div id="generation-chart" class="generation-chart"></div></article><article class="panel-card"><h2>Последние генерации</h2><div id="dashboard-recent" class="recent-list"></div></article></section><section class="panel-card report-panel"><h2>Отчёт по пользователям</h2><p class="muted" id="report-scope"></p><div class="table-scroll"><table class="report-table"><thead><tr><th>Ник</th><th>Генерации</th><th>Готово</th><th>Ошибки</th><th>XP</th><th>Стоимость API</th></tr></thead><tbody id="report-rows"></tbody></table></div></section></div></main><script>'use strict';
+    </aside><main class="app-content"><div class="page-wrap"><section class="dashboard-greeting"><h1>Привет, <span data-user-name>user</span>!</h1><p id="dashboard-scope">Отчёт по генерациям</p></section><section class="stat-grid"><article class="stat-card"><span class="stat-icon">✦</span><strong id="stat-generations">0</strong><small>Генерации</small></article><article class="stat-card"><span class="stat-icon">⌘</span><strong id="stat-spaces">0</strong><small>Мои Canvas Spaces</small></article><article class="stat-card"><span class="stat-icon">▤</span><strong id="stat-cost">0</strong><small>Стоимость генераций</small></article><article class="stat-card"><span class="stat-icon">✓</span><strong id="stat-completed">0</strong><small>Готовые видео</small></article></section><section class="dashboard-grid"><article class="panel-card"><h2>Генерации · последние 7 дней</h2><div class="chart-summary"><div><small>В работе</small><strong id="dashboard-running">0</strong></div><div><small>Ошибки</small><strong id="dashboard-failed">0</strong></div><div><small>Стоимость</small><strong id="dashboard-cost">—</strong><small id="cost-note"></small></div></div><div id="generation-chart" class="generation-chart"></div></article><article class="panel-card"><h2>Последние генерации</h2><div id="dashboard-recent" class="recent-list"></div></article></section><section class="panel-card report-panel"><h2>Отчёт по пользователям</h2><p class="muted" id="report-scope"></p><div class="table-scroll"><table class="report-table"><thead><tr><th>Ник</th><th>Генерации</th><th>Готово</th><th>Ошибки</th><th>Стоимость, USD</th></tr></thead><tbody id="report-rows"></tbody></table></div></section></div></main><script>'use strict';
 // Firebase Web App config for the NEW Magic / media-node-canvas project.
 // Firebase web config is public client configuration; provider API keys must never go here.
 window.MAGIC_FIREBASE_CONFIG = {
@@ -222,6 +222,30 @@ window.MagicDomain = (() => {
   }
   const resolutions = { '480p': 1, '720p': 1.5, '1080p': 2 };
   const terminal = status => ['completed', 'failed', 'cancelled'].includes(status);
+  const defaultVideoPrices = Object.freeze({ '480p': .103, '720p': .231, '1080p': .569 });
+  let videoPrices = {...defaultVideoPrices};
+  const pricingVersion = 'seedance-2.5-per-second-v1';
+  function validatePrices(prices) {
+    const result={};
+    for(const resolution of Object.keys(defaultVideoPrices)){
+      const price=Number(prices?.[resolution]);
+      if(!Number.isFinite(price)||price<=0||price>100)throw new Error('Тариф должен быть больше 0 и не выше $100 за секунду.');
+      result[resolution]=Math.round(price*1000000)/1000000;
+      if(result[resolution]<=0)throw new Error('Минимальный тариф — $0.000001 за секунду.');
+    }
+    return result;
+  }
+  function setVideoPrices(prices){videoPrices=validatePrices(prices);return {...videoPrices};}
+  function estimateCost({seconds, resolution, videoReferenceCount = 0, pricingRates} = {}, rates = pricingRates || videoPrices) {
+    const duration = Number(seconds), price = rates[resolution];
+    if (!Number.isFinite(duration) || duration < 4 || duration > 30 || !price || Number(videoReferenceCount) > 0) return null;
+    return Math.round(price * 1000000 * duration) / 1000000;
+  }
+  function videoCost(video) {
+    if (video.cost != null && Number.isFinite(Number(video.cost)) && Number(video.cost) >= 0) return Number(video.cost);
+    return video.status === 'completed' ? estimateCost(video, video.pricingRates || defaultVideoPrices) : null;
+  }
+  const money = (value, precision=4) => '$' + Number(value || 0).toFixed(precision).replace(/(\.\d{2,}?)0+$/, '$1');
   function xp({ seconds = 4, resolution = '480p', referenceCount = 1 } = {}) {
     const duration = Math.max(4, Math.min(30, Number(seconds) || 4));
     // Text-only generations use the base reference multiplier, not a penalty.
@@ -234,16 +258,19 @@ window.MagicDomain = (() => {
       if (v.status === 'completed') { out.completed++; out.xp += xp(v); }
       if (v.status === 'failed') out.failed++;
       if (!terminal(v.status)) out.running++;
-      if (v.cost != null && Number.isFinite(Number(v.cost))) out.cost += Number(v.cost);
-      else if (terminal(v.status)) out.unknownCost++;
+      const cost = videoCost(v);
+      if (cost != null) {
+        out.cost = Math.round((out.cost + cost) * 1000000) / 1000000;
+        if (v.cost == null || v.costSource === 'tariff') out.estimatedCostCount++;
+      } else if (v.status === 'completed') out.unknownCost++;
       return out;
-    }, { total: 0, completed: 0, failed: 0, running: 0, cost: 0, unknownCost: 0, xp: 0 });
+    }, { total: 0, completed: 0, failed: 0, running: 0, cost: 0, unknownCost: 0, xp: 0, estimatedCostCount: 0 });
   }
   function compatible(type, direction) {
     if (direction === 'in') return { generation: ['media', 'preset'], text: ['preset'], output: ['generation'] }[type] || [];
     return { generation: ['output'], media: ['generation'], camera: ['generation'], preset: ['generation', 'text'], text: ['generation'] }[type] || [];
   }
-  return { xp, totals, terminal, compatible, resolutions, defaultVideoModel, normalizeBytePlusModel };
+  return { xp, totals, terminal, compatible, resolutions, defaultVideoModel, normalizeBytePlusModel, get videoPrices(){return {...videoPrices};}, defaultVideoPrices, pricingVersion, estimateCost, videoCost, money, validatePrices, setVideoPrices };
 })();
 
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MagicProviders=api;})(typeof window==='object'?window:globalThis,()=>{
@@ -739,11 +766,11 @@ window.Studio=(()=>{
     return hydrateLocalAssets(snap.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>timestamp(b.createdAt)-timestamp(a.createdAt)));
   }
   async function createVideoRecord(data){
-    assertFirebase();const me=current();
+    assertFirebase();await loadVideoPricing();const me=current();
     const row={id:uid(),uid:me.uid,user:me.name,spaceId:data.spaceId||null,spaceName:data.spaceName||'',sourceNodeId:data.sourceNodeId||null,outputNodeId:data.outputNodeId||null,
       prompt:data.prompt||'',provider:data.provider||'byteplus',model:videoModelFor(data.provider,data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
-      transport:data.transport||'direct',gatewayUrl:data.gatewayUrl||null,
-      seconds:Math.max(4,Math.min(30,Number(data.seconds)||8)),referenceCount:Math.max(0,Math.min(15,Number(data.referenceCount)||0)),hasRef:Boolean(data.hasRef),refMode:'reference',generateAudio:data.generateAudio!==false,
+      transport:data.transport||'direct',gatewayUrl:data.gatewayUrl||null,pricingRates:MagicDomain.videoPrices,
+      seconds:Math.max(4,Math.min(30,Number(data.seconds)||8)),referenceCount:Math.max(0,Math.min(15,Number(data.referenceCount)||0)),videoReferenceCount:Math.max(0,Math.min(15,Number(data.videoReferenceCount)||0)),hasRef:Boolean(data.hasRef),refMode:'reference',generateAudio:data.generateAudio!==false,
       status:'queued',pct:0,cost:null,error:null,requestId:null,videoUrl:null,remoteUrl:null,storagePath:null,createdAt:now(),updatedAt:now(),cloudSaved:false};
     return rememberVideo(row);
   }
@@ -769,6 +796,7 @@ window.Studio=(()=>{
       const videoRef=api.fsM.doc(api.db,'videos',row.id),scoreRef=api.fsM.doc(api.db,'leaderboard',row.uid);
       const {id,cloudSaved,trackingWarning,syncError,...data}=row;
       data.schemaVersion=2;data.referenceCount=Math.max(0,Math.min(15,Number(data.referenceCount)||0));data.seconds=Math.max(4,Math.min(30,Number(data.seconds)||8));data.resolution=normalizeResolution(data.resolution);
+      if(data.status==='completed'&&data.cost==null){data.cost=MagicDomain.estimateCost(data);if(data.cost!=null){data.costSource='tariff';data.pricingVersion=MagicDomain.pricingVersion;}}
       let wasDeleted=false,canonical=null;
       await api.fsM.runTransaction(api.db,async tx=>{
         const [previous,score,deleted]=await Promise.all([tx.get(videoRef),tx.get(scoreRef),tx.get(api.fsM.doc(api.db,'videoDeletions',row.id))]);
@@ -781,7 +809,7 @@ window.Studio=(()=>{
           completed:(before.completed||0)+(row.status==='completed'?1:0),failed:(before.failed||0)+(row.status==='failed'?1:0),lastVideoId:row.id,updatedAt:now()});
       });
       if(wasDeleted){localStorage.removeItem(jobsPrefix()+row.id);return null;}
-      return rememberVideo({...canonical||row,id:row.id,cloudSaved:true,syncError:null});
+      return rememberVideo({...canonical||data,id:row.id,cloudSaved:true,syncError:null});
     })();syncingVideos.set(row.id,task);
     try{return await task;}finally{syncingVideos.delete(row.id);}
   }
@@ -843,6 +871,21 @@ window.Studio=(()=>{
     localStorage.removeItem(jobsPrefix()+id);
   }
   async function listLeaderboard(){const snap=await api.fsM.getDocs(api.fsM.collection(api.db,'leaderboard'));return snap.docs.map(d=>({...d.data(),uid:d.id}));}
+  async function loadVideoPricing(){
+    try{const snap=await api.fsM.getDoc(api.fsM.doc(api.db,'config','videoPricing'));if(snap.exists())MagicDomain.setVideoPrices(snap.data().rates);else MagicDomain.setVideoPrices(MagicDomain.defaultVideoPrices);}
+    catch(error){MagicDomain.setVideoPrices(MagicDomain.defaultVideoPrices);console.warn('Pricing defaults used',error);}
+    return MagicDomain.videoPrices;
+  }
+  async function saveVideoPricing(rates,expected){
+    assertFirebase();if(!isAdmin())throw new Error('Тарифы изменяет только суперадмин.');
+    const clean=MagicDomain.validatePrices(rates),ref=api.fsM.doc(api.db,'config','videoPricing');
+    await api.fsM.runTransaction(api.db,async tx=>{
+      const snap=await tx.get(ref),current=snap.exists()?MagicDomain.validatePrices(snap.data().rates):MagicDomain.defaultVideoPrices;
+      if(Object.keys(clean).some(key=>current[key]!==Number(expected?.[key])))throw new Error('Тарифы уже изменились. Обнови страницу и подтверди новые значения.');
+      tx.set(ref,{rates:clean,updatedBy:cache.user.uid,updatedAt:now(),version:MagicDomain.pricingVersion});
+    });
+    return MagicDomain.setVideoPrices(clean);
+  }
   async function rebuildLeaderboard(){
     if(!isAdmin())throw new Error('Только суперадмин может пересчитать рейтинг.');
     const users=await listUsers();
@@ -906,6 +949,8 @@ window.Studio=(()=>{
       cost:rawCost!=null&&Number.isFinite(Number(rawCost))?Number(rawCost):null,finishedAt:now(),error:null,archiveWarning};
     if(actualDuration>=4&&actualDuration<=30)patch.seconds=actualDuration;
     if(['480p','720p','1080p'].includes(result?.resolution))patch.resolution=result.resolution;
+    patch.costSource=patch.cost!=null?'api':null;
+    if(patch.cost==null){patch.cost=MagicDomain.estimateCost({...record,...patch});if(patch.cost!=null){patch.costSource='tariff';patch.pricingVersion=MagicDomain.pricingVersion;}}
     return updateVideo(record.id,patch);
   }
   const playbackCache=new Map();
@@ -1063,7 +1108,7 @@ window.Studio=(()=>{
     portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,integrationVerified,activeVideoProvider,setVideoProvider,videoModelFor,prepareVideoRequest,providerKey,providerCredentials,apiGatewayBase,openRouterGateway,
     listSpaces,createSpace,getSpace,renameSpace,duplicateSpace,deleteSpace,saveSpaceState,queueSpaceState,flushSpaceState,flushPendingWork,
     uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,permanentlyDeleteVideo,submitGeneration,refreshGeneration,watchGeneration,resolveVideoSource,downloadVideo,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
-    getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
+    loadVideoPricing,saveVideoPricing,getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
 })();
 
 'use strict';
@@ -1263,7 +1308,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
 (async()=>{
   const S=Studio,$=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)],E=S.element,page=document.body.dataset.page;
   await S.ready();
-  const allowed=['index.html','spaces.html','nodes.html','assets.html','presets.html','integrations.html','projects.html','flows.html','modifiers.html','winners.html','users.html'];
+  const allowed=['index.html','spaces.html','nodes.html','assets.html','presets.html','integrations.html','projects.html','flows.html','modifiers.html','winners.html','cost.html','users.html'];
   const next=()=>{const raw=new URLSearchParams(location.search).get('next')||'index.html';return allowed.includes(raw.split('?')[0])?raw:'index.html';};
   const friendlyAuth=e=>({
     'auth/invalid-credential':'Неверный email или пароль.','auth/invalid-email':'Некорректный email.','auth/email-already-in-use':'Этот email уже зарегистрирован.','auth/weak-password':'Пароль слишком слабый. Минимум 6 символов.','auth/too-many-requests':'Слишком много попыток. Попробуй позже.'
@@ -1284,10 +1329,10 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     const [spaces,videos,users]=await Promise.all([S.listSpaces(),S.listVideos(),S.isAdmin()?S.listUsers():Promise.resolve([user])]);
     const stats=MagicDomain.totals(videos);
     $('#dashboard-scope').textContent=S.isAdmin()?'Все генерации команды · Spaces остаются личными':'Твои генерации и личные Spaces';
-    $('#stat-generations').textContent=stats.total;$('#stat-spaces').textContent=spaces.length;$('#stat-xp').textContent=stats.xp;$('#stat-completed').textContent=stats.completed;
+    $('#stat-generations').textContent=stats.total;$('#stat-spaces').textContent=spaces.length;$('#stat-cost').textContent=MagicDomain.money(stats.cost);$('#stat-completed').textContent=stats.completed;
     $('#dashboard-running').textContent=stats.running;$('#dashboard-failed').textContent=stats.failed;
-    $('#dashboard-cost').textContent=stats.unknownCost===stats.total&&stats.total?'—':'$'+stats.cost.toFixed(2);
-    $('#cost-note').textContent=stats.unknownCost?`Без стоимости от API: ${stats.unknownCost}`:'По данным API';
+    $('#dashboard-cost').textContent=MagicDomain.money(stats.cost);
+    $('#cost-note').textContent=`Расчётных видео: ${stats.estimatedCostCount}; без тарифа: ${stats.unknownCost}`;
     const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push(d);}
     const counts=days.map(d=>videos.filter(v=>{const n=new Date(S.timestamp(v.createdAt));const end=new Date(d);end.setDate(end.getDate()+1);return n>=d&&n<end;}).length),max=Math.max(1,...counts);
     $('#generation-chart').replaceChildren(...days.map((d,i)=>{const col=E('div',undefined,'chart-col'),bar=E('div',undefined,'chart-bar');bar.style.height=`${Math.max(5,counts[i]/max*100)}%`;bar.title=`${counts[i]} генераций`;col.append(bar,E('small',d.toLocaleDateString('ru-RU',{weekday:'short'})));return col;}));
@@ -1299,8 +1344,8 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     for(const v of videos)if(!people.has(v.uid))people.set(v.uid,{uid:v.uid,name:v.user||'User'});
     for(const person of people.values()){
       const summary=MagicDomain.totals(videos.filter(v=>v.uid===person.uid)),row=E('tr');
-      for(const value of [person.name,summary.total,summary.completed,summary.failed,summary.xp])row.append(E('td',String(value)));
-      const cost=E('td',summary.unknownCost===summary.total&&summary.total?'—':'$'+summary.cost.toFixed(2));
+      for(const value of [person.name,summary.total,summary.completed,summary.failed])row.append(E('td',String(value)));
+      const cost=E('td',MagicDomain.money(summary.cost));
       if(summary.unknownCost)cost.append(E('small',`Нет данных: ${summary.unknownCost}`));row.append(cost);$('#report-rows').append(row);
     }
   }
@@ -1349,7 +1394,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
         if(v.provider!=='openrouter'){const video=E('video');video.src=v.videoUrl;video.muted=true;video.playsInline=true;video.preload='metadata';trigger.append(video);}else trigger.append(E('span','READY','asset-placeholder completed'));
         trigger.append(E('span','▷','asset-preview-play'));media.append(trigger);
       }else media.append(E('div',statusLabel(v.status),'asset-placeholder '+String(v.status||'')));
-      if(v.cost!=null)media.append(E('span','$'+Number(v.cost).toFixed(2),'asset-cost'));
+      const cost=MagicDomain.videoCost(v);if(cost!=null)media.append(E('span',MagicDomain.money(cost)+(v.cost==null||v.costSource==='tariff'?' ≈':''),'asset-cost'));
       if(v.seconds>0)media.append(E('span',v.seconds+'s','asset-duration'));
       const body=E('div',undefined,'asset-body');body.append(E('p',(v.prompt||'Без промпта').slice(0,180)),E('small',`${v.model||'model'} · ${v.resolution||''} ${v.ratio||''}`));
       if(v.cloudSaved===false&&MagicDomain.terminal(v.status))body.append(E('small','Сохранено только на этом компьютере. '+(v.syncError||'Ожидает отправки в базу.'),'asset-warning'));
@@ -1434,26 +1479,48 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
       catch(error){$('#create-user-error').textContent=friendlyAuth(error);}finally{submit.disabled=false;}
     };await team();
   }
-  if(page==='winners'){
-    const duration=$('#xp-seconds'),resolution=$('#xp-resolution'),refs=$('#xp-refs');
+  if(page==='cost'||page==='winners'){
+    let baseRates=await S.loadVideoPricing();
+    const duration=$('#cost-seconds'),resolution=$('#cost-resolution'),input=$('#cost-input'),priceInputs=$$('[data-price-resolution]');
+    $('#cost-pricing-editor').hidden=!S.isAdmin();
+    for(const field of priceInputs)field.value=baseRates[field.dataset.priceResolution];
+    const draftRates=()=>S.isAdmin()?MagicDomain.validatePrices(Object.fromEntries(priceInputs.map(field=>[field.dataset.priceResolution,field.value]))):baseRates;
     function calculate(){
-      $('#xp-result').textContent=MagicDomain.xp({seconds:duration.value,resolution:resolution.value,referenceCount:refs.value});
-      $('#xp-seconds-label').textContent=duration.value+' сек.';$('#xp-refs-label').textContent=refs.value;
-      $('#xp-multipliers').textContent=`T ×${Number(duration.value)/4} · Q ×${MagicDomain.resolutions[resolution.value]} · R ×${(1+.15*(Number(refs.value)-1)).toFixed(2)}`;
+      $('#cost-seconds-label').textContent=duration.value+' сек.';
+      try{
+        const rates=draftRates(),cost=MagicDomain.estimateCost({seconds:duration.value,resolution:resolution.value,videoReferenceCount:input.value},rates);
+        $('#cost-result').textContent=cost==null?'—':MagicDomain.money(cost);
+        $('#cost-formula').textContent=cost==null?'Тариф с видео-референсом не задан.':duration.value+' сек. × '+MagicDomain.money(rates[resolution.value],6)+'/сек.';
+      }catch(error){$('#cost-result').textContent='—';$('#cost-formula').textContent=error.message;}
     }
-    for(const control of [duration,resolution,refs])control.oninput=calculate;calculate();
+    for(const control of [duration,resolution,input,...priceInputs])control.oninput=calculate;calculate();
     function renderRank(target,rows,field){
       target.replaceChildren();for(const [index,row] of rows.entries()){
-        const li=E('li',undefined,'rank-row'+(index===0?' first':'')),name=E('div');name.append(E('strong',row.nickname||'User'),E('small',field==='xp'?`${row.completed||0} готовых видео`:'Ошибок генерации'));
-        li.append(E('span',String(index+1),'rank-position'),name,E('b',String(row[field]||0)+(field==='xp'?' XP':'')));target.append(li);
+        const li=E('li',undefined,'rank-row'),name=E('div');name.append(E('strong',row.nickname||'User'),E('small',field==='cost'?`${row.completed} готовых видео · расчётных: ${row.estimatedCostCount} · без тарифа: ${row.unknownCost}`:'Ошибок генерации'));
+        li.append(E('span',String(index+1),'rank-position'),name,E('b',field==='cost'?(row.unknownCost===row.completed&&row.completed&&row.cost===0?'—':MagicDomain.money(row.cost)):String(row.failed)));target.append(li);
       }
-      if(!rows.length)target.append(E('li','Пока нет результатов. Рейтинг появится после генераций.','empty-card'));
+      if(!rows.length)target.append(E('li','Пока нет результатов.','empty-card'));
     }
     async function ranking(){
-      try{const rows=await S.listLeaderboard();renderRank($('#xp-ranking'),rows.filter(r=>r.completed>0).sort((a,b)=>b.xp-a.xp||(a.nickname||'').localeCompare(b.nickname||'')),'xp');renderRank($('#error-ranking'),rows.filter(r=>r.failed>0).sort((a,b)=>b.failed-a.failed||(a.nickname||'').localeCompare(b.nickname||'')),'failed');}
-      catch(e){$('#xp-ranking').replaceChildren(E('li','Рейтинг пока недоступен: '+e.message,'empty-card'));$('#error-ranking').replaceChildren();}
+      const videos=await S.listVideos(),people=S.isAdmin()?await S.listUsers():[user],names=new Map(people.map(p=>[p.uid,p.name||p.displayName||p.email])),groups=new Map();
+      for(const video of videos){if(!groups.has(video.uid))groups.set(video.uid,[]);groups.get(video.uid).push(video);}
+      const rows=[...groups].map(([uid,items])=>({uid,nickname:names.get(uid)||items[0].user||'User',...MagicDomain.totals(items)})),stats=MagicDomain.totals(videos);
+      $('#cost-scope').textContent=S.isAdmin()?'Стоимость сохранённых генераций всей команды':'Стоимость твоих сохранённых генераций';
+      $('#cost-total').textContent=MagicDomain.money(stats.cost);$('#cost-completed').textContent=stats.completed;$('#cost-unknown').textContent=stats.unknownCost;
+      renderRank($('#cost-ranking'),rows.filter(r=>r.completed||r.cost>0).sort((a,b)=>b.cost-a.cost),'cost');renderRank($('#error-ranking'),rows.filter(r=>r.failed).sort((a,b)=>b.failed-a.failed),'failed');
     }
-    $('#rebuild-ranking').onclick=async()=>{const button=$('#rebuild-ranking');button.disabled=true;try{await S.rebuildLeaderboard();await ranking();S.notify('Рейтинг пересчитан по истории генераций');}catch(e){S.notify(e.message,'error');}finally{button.disabled=false;}};
+    $('#cost-refresh').onclick=()=>ranking().catch(error=>S.notify(error.message,'error'));
+    $('#cost-pricing-form').onsubmit=async event=>{
+      event.preventDefault();const button=$('#cost-pricing-save'),status=$('#cost-pricing-status');
+      try{
+        if(!S.isAdmin())throw new Error('Тарифы изменяет только суперадмин.');
+        const rates=draftRates();
+        if(Object.keys(rates).every(key=>rates[key]===baseRates[key])){status.textContent='Тарифы не изменились.';return;}
+        const changes=Object.keys(rates).map(key=>key+': '+MagicDomain.money(baseRates[key],6)+' → '+MagicDomain.money(rates[key],6)+' / сек.').join('\n');
+        if(!confirm('Сохранить тарифы команды?\n\n'+changes+'\n\nНовые ставки будут применяться к следующим генерациям.')){status.textContent='Изменения не сохранены.';return;}
+        button.disabled=true;baseRates=await S.saveVideoPricing(rates,baseRates);status.textContent='Тарифы сохранены.';calculate();
+      }catch(error){status.textContent=error.message;}finally{button.disabled=false;}
+    };
     await ranking();
   }
 

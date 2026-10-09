@@ -2,7 +2,7 @@
 (async()=>{
   const S=Studio,$=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)],E=S.element,page=document.body.dataset.page;
   await S.ready();
-  const allowed=['index.html','spaces.html','nodes.html','assets.html','presets.html','integrations.html','projects.html','flows.html','modifiers.html','winners.html','users.html'];
+  const allowed=['index.html','spaces.html','nodes.html','assets.html','presets.html','integrations.html','projects.html','flows.html','modifiers.html','winners.html','cost.html','users.html'];
   const next=()=>{const raw=new URLSearchParams(location.search).get('next')||'index.html';return allowed.includes(raw.split('?')[0])?raw:'index.html';};
   const friendlyAuth=e=>({
     'auth/invalid-credential':'Неверный email или пароль.','auth/invalid-email':'Некорректный email.','auth/email-already-in-use':'Этот email уже зарегистрирован.','auth/weak-password':'Пароль слишком слабый. Минимум 6 символов.','auth/too-many-requests':'Слишком много попыток. Попробуй позже.'
@@ -23,10 +23,10 @@
     const [spaces,videos,users]=await Promise.all([S.listSpaces(),S.listVideos(),S.isAdmin()?S.listUsers():Promise.resolve([user])]);
     const stats=MagicDomain.totals(videos);
     $('#dashboard-scope').textContent=S.isAdmin()?'Все генерации команды · Spaces остаются личными':'Твои генерации и личные Spaces';
-    $('#stat-generations').textContent=stats.total;$('#stat-spaces').textContent=spaces.length;$('#stat-xp').textContent=stats.xp;$('#stat-completed').textContent=stats.completed;
+    $('#stat-generations').textContent=stats.total;$('#stat-spaces').textContent=spaces.length;$('#stat-cost').textContent=MagicDomain.money(stats.cost);$('#stat-completed').textContent=stats.completed;
     $('#dashboard-running').textContent=stats.running;$('#dashboard-failed').textContent=stats.failed;
-    $('#dashboard-cost').textContent=stats.unknownCost===stats.total&&stats.total?'—':'$'+stats.cost.toFixed(2);
-    $('#cost-note').textContent=stats.unknownCost?`Без стоимости от API: ${stats.unknownCost}`:'По данным API';
+    $('#dashboard-cost').textContent=MagicDomain.money(stats.cost);
+    $('#cost-note').textContent=`Расчётных видео: ${stats.estimatedCostCount}; без тарифа: ${stats.unknownCost}`;
     const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push(d);}
     const counts=days.map(d=>videos.filter(v=>{const n=new Date(S.timestamp(v.createdAt));const end=new Date(d);end.setDate(end.getDate()+1);return n>=d&&n<end;}).length),max=Math.max(1,...counts);
     $('#generation-chart').replaceChildren(...days.map((d,i)=>{const col=E('div',undefined,'chart-col'),bar=E('div',undefined,'chart-bar');bar.style.height=`${Math.max(5,counts[i]/max*100)}%`;bar.title=`${counts[i]} генераций`;col.append(bar,E('small',d.toLocaleDateString('ru-RU',{weekday:'short'})));return col;}));
@@ -38,8 +38,8 @@
     for(const v of videos)if(!people.has(v.uid))people.set(v.uid,{uid:v.uid,name:v.user||'User'});
     for(const person of people.values()){
       const summary=MagicDomain.totals(videos.filter(v=>v.uid===person.uid)),row=E('tr');
-      for(const value of [person.name,summary.total,summary.completed,summary.failed,summary.xp])row.append(E('td',String(value)));
-      const cost=E('td',summary.unknownCost===summary.total&&summary.total?'—':'$'+summary.cost.toFixed(2));
+      for(const value of [person.name,summary.total,summary.completed,summary.failed])row.append(E('td',String(value)));
+      const cost=E('td',MagicDomain.money(summary.cost));
       if(summary.unknownCost)cost.append(E('small',`Нет данных: ${summary.unknownCost}`));row.append(cost);$('#report-rows').append(row);
     }
   }
@@ -88,7 +88,7 @@
         if(v.provider!=='openrouter'){const video=E('video');video.src=v.videoUrl;video.muted=true;video.playsInline=true;video.preload='metadata';trigger.append(video);}else trigger.append(E('span','READY','asset-placeholder completed'));
         trigger.append(E('span','▷','asset-preview-play'));media.append(trigger);
       }else media.append(E('div',statusLabel(v.status),'asset-placeholder '+String(v.status||'')));
-      if(v.cost!=null)media.append(E('span','$'+Number(v.cost).toFixed(2),'asset-cost'));
+      const cost=MagicDomain.videoCost(v);if(cost!=null)media.append(E('span',MagicDomain.money(cost)+(v.cost==null||v.costSource==='tariff'?' ≈':''),'asset-cost'));
       if(v.seconds>0)media.append(E('span',v.seconds+'s','asset-duration'));
       const body=E('div',undefined,'asset-body');body.append(E('p',(v.prompt||'Без промпта').slice(0,180)),E('small',`${v.model||'model'} · ${v.resolution||''} ${v.ratio||''}`));
       if(v.cloudSaved===false&&MagicDomain.terminal(v.status))body.append(E('small','Сохранено только на этом компьютере. '+(v.syncError||'Ожидает отправки в базу.'),'asset-warning'));
@@ -173,26 +173,48 @@
       catch(error){$('#create-user-error').textContent=friendlyAuth(error);}finally{submit.disabled=false;}
     };await team();
   }
-  if(page==='winners'){
-    const duration=$('#xp-seconds'),resolution=$('#xp-resolution'),refs=$('#xp-refs');
+  if(page==='cost'||page==='winners'){
+    let baseRates=await S.loadVideoPricing();
+    const duration=$('#cost-seconds'),resolution=$('#cost-resolution'),input=$('#cost-input'),priceInputs=$$('[data-price-resolution]');
+    $('#cost-pricing-editor').hidden=!S.isAdmin();
+    for(const field of priceInputs)field.value=baseRates[field.dataset.priceResolution];
+    const draftRates=()=>S.isAdmin()?MagicDomain.validatePrices(Object.fromEntries(priceInputs.map(field=>[field.dataset.priceResolution,field.value]))):baseRates;
     function calculate(){
-      $('#xp-result').textContent=MagicDomain.xp({seconds:duration.value,resolution:resolution.value,referenceCount:refs.value});
-      $('#xp-seconds-label').textContent=duration.value+' сек.';$('#xp-refs-label').textContent=refs.value;
-      $('#xp-multipliers').textContent=`T ×${Number(duration.value)/4} · Q ×${MagicDomain.resolutions[resolution.value]} · R ×${(1+.15*(Number(refs.value)-1)).toFixed(2)}`;
+      $('#cost-seconds-label').textContent=duration.value+' сек.';
+      try{
+        const rates=draftRates(),cost=MagicDomain.estimateCost({seconds:duration.value,resolution:resolution.value,videoReferenceCount:input.value},rates);
+        $('#cost-result').textContent=cost==null?'—':MagicDomain.money(cost);
+        $('#cost-formula').textContent=cost==null?'Тариф с видео-референсом не задан.':duration.value+' сек. × '+MagicDomain.money(rates[resolution.value],6)+'/сек.';
+      }catch(error){$('#cost-result').textContent='—';$('#cost-formula').textContent=error.message;}
     }
-    for(const control of [duration,resolution,refs])control.oninput=calculate;calculate();
+    for(const control of [duration,resolution,input,...priceInputs])control.oninput=calculate;calculate();
     function renderRank(target,rows,field){
       target.replaceChildren();for(const [index,row] of rows.entries()){
-        const li=E('li',undefined,'rank-row'+(index===0?' first':'')),name=E('div');name.append(E('strong',row.nickname||'User'),E('small',field==='xp'?`${row.completed||0} готовых видео`:'Ошибок генерации'));
-        li.append(E('span',String(index+1),'rank-position'),name,E('b',String(row[field]||0)+(field==='xp'?' XP':'')));target.append(li);
+        const li=E('li',undefined,'rank-row'),name=E('div');name.append(E('strong',row.nickname||'User'),E('small',field==='cost'?`${row.completed} готовых видео · расчётных: ${row.estimatedCostCount} · без тарифа: ${row.unknownCost}`:'Ошибок генерации'));
+        li.append(E('span',String(index+1),'rank-position'),name,E('b',field==='cost'?(row.unknownCost===row.completed&&row.completed&&row.cost===0?'—':MagicDomain.money(row.cost)):String(row.failed)));target.append(li);
       }
-      if(!rows.length)target.append(E('li','Пока нет результатов. Рейтинг появится после генераций.','empty-card'));
+      if(!rows.length)target.append(E('li','Пока нет результатов.','empty-card'));
     }
     async function ranking(){
-      try{const rows=await S.listLeaderboard();renderRank($('#xp-ranking'),rows.filter(r=>r.completed>0).sort((a,b)=>b.xp-a.xp||(a.nickname||'').localeCompare(b.nickname||'')),'xp');renderRank($('#error-ranking'),rows.filter(r=>r.failed>0).sort((a,b)=>b.failed-a.failed||(a.nickname||'').localeCompare(b.nickname||'')),'failed');}
-      catch(e){$('#xp-ranking').replaceChildren(E('li','Рейтинг пока недоступен: '+e.message,'empty-card'));$('#error-ranking').replaceChildren();}
+      const videos=await S.listVideos(),people=S.isAdmin()?await S.listUsers():[user],names=new Map(people.map(p=>[p.uid,p.name||p.displayName||p.email])),groups=new Map();
+      for(const video of videos){if(!groups.has(video.uid))groups.set(video.uid,[]);groups.get(video.uid).push(video);}
+      const rows=[...groups].map(([uid,items])=>({uid,nickname:names.get(uid)||items[0].user||'User',...MagicDomain.totals(items)})),stats=MagicDomain.totals(videos);
+      $('#cost-scope').textContent=S.isAdmin()?'Стоимость сохранённых генераций всей команды':'Стоимость твоих сохранённых генераций';
+      $('#cost-total').textContent=MagicDomain.money(stats.cost);$('#cost-completed').textContent=stats.completed;$('#cost-unknown').textContent=stats.unknownCost;
+      renderRank($('#cost-ranking'),rows.filter(r=>r.completed||r.cost>0).sort((a,b)=>b.cost-a.cost),'cost');renderRank($('#error-ranking'),rows.filter(r=>r.failed).sort((a,b)=>b.failed-a.failed),'failed');
     }
-    $('#rebuild-ranking').onclick=async()=>{const button=$('#rebuild-ranking');button.disabled=true;try{await S.rebuildLeaderboard();await ranking();S.notify('Рейтинг пересчитан по истории генераций');}catch(e){S.notify(e.message,'error');}finally{button.disabled=false;}};
+    $('#cost-refresh').onclick=()=>ranking().catch(error=>S.notify(error.message,'error'));
+    $('#cost-pricing-form').onsubmit=async event=>{
+      event.preventDefault();const button=$('#cost-pricing-save'),status=$('#cost-pricing-status');
+      try{
+        if(!S.isAdmin())throw new Error('Тарифы изменяет только суперадмин.');
+        const rates=draftRates();
+        if(Object.keys(rates).every(key=>rates[key]===baseRates[key])){status.textContent='Тарифы не изменились.';return;}
+        const changes=Object.keys(rates).map(key=>key+': '+MagicDomain.money(baseRates[key],6)+' → '+MagicDomain.money(rates[key],6)+' / сек.').join('\n');
+        if(!confirm('Сохранить тарифы команды?\n\n'+changes+'\n\nНовые ставки будут применяться к следующим генерациям.')){status.textContent='Изменения не сохранены.';return;}
+        button.disabled=true;baseRates=await S.saveVideoPricing(rates,baseRates);status.textContent='Тарифы сохранены.';calculate();
+      }catch(error){status.textContent=error.message;}finally{button.disabled=false;}
+    };
     await ranking();
   }
 

@@ -146,7 +146,7 @@
         selected.clear();selected.add(source.id);refreshContent();updateStatus();
       },`${nodeName(source)} · ${count} результатов`);
       await Promise.all(runs.map(async output=>{
-        const record=await Studio.createVideoRecord({spaceId:SPACE_ID,spaceName:SPACE.name,sourceNodeId:source.id,outputNodeId:output.id,prompt,provider,transport:credentials.mode,gatewayUrl:credentials.workerUrl||null,model:options.model,resolution:options.resolution,ratio:options.aspect_ratio,seconds:options.duration,referenceCount:refs.length,hasRef:refs.length>0,generateAudio:options.generate_audio});
+        const record=await Studio.createVideoRecord({spaceId:SPACE_ID,spaceName:SPACE.name,sourceNodeId:source.id,outputNodeId:output.id,prompt,provider,transport:credentials.mode,gatewayUrl:credentials.workerUrl||null,model:options.model,resolution:options.resolution,ratio:options.aspect_ratio,seconds:options.duration,referenceCount:refs.length,videoReferenceCount:videos.length,hasRef:refs.length>0,generateAudio:options.generate_audio});
         applyVideoRecord(output,{...record,status:'submitting'});paintOutput(output);saveSession();
         try{
           const submitted=await Studio.submitGeneration(record.id,{...options,prompt,reference_images:images,reference_videos:videos,asset_receipts:Object.fromEntries(refs.filter(a=>a.assetToken).map(a=>[a.referenceUrl.slice(8),a.assetToken]))},provider);

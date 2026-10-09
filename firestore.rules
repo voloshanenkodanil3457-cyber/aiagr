@@ -126,7 +126,18 @@ service cloud.firestore {
       allow update: if validShape(request.resource.data) && (isAdmin() || nextScore(resource.data));
       allow delete: if isAdmin();
     }
-    match /config/{docId} { allow read, write: if isAdmin(); }
+    match /config/videoPricing {
+      allow get: if signedIn();
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasOnly(['rates','updatedAt','updatedBy','version'])
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.version is string
+        && request.resource.data.rates.keys().hasOnly(['480p','720p','1080p'])
+        && request.resource.data.rates['480p'] is number && request.resource.data.rates['480p'] > 0 && request.resource.data.rates['480p'] <= 100
+        && request.resource.data.rates['720p'] is number && request.resource.data.rates['720p'] > 0 && request.resource.data.rates['720p'] <= 100
+        && request.resource.data.rates['1080p'] is number && request.resource.data.rates['1080p'] > 0 && request.resource.data.rates['1080p'] <= 100;
+    }
+    match /config/{docId} { allow read, write: if isAdmin() && docId != 'videoPricing'; }
     match /{document=**} { allow read, write: if false; }
   }
 }
