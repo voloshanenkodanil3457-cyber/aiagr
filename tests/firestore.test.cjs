@@ -1,6 +1,6 @@
 const {test,before,after,beforeEach}=require('node:test');
 const {initializeTestEnvironment,assertSucceeds,assertFails}=require('@firebase/rules-unit-testing');
-const {doc,getDoc,setDoc,updateDoc,deleteDoc,collection,query,where,getDocs,writeBatch}=require('firebase/firestore');
+const {doc,getDoc,setDoc,updateDoc,deleteDoc,collection,query,where,getDocs,writeBatch,runTransaction}=require('firebase/firestore');
 const {ref,uploadBytes,getBytes}=require('firebase/storage');
 const fs=require('node:fs');let env;
 const db=uid=>env.authenticatedContext(uid,{email:uid+'@example.test'}).firestore();
@@ -47,6 +47,19 @@ function resultBatch(uid,id,xp=49,overrides={}){
   batch.set(doc(d,'videos',id),{uid,status:'completed',seconds:10,resolution:'720p',referenceCount:3,...overrides});
   batch.set(doc(d,'leaderboard',uid),{uid,nickname:uid,xp,completed:1,failed:0,lastVideoId:id,updatedAt:1});return batch;
 }
+
+test('first result transaction can read missing documents and publish a normal user result',async()=>{
+  const d=db('alice'),video=doc(d,'videos','first-transaction'),score=doc(d,'leaderboard','alice'),deleted=doc(d,'videoDeletions','first-transaction');
+  await assertSucceeds(runTransaction(d,async tx=>{
+    const snapshots=await Promise.all([tx.get(video),tx.get(score),tx.get(deleted)]);
+    for(const snapshot of snapshots)require('node:assert/strict').equal(snapshot.exists(),false);
+    tx.set(video,{uid:'alice',status:'completed',seconds:10,resolution:'720p',referenceCount:3});
+    tx.set(score,{uid:'alice',nickname:'alice',xp:49,completed:1,failed:0,lastVideoId:'first-transaction',updatedAt:1});
+  }));
+  await assertSucceeds(getDoc(doc(db('boss'),'videos','first-transaction')));
+  await assertFails(getDoc(doc(db('bob'),'videos','first-transaction')));
+  await assertFails(getDoc(doc(db('outsider'),'videos','missing')));
+});
 test('terminal result and accurate score must be atomic, cannot be replayed or inflated',async()=>{
   await assertFails(resultBatch('alice','r1',999).commit());
   await assertSucceeds(resultBatch('alice','r1').commit());

@@ -23,7 +23,7 @@
   if($('#space-breadcrumb'))$('#space-breadcrumb').textContent=SPACE.name||'Untitled';
   if($('#avatar-button'))$('#avatar-button').textContent=Studio.current().name.slice(0,2).toUpperCase();
   function notify(message){clearTimeout(noticeTimer);$('#notice').textContent=message;$('#notice').hidden=false;noticeTimer=setTimeout(()=>$('#notice').hidden=true,4000);}
-  function snapshot(){return {nodes:[...nodes.values()].map(n=>({id:n.id,type:n.type,x:n.x,y:n.y,fields:{...n.fields},assets:[...n.assets]})),edges:[...edges.values()].map(e=>({...e}))};}
+  function snapshot(){return {nodes:[...nodes.values()].map(n=>({id:n.id,type:n.type,x:n.x,y:n.y,fields:{...n.fields},assets:[...n.assets],...(n.type==='output'&&n.videoRecord?{videoRecord:{...n.videoRecord}}:{})})),edges:[...edges.values()].map(e=>({...e}))};}
   function sessionPayload(){return {version:6,savedAt:(lastSavedAt=Math.max(Date.now(),lastSavedAt+1)),session,state:snapshot(),journal:journal.slice(-150),undoStack:undoStack.slice(-25),redoStack:redoStack.slice(-25),counters:{...counters},edgeSequence,camera:{...camera},mapVisible,assets:[...assets.values()].map(({id,name,kind,size,url,storagePath,mediaType,portraitGroupId})=>({id,name,kind,size,url:url||null,storagePath:storagePath||null,mediaType:mediaType||null,portraitGroupId:portraitGroupId||null,uploading:false}))};}
   function saveSession(){
     try{Studio.queueSpaceState(SPACE_ID,sessionPayload());if($('#autosave-state'))$('#autosave-state').textContent='Сохранено на компьютере';}

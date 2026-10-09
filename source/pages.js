@@ -91,6 +91,7 @@
       if(v.cost!=null)media.append(E('span','$'+Number(v.cost).toFixed(2),'asset-cost'));
       if(v.seconds>0)media.append(E('span',v.seconds+'s','asset-duration'));
       const body=E('div',undefined,'asset-body');body.append(E('p',(v.prompt||'Без промпта').slice(0,180)),E('small',`${v.model||'model'} · ${v.resolution||''} ${v.ratio||''}`));
+      if(v.cloudSaved===false&&MagicDomain.terminal(v.status))body.append(E('small','Сохранено только на этом компьютере. '+(v.syncError||'Ожидает отправки в базу.'),'asset-warning'));
       const tags=E('div',undefined,'asset-tags');tags.append(E('span',v.user||'User'),E('span',fmtDate(v.createdAt)));
       if(v.archived)tags.append(E('span','В архиве'));const actions=E('div',undefined,'asset-actions');
       if(v.videoUrl){const preview=E('button','Предпросмотр','ui-button small');preview.onclick=()=>MagicVideoViewer.show(v);const save=E('button','Скачать видео','ui-button small');save.onclick=async()=>{save.disabled=true;try{await S.downloadVideo(v);}catch(e){S.notify(e.message,'error');}finally{save.disabled=false;}};actions.append(preview,save);if(v.providerUrlExpiresAt)body.append(E('small',Date.now()>=v.providerUrlExpiresAt?'Ссылка провайдера могла истечь; отчёт сохранён.':'Ссылка ориентировочно до '+new Date(v.providerUrlExpiresAt).toLocaleString('ru-RU'),'asset-warning'));}

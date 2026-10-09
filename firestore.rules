@@ -71,7 +71,9 @@ service cloud.firestore {
       allow update: if owns('uid') && request.resource.data.uid == resource.data.uid;
     }
     match /videos/{id} {
-      allow read: if signedIn() && (resource.data.uid == request.auth.uid || isAdmin());
+      // Transactions must be able to check whether their new result exists.
+      allow get: if signedIn() && (!exists(/databases/$(database)/documents/videos/$(id)) || owns('uid') || isAdmin());
+      allow list: if signedIn() && (owns('uid') || isAdmin());
       allow create: if signedIn() && !exists(/databases/$(database)/documents/videoDeletions/$(id)) && validResult(request.resource.data) && hasScoreWrite(id);
       allow update: if (
         owns('uid') && !terminal(resource.data.status) && validResult(request.resource.data)

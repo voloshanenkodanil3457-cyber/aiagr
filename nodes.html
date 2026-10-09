@@ -954,21 +954,21 @@ window.Studio=(()=>{
     if(syncingVideos.has(row.id))return syncingVideos.get(row.id);
     const task=(async()=>{
       const videoRef=api.fsM.doc(api.db,'videos',row.id),scoreRef=api.fsM.doc(api.db,'leaderboard',row.uid);
-      const {id,cloudSaved,trackingWarning,...data}=row;
+      const {id,cloudSaved,trackingWarning,syncError,...data}=row;
       data.schemaVersion=2;data.referenceCount=Math.max(0,Math.min(15,Number(data.referenceCount)||0));data.seconds=Math.max(4,Math.min(30,Number(data.seconds)||8));data.resolution=normalizeResolution(data.resolution);
-      let wasDeleted=false;
+      let wasDeleted=false,canonical=null;
       await api.fsM.runTransaction(api.db,async tx=>{
         const [previous,score,deleted]=await Promise.all([tx.get(videoRef),tx.get(scoreRef),tx.get(api.fsM.doc(api.db,'videoDeletions',row.id))]);
         wasDeleted=deleted.exists();if(wasDeleted)return;
         // The same terminal task can be observed by several tabs. Count it only once.
-        if(previous.exists()&&MagicDomain.terminal(previous.data().status))return;
+        if(previous.exists()&&MagicDomain.terminal(previous.data().status)){canonical=previous.data();return;}
         const before=score.exists()?score.data():{};
         tx.set(videoRef,data);
         tx.set(scoreRef,{uid:row.uid,nickname:current().name,xp:(before.xp||0)+(row.status==='completed'?MagicDomain.xp(data):0),
           completed:(before.completed||0)+(row.status==='completed'?1:0),failed:(before.failed||0)+(row.status==='failed'?1:0),lastVideoId:row.id,updatedAt:now()});
       });
       if(wasDeleted){localStorage.removeItem(jobsPrefix()+row.id);return null;}
-      return rememberVideo({...row,cloudSaved:true});
+      return rememberVideo({...canonical||row,id:row.id,cloudSaved:true,syncError:null});
     })();syncingVideos.set(row.id,task);
     try{return await task;}finally{syncingVideos.delete(row.id);}
   }
@@ -976,6 +976,34 @@ window.Studio=(()=>{
     const col=api.fsM.collection(api.db,'videos');
     const snap=await api.fsM.getDocs(isAdmin()?col:api.fsM.query(col,api.fsM.where('uid','==',cache.user.uid)));
     const byId=new Map(snap.docs.map(d=>[d.id,{...d.data(),id:d.id,cloudSaved:true}]));
+    // Recover only from this account's private Spaces, never another user's Canvas.
+    try{
+      for(const space of await listSpaces()){
+        const local=read(sessionKey(space.id),null),remote=space.canvasState;
+        const state=(local&&(local.savedAt||0)>(remote?.savedAt||0)?local:remote||local)?.state;
+        if(!Array.isArray(state?.nodes))continue;
+        for(const node of state.nodes){
+          const f=node.fields||{},saved=node.videoRecord,id=f.generationId||saved?.id;
+          if(node.type!=='output'||!id||byId.has(id)||localVideos()[id]||saved?.uid&&saved.uid!==cache.user.uid)continue;
+          const status=saved?.status||f.status;if(!MagicDomain.terminal(status))continue;
+          const source=state.nodes.find(n=>state.edges?.some(e=>e.to===node.id&&e.from===n.id)&&n.type==='generation');
+          if(!saved&&!source)continue;
+          const options=source?.fields||{},videoUrl=saved?.videoUrl||f.videoUrl||null;
+          if(status==='completed'&&!videoUrl&&!(saved?.provider==='openrouter'&&saved.requestId))continue;
+          rememberVideo({id,uid:cache.user.uid,user:current().name,spaceId:space.id,spaceName:space.name||'',sourceNodeId:source?.id||null,outputNodeId:node.id,
+            prompt:options.text||'',provider:f.provider||'byteplus',model:videoModelFor(f.provider||'byteplus',options.model),
+            resolution:normalizeResolution(options.resolution),ratio:normalizeRatio(f.ratio||options.ratio),seconds:Math.max(4,Math.min(30,Number(options.duration)||8)),
+            referenceCount:Math.min(15,new Set([...(source?.assets||[]),...state.nodes.filter(n=>n.type==='media'&&state.edges?.some(e=>e.from===n.id&&e.to===source?.id)).flatMap(n=>n.assets||[])]).size),createdAt:space.createdAt||now(),updatedAt:now(),
+            requestId:f.requestId||null,videoUrl,remoteUrl:f.remoteUrl||null,providerUrlExpiresAt:f.providerUrlExpiresAt||null,error:f.error||null,status,
+            ...(saved||{}),id,uid:cache.user.uid,cloudSaved:false,recoveredFromCanvas:true});
+        }
+      }
+    }catch(error){console.warn('Canvas recovery unavailable',error);}
+    for(const row of Object.values(localVideos())){
+      if(!MagicDomain.terminal(row.status)||row.cloudSaved&&byId.has(row.id))continue;
+      try{const saved=await persistVideo({...row,cloudSaved:false});if(saved)byId.set(saved.id,saved);else byId.delete(row.id);}
+      catch(error){rememberVideo({...row,cloudSaved:false,syncError:error.code==='permission-denied'?'Firebase запрещает сохранение. Обновите Firestore rules.':error.message});}
+    }
     for(const row of Object.values(localVideos()))if(row.uid===cache.user.uid&&!row.cloudSaved)byId.set(row.id,row);
     return [...byId.values()].sort((a,b)=>timestamp(b.createdAt)-timestamp(a.createdAt));
   }
@@ -1443,7 +1471,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
   if($('#space-breadcrumb'))$('#space-breadcrumb').textContent=SPACE.name||'Untitled';
   if($('#avatar-button'))$('#avatar-button').textContent=Studio.current().name.slice(0,2).toUpperCase();
   function notify(message){clearTimeout(noticeTimer);$('#notice').textContent=message;$('#notice').hidden=false;noticeTimer=setTimeout(()=>$('#notice').hidden=true,4000);}
-  function snapshot(){return {nodes:[...nodes.values()].map(n=>({id:n.id,type:n.type,x:n.x,y:n.y,fields:{...n.fields},assets:[...n.assets]})),edges:[...edges.values()].map(e=>({...e}))};}
+  function snapshot(){return {nodes:[...nodes.values()].map(n=>({id:n.id,type:n.type,x:n.x,y:n.y,fields:{...n.fields},assets:[...n.assets],...(n.type==='output'&&n.videoRecord?{videoRecord:{...n.videoRecord}}:{})})),edges:[...edges.values()].map(e=>({...e}))};}
   function sessionPayload(){return {version:6,savedAt:(lastSavedAt=Math.max(Date.now(),lastSavedAt+1)),session,state:snapshot(),journal:journal.slice(-150),undoStack:undoStack.slice(-25),redoStack:redoStack.slice(-25),counters:{...counters},edgeSequence,camera:{...camera},mapVisible,assets:[...assets.values()].map(({id,name,kind,size,url,storagePath,mediaType,portraitGroupId})=>({id,name,kind,size,url:url||null,storagePath:storagePath||null,mediaType:mediaType||null,portraitGroupId:portraitGroupId||null,uploading:false}))};}
   function saveSession(){
     try{Studio.queueSpaceState(SPACE_ID,sessionPayload());if($('#autosave-state'))$('#autosave-state').textContent='Сохранено на компьютере';}

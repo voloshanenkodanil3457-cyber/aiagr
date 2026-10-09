@@ -50,6 +50,40 @@ test('failed result is physically removed and stale local sync cannot recreate i
   assert.equal(a.c.__qa.get('metrics',{}).writes,writes);
 });
 
+function canvasFixture(a,{local=false,id='recovered',deleted=false,foreign=false}={}){
+  const docs=a.docs();
+  const payload={version:6,savedAt:100,state:{nodes:[
+    {id:'G1',type:'generation',fields:{text:'Walking in Lisbon',duration:'4',resolution:'480p',ratio:'9:16'},assets:[]},
+    {id:'O1',type:'output',fields:{generationId:id,status:'completed',requestId:'task-1',videoUrl:'https://cdn.test/expired.mp4',providerUrlExpiresAt:1},...(foreign?{videoRecord:{id,uid:'bob',status:'completed'}}:{})}
+  ],edges:[{from:'G1',to:'O1'}]}};
+  docs['spaces/first'].canvasState=local?null:payload;
+  if(deleted)docs['videoDeletions/'+id]={uid:'alice'};
+  a.c.__qa.put('docs',docs);
+  if(local)a.c.localStorage.setItem('magic.canvas.cache.v1.alice.first',JSON.stringify(payload));
+}
+test('normal user recovers an expired Canvas result into Firestore and the admin can list it',async()=>{
+  const a=app('user');canvasFixture(a);
+  const rows=await a.s.listVideos();assert.equal(rows.length,1);assert.equal(rows[0].cloudSaved,true);
+  assert.equal(a.docs()['videos/recovered'].uid,'alice');assert.equal(a.docs()['videos/recovered'].prompt,'Walking in Lisbon');
+  assert.equal(a.docs()['leaderboard/alice'].completed,1);
+  const writes=a.c.__qa.get('metrics',{}).writes;await a.s.listVideos();assert.equal(a.c.__qa.get('metrics',{}).writes,writes);
+  const boss=app();boss.c.__qa.put('docs',a.docs());assert.equal((await boss.s.listVideos()).length,2);
+});
+test('local Canvas recovery never reads another account cache or recreates an admin-deleted result',async()=>{
+  const a=app('user');canvasFixture(a,{local:true,deleted:true});
+  assert.equal((await a.s.listVideos()).length,0);assert.equal(a.docs()['videos/recovered'],undefined);
+  assert.equal(a.docs()['leaderboard/alice'],undefined);
+  const b=app('user');canvasFixture(b,{foreign:true});assert.equal((await b.s.listVideos()).length,0);
+});
+test('Assets retries the durable outbox and explicitly retains errors when Firebase denies saving',async()=>{
+  const a=app('user');canvasFixture(a,{local:true});
+  const sdk=a.c.__test.api.fsM,run=sdk.runTransaction;
+  sdk.runTransaction=async()=>{const error=new Error('Missing or insufficient permissions');error.code='permission-denied';throw error;};
+  let rows=await a.s.listVideos();assert.equal(rows.length,1);assert.equal(rows[0].cloudSaved,false);assert.match(rows[0].syncError,/Firestore rules/);
+  sdk.runTransaction=run;rows=await a.s.listVideos();assert.equal(rows[0].cloudSaved,true);assert.equal(rows[0].syncError,null);
+  assert.equal(a.docs()['videos/recovered'].syncError,undefined);
+});
+
 function downloads(a){
   const elements=[],requests=[],releases=[];
   a.c.document.createElement=tag=>{const e={tag,style:{},setAttribute(){},addEventListener(){},append(...items){this.children=(this.children||[]).concat(items);},click(){this.clicked=true;},remove(){this.removed=true;},showModal(){this.open=true;},close(){this.onclose?.();}};elements.push(e);return e;};
