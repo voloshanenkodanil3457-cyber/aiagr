@@ -425,11 +425,11 @@ window.Studio=(()=>{
     return hydrateLocalAssets(snap.docs.map(d=>({...d.data(),id:d.id})).sort((a,b)=>timestamp(b.createdAt)-timestamp(a.createdAt)));
   }
   async function createVideoRecord(data){
-    assertFirebase();const me=current();
+    assertFirebase();await loadVideoPricing();const me=current();
     const row={id:uid(),uid:me.uid,user:me.name,spaceId:data.spaceId||null,spaceName:data.spaceName||'',sourceNodeId:data.sourceNodeId||null,outputNodeId:data.outputNodeId||null,
       prompt:data.prompt||'',provider:data.provider||'byteplus',model:videoModelFor(data.provider,data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
-      transport:data.transport||'direct',gatewayUrl:data.gatewayUrl||null,
-      seconds:Math.max(4,Math.min(30,Number(data.seconds)||8)),referenceCount:Math.max(0,Math.min(15,Number(data.referenceCount)||0)),hasRef:Boolean(data.hasRef),refMode:'reference',generateAudio:data.generateAudio!==false,
+      transport:data.transport||'direct',gatewayUrl:data.gatewayUrl||null,pricingRates:MagicDomain.videoPrices,
+      seconds:Math.max(4,Math.min(30,Number(data.seconds)||8)),referenceCount:Math.max(0,Math.min(15,Number(data.referenceCount)||0)),videoReferenceCount:Math.max(0,Math.min(15,Number(data.videoReferenceCount)||0)),hasRef:Boolean(data.hasRef),refMode:'reference',generateAudio:data.generateAudio!==false,
       status:'queued',pct:0,cost:null,error:null,requestId:null,videoUrl:null,remoteUrl:null,storagePath:null,createdAt:now(),updatedAt:now(),cloudSaved:false};
     return rememberVideo(row);
   }
@@ -455,6 +455,7 @@ window.Studio=(()=>{
       const videoRef=api.fsM.doc(api.db,'videos',row.id),scoreRef=api.fsM.doc(api.db,'leaderboard',row.uid);
       const {id,cloudSaved,trackingWarning,syncError,...data}=row;
       data.schemaVersion=2;data.referenceCount=Math.max(0,Math.min(15,Number(data.referenceCount)||0));data.seconds=Math.max(4,Math.min(30,Number(data.seconds)||8));data.resolution=normalizeResolution(data.resolution);
+      if(data.status==='completed'&&data.cost==null){data.cost=MagicDomain.estimateCost(data);if(data.cost!=null){data.costSource='tariff';data.pricingVersion=MagicDomain.pricingVersion;}}
       let wasDeleted=false,canonical=null;
       await api.fsM.runTransaction(api.db,async tx=>{
         const [previous,score,deleted]=await Promise.all([tx.get(videoRef),tx.get(scoreRef),tx.get(api.fsM.doc(api.db,'videoDeletions',row.id))]);
@@ -467,7 +468,7 @@ window.Studio=(()=>{
           completed:(before.completed||0)+(row.status==='completed'?1:0),failed:(before.failed||0)+(row.status==='failed'?1:0),lastVideoId:row.id,updatedAt:now()});
       });
       if(wasDeleted){localStorage.removeItem(jobsPrefix()+row.id);return null;}
-      return rememberVideo({...canonical||row,id:row.id,cloudSaved:true,syncError:null});
+      return rememberVideo({...canonical||data,id:row.id,cloudSaved:true,syncError:null});
     })();syncingVideos.set(row.id,task);
     try{return await task;}finally{syncingVideos.delete(row.id);}
   }
@@ -529,6 +530,21 @@ window.Studio=(()=>{
     localStorage.removeItem(jobsPrefix()+id);
   }
   async function listLeaderboard(){const snap=await api.fsM.getDocs(api.fsM.collection(api.db,'leaderboard'));return snap.docs.map(d=>({...d.data(),uid:d.id}));}
+  async function loadVideoPricing(){
+    try{const snap=await api.fsM.getDoc(api.fsM.doc(api.db,'config','videoPricing'));if(snap.exists())MagicDomain.setVideoPrices(snap.data().rates);else MagicDomain.setVideoPrices(MagicDomain.defaultVideoPrices);}
+    catch(error){MagicDomain.setVideoPrices(MagicDomain.defaultVideoPrices);console.warn('Pricing defaults used',error);}
+    return MagicDomain.videoPrices;
+  }
+  async function saveVideoPricing(rates,expected){
+    assertFirebase();if(!isAdmin())throw new Error('Тарифы изменяет только суперадмин.');
+    const clean=MagicDomain.validatePrices(rates),ref=api.fsM.doc(api.db,'config','videoPricing');
+    await api.fsM.runTransaction(api.db,async tx=>{
+      const snap=await tx.get(ref),current=snap.exists()?MagicDomain.validatePrices(snap.data().rates):MagicDomain.defaultVideoPrices;
+      if(Object.keys(clean).some(key=>current[key]!==Number(expected?.[key])))throw new Error('Тарифы уже изменились. Обнови страницу и подтверди новые значения.');
+      tx.set(ref,{rates:clean,updatedBy:cache.user.uid,updatedAt:now(),version:MagicDomain.pricingVersion});
+    });
+    return MagicDomain.setVideoPrices(clean);
+  }
   async function rebuildLeaderboard(){
     if(!isAdmin())throw new Error('Только суперадмин может пересчитать рейтинг.');
     const users=await listUsers();
@@ -592,6 +608,8 @@ window.Studio=(()=>{
       cost:rawCost!=null&&Number.isFinite(Number(rawCost))?Number(rawCost):null,finishedAt:now(),error:null,archiveWarning};
     if(actualDuration>=4&&actualDuration<=30)patch.seconds=actualDuration;
     if(['480p','720p','1080p'].includes(result?.resolution))patch.resolution=result.resolution;
+    patch.costSource=patch.cost!=null?'api':null;
+    if(patch.cost==null){patch.cost=MagicDomain.estimateCost({...record,...patch});if(patch.cost!=null){patch.costSource='tariff';patch.pricingVersion=MagicDomain.pricingVersion;}}
     return updateVideo(record.id,patch);
   }
   const playbackCache=new Map();
@@ -749,5 +767,5 @@ window.Studio=(()=>{
     portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,integrationVerified,activeVideoProvider,setVideoProvider,videoModelFor,prepareVideoRequest,providerKey,providerCredentials,apiGatewayBase,openRouterGateway,
     listSpaces,createSpace,getSpace,renameSpace,duplicateSpace,deleteSpace,saveSpaceState,queueSpaceState,flushSpaceState,flushPendingWork,
     uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,permanentlyDeleteVideo,submitGeneration,refreshGeneration,watchGeneration,resolveVideoSource,downloadVideo,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
-    getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
+    loadVideoPricing,saveVideoPricing,getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
 })();

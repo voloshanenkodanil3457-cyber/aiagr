@@ -60,6 +60,14 @@ test('first result transaction can read missing documents and publish a normal u
   await assertFails(getDoc(doc(db('bob'),'videos','first-transaction')));
   await assertFails(getDoc(doc(db('outsider'),'videos','missing')));
 });
+test('members read pricing but only superuser can write a valid rate document',async()=>{
+  const pricing={rates:{'480p':.103,'720p':.231,'1080p':.569},updatedBy:'boss',updatedAt:1,version:'v1'};
+  await assertSucceeds(setDoc(doc(db('boss'),'config','videoPricing'),pricing));
+  await assertSucceeds(getDoc(doc(db('alice'),'config','videoPricing')));
+  await assertFails(setDoc(doc(db('alice'),'config','videoPricing'),{...pricing,updatedBy:'alice'}));
+  await assertFails(setDoc(doc(db('boss'),'config','videoPricing'),{...pricing,rates:{...pricing.rates,'480p':-1}}));
+  await assertFails(getDoc(doc(db('outsider'),'config','videoPricing')));
+});
 test('terminal result and accurate score must be atomic, cannot be replayed or inflated',async()=>{
   await assertFails(resultBatch('alice','r1',999).commit());
   await assertSucceeds(resultBatch('alice','r1').commit());

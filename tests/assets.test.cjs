@@ -83,6 +83,16 @@ test('Assets retries the durable outbox and explicitly retains errors when Fireb
   sdk.runTransaction=run;rows=await a.s.listVideos();assert.equal(rows[0].cloudSaved,true);assert.equal(rows[0].syncError,null);
   assert.equal(a.docs()['videos/recovered'].syncError,undefined);
 });
+test('only superuser can save validated pricing and stale changes are rejected',async()=>{
+  const user=app('user');await assert.rejects(user.s.saveVideoPricing({'480p':1,'720p':2,'1080p':3},user.c.MagicDomain.defaultVideoPrices),/суперадмин/);
+  const boss=app(),initial=await boss.s.loadVideoPricing(),rates={'480p':.2,'720p':.3,'1080p':.6};
+  await boss.s.saveVideoPricing(rates,initial);assert.deepEqual(boss.docs()['config/videoPricing'].rates,rates);
+  await assert.rejects(boss.s.saveVideoPricing({'480p':1,'720p':2,'1080p':3},initial),/уже изменились/);
+  const row=await boss.s.createVideoRecord({seconds:4,resolution:'480p'});
+  await boss.s.saveVideoPricing({'480p':1,'720p':2,'1080p':3},rates);
+  await boss.s.updateVideo(row.id,{status:'completed'});const result=(await boss.s.listVideos()).find(v=>v.id===row.id);
+  assert.equal(result.cost,.8);assert.equal(result.costSource,'tariff');
+});
 
 function downloads(a){
   const elements=[],requests=[],releases=[];
