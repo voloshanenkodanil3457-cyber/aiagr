@@ -7,6 +7,8 @@
   let file=null,fileURL=null,cues=[],language='auto',style='classic',worker=null,job=0,busy=false,activeIndex=-1,raf=0,recorder=null,exportAbort=null,audioEngine=null,fetchAbort=null,selection=0;
   const storageKey=()=>`magic.captions.v1.${user.uid}.${file?.name}|${file?.size}|${file?.lastModified}`;
   const notice=(text,error=false)=>{const el=$('#caption-notice');el.textContent=text;el.classList.toggle('error',error);};
+  const languageCodes={english:'en',spanish:'es',portuguese:'pt',romanian:'ro',hungarian:'hu',german:'de',french:'fr',italian:'it',polish:'pl',ukrainian:'uk',russian:'ru'};
+  function languageName(value){try{return new Intl.DisplayNames(['ru'],{type:'language'}).of(languageCodes[value]||value);}catch{return value;}}
   function lock(value){
     busy=value;page.classList.toggle('is-busy',value);
     for(const control of page.querySelectorAll('button,input,textarea,select'))control.disabled=value;
@@ -65,7 +67,7 @@
     if(!/^video\//.test(next.type)&&! /\.(mp4|webm|mov|m4v|mkv)$/i.test(next.name)){notice('Нужен видеофайл MP4, WebM или MOV.',true);return;}
     const token=++selection;fetchAbort?.abort();video.pause();if(fileURL)URL.revokeObjectURL(fileURL);
     file=next;fileURL=URL.createObjectURL(next);cues=[];video.src=fileURL;video.hidden=false;$('#caption-preview-empty').hidden=true;
-    $('#caption-file-name').textContent=next.name;$('#caption-recognize').disabled=true;$('#caption-draft').disabled=true;renderCues();notice('Чтение видео…');
+    $('#caption-file-name').textContent=next.name;$('#caption-language-info').textContent=language==='auto'?'Язык будет определён заново по речи в этом видео.':'Выбран язык речи: '+languageName(language)+'. Субтитры будут без перевода.';$('#caption-recognize').disabled=true;$('#caption-draft').disabled=true;renderCues();notice('Чтение видео…');
     try{
       await new Promise((resolve,reject)=>{const timer=setTimeout(()=>finish(new Error('Браузер не смог открыть это видео. Попробуй MP4 с H.264/AAC.')),15000);const loaded=()=>finish();const failed=()=>finish(new Error('Формат видео не поддерживается браузером.'));function finish(error){clearTimeout(timer);video.removeEventListener('loadedmetadata',loaded);video.removeEventListener('error',failed);error?reject(error):resolve();}video.addEventListener('loadedmetadata',loaded,{once:true});video.addEventListener('error',failed,{once:true});});
       if(token!==selection)return;
@@ -79,7 +81,7 @@
   $('#caption-drop').onclick=()=>$('#caption-file').click();$('#caption-file').onchange=event=>selectFile(event.target.files[0]);
   for(const type of ['dragenter','dragover'])$('#caption-drop').addEventListener(type,event=>{event.preventDefault();if(!busy)$('#caption-drop').classList.add('dragging');});
   for(const type of ['dragleave','drop'])$('#caption-drop').addEventListener(type,event=>{event.preventDefault();$('#caption-drop').classList.remove('dragging');if(type==='drop'&&!busy)selectFile(event.dataTransfer.files[0]);});
-  for(const button of $$('[data-language]'))button.onclick=()=>{language=button.dataset.language;for(const b of $$('[data-language]')){const active=b===button;b.classList.toggle('active',active);b.setAttribute('aria-pressed',active);}};
+  for(const button of $$('[data-language]'))button.onclick=()=>{language=button.dataset.language;for(const b of $$('[data-language]')){const active=b===button;b.classList.toggle('active',active);b.setAttribute('aria-pressed',active);}$('#caption-language-info').textContent=language==='auto'?'Язык будет определён заново по речи в этом видео.':'Выбран язык речи: '+languageName(language)+'. Нажми «Распознать речь», чтобы применить его.';};
   function updateStyleButtons(){for(const button of $$('[data-caption-style]')){const active=button.dataset.captionStyle===style;button.classList.toggle('active',active);button.setAttribute('aria-pressed',active);}}
   for(const button of $$('[data-caption-style]'))button.onclick=()=>{style=button.dataset.captionStyle;updateStyleButtons();persist();paint();};
   for(const control of [$('#caption-size'),$('#caption-position')])control.oninput=()=>{persist();paint();};
@@ -108,16 +110,17 @@
     try{
       const audio=await decodeAudio(file);if(id!==job)return;
       if(!audio.some(value=>Math.abs(value)>.0001))throw new Error('В видео не найден звук. Можно создать субтитры из текста.');
-      worker||=new Worker(new URL('assets/captions/whisper-worker.js',location.href),{type:'module'});
+      worker||=new Worker(new URL('assets/captions/whisper-worker.js?v=0.9.1',location.href),{type:'module'});
       worker.onmessage=({data})=>{
         if(data.id!==job)return;
         if(data.type==='status'||data.type==='progress')notice(data.text);
+        if(data.type==='language')$('#caption-language-info').textContent=(data.automatic?'Определён язык: ':'Выбран язык: ')+languageName(data.language)+'. Субтитры будут на языке оригинала.';
         if(data.type==='result'){
           cues=C.normalize(data.chunks,video.duration);lock(false);
           if(!cues.length){notice('Речь с таймкодами не найдена. Попробуй выбрать язык или создать черновик из текста.',true);return;}
           persist();renderCues();notice('Готово. Проверь текст и таймкоды — распознавание может ошибаться. Черновик сохранён в этом браузере.');
         }
-        if(data.type==='error'){worker?.terminate();worker=null;lock(false);notice('Whisper не запустился: '+data.text+'. Проверь интернет для загрузки модели или создай черновик из текста.',true);}
+        if(data.type==='error'){if(data.code==='LANGUAGE_UNCERTAIN'){lock(false);notice(data.text,true);return;}worker?.terminate();worker=null;lock(false);notice('Whisper не запустился: '+data.text+'. Проверь интернет для загрузки модели или создай черновик из текста.',true);}
       };
       worker.onerror=()=>{if(id!==job)return;worker?.terminate();worker=null;++job;lock(false);notice('Не удалось загрузить локальный Whisper. Проверь интернет и поддержку WebAssembly; доступен ручной черновик.',true);};
       worker.postMessage({id,audio,language},[audio.buffer]);
