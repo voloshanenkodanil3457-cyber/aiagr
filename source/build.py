@@ -68,6 +68,7 @@ def save(name,title,page,active,body,module=None):
     if page in ['captions','editor']:
         page_head=page_head.replace('</style>',(root/(page+'.css')).read_text(encoding='utf-8')+'</style>')
         extra='<script>'+(root/(page+'-core.js')).read_text(encoding='utf-8')+'\n'+(root/(page+'.js')).read_text(encoding='utf-8')+'</script>'
+        if page=='editor': extra='<script>'+(root/'captions-core.js').read_text(encoding='utf-8')+'</script>'+extra
     html=page_head+f'<body data-page="{page}"{mod}>'+shell(active)+f'<main class="app-content"><div class="page-wrap">{body}</div></main>'+scripts()+extra+'</body></html>'
     (out/name).write_text(html, encoding="utf-8")
 
