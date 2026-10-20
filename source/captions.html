@@ -1,0 +1,27 @@
+<section class="captions-page">
+  <header class="captions-heading"><a class="icon-button" href="assets.html" aria-label="Вернуться в Assets">←</a><div><h1><span>▣</span> Captions</h1><p>Речь из видео — в субтитры: правка по словам, стили и готовое видео.</p></div><span class="captions-free">Бесплатно · на устройстве</span></header>
+  <div class="captions-privacy"><span>♧</span><div>Видео и звук остаются в твоём браузере. Распознавание и экспорт работают на твоём устройстве.<small>Для первого запуска потребуется интернет, чтобы скачать модель Whisper. Оплаты за распознавание нет.</small></div></div>
+  <div class="captions-layout">
+    <div class="captions-workspace">
+      <div class="segmented captions-tabs"><button data-caption-tab="file" class="active">Файл</button><button data-caption-tab="mine">Мои видео</button></div>
+      <div id="caption-file-tab"><button id="caption-drop" class="caption-drop"><span>↥</span><strong id="caption-file-name">Перетащи видео или нажми</strong><small>MP4 / WebM / MOV · до 200 МБ и 5 минут</small></button><input id="caption-file" type="file" accept="video/*" hidden></div>
+      <div id="caption-mine-tab" hidden><p class="muted">Твои готовые генерации. Если ссылка истекла или сервер запрещает загрузку, выбери скачанный файл.</p><div id="caption-mine-list" class="caption-mine-list"></div></div>
+      <fieldset class="caption-languages"><legend>ЯЗЫК РЕЧИ</legend><div id="caption-languages"><button data-language="auto" class="active" aria-pressed="true">Авто</button><button data-language="english">EN</button><button data-language="spanish">ES</button><button data-language="portuguese">PT</button><button data-language="romanian">RO</button><button data-language="hungarian">HU</button><button data-language="german">DE</button><button data-language="french">FR</button><button data-language="italian">IT</button><button data-language="polish">PL</button><button data-language="ukrainian">UK</button><button data-language="russian">RU</button></div></fieldset>
+      <label class="caption-script-label" for="caption-script">ТЕКСТ РОЛИКА <small>— необязательный черновик для ручных субтитров</small></label><textarea id="caption-script" rows="3" maxlength="20000" placeholder="Можно не заполнять — Whisper распознает речь"></textarea>
+      <div class="caption-run-actions"><button id="caption-recognize" class="ui-button caption-primary" disabled>✦ Распознать речь</button><button id="caption-draft" class="ui-button" disabled>Из текста</button><button id="caption-cancel" class="ui-button" hidden>Отменить</button></div>
+      <div id="caption-progress-wrap" hidden><progress id="caption-progress"></progress></div><p id="caption-notice" class="caption-notice" role="status" aria-live="polite">Выбери видео, чтобы начать.</p>
+      <section id="caption-editor" class="caption-editor" hidden>
+        <div class="caption-section-title"><h2>Субтитры <small id="caption-word-count"></small></h2><button id="caption-add" class="ui-button small">+ Слово</button></div>
+        <p class="muted">Нажми слово на таймлайне для перехода. Текст и время можно редактировать ниже.</p>
+        <div class="caption-timeline-scroll"><div id="caption-timeline" class="caption-timeline"></div></div>
+        <div class="caption-cue-head"><span>Начало, сек.</span><span>Конец, сек.</span><span>Текст</span></div><div id="caption-cues" class="caption-cues"></div>
+        <div class="caption-export"><button id="caption-srt" class="ui-button">↓ SRT</button><button id="caption-vtt" class="ui-button">↓ VTT</button><button id="caption-export-video" class="ui-button caption-primary">↓ Видео с субтитрами</button></div>
+        <p class="muted caption-export-note">Экспорт видео идёт во время воспроизведения. Оставь вкладку открытой; формат MP4 или WebM зависит от браузера.</p>
+      </section>
+    </div>
+    <aside class="captions-preview-column">
+      <div id="caption-stage" class="caption-stage"><div id="caption-preview-empty"><span>▣</span><p>Твоё видео<br><small>Предпросмотр субтитров</small></p></div><video id="caption-video" playsinline controls preload="metadata" hidden></video><canvas id="caption-overlay" aria-hidden="true"></canvas></div>
+      <section class="caption-styles"><h2>Стиль субтитров</h2><div class="caption-style-grid"><button data-caption-style="classic" class="active" aria-pressed="true"><b>Твой текст</b><small>Classic</small></button><button data-caption-style="highlight"><b>Твой <em>текст</em></b><small>Highlight</small></button><button data-caption-style="minimal"><b>Твой текст</b><small>Minimal</small></button><button data-caption-style="pop"><b>ТВОЙ ТЕКСТ</b><small>Pop</small></button></div><label>Размер<input id="caption-size" type="range" min="3" max="9" step=".5" value="5.5"></label><label>Положение<select id="caption-position"><option value="bottom">Снизу</option><option value="center">По центру</option><option value="top">Сверху</option></select></label></section>
+    </aside>
+  </div>
+</section>
