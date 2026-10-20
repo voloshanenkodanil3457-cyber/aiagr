@@ -19,6 +19,16 @@ window.MagicEditor=(()=>{
       const [a,b]=active,p=Math.max(0,Math.min(1,(time-b.start)/b.overlap));
       if(b.transition==='black'){a.alpha=Math.max(0,1-p*2);b.alpha=Math.max(0,p*2-1);}else b.alpha=p;
       a.gain=1-p;b.gain=p;
+      const type=b.transition;
+      if(type==='white'){a.alpha=Math.max(0,1-p*2);b.alpha=Math.max(0,p*2-1);a.white=b.white=true;}
+      if(type.startsWith('wipe-')){b.alpha=1;b.reveal={type:type.slice(5),progress:p};}
+      if(type==='slide-left'){a.dx=-p;b.dx=1-p;b.alpha=1;}
+      if(type==='slide-right'){a.dx=p;b.dx=p-1;b.alpha=1;}
+      if(type==='slide-up'){a.dy=-p;b.dy=1-p;b.alpha=1;}
+      if(type==='zoom'){a.scale=1+p*.15;b.scale=1.6-p*.6;}
+      if(type==='spin'){b.rotation=(1-p)*Math.PI*.5;b.scale=.4+p*.6;}
+      if(type==='circle'){b.alpha=1;b.reveal={type:'circle',progress:p};}
+      if(type==='blur'){a.blur=p*18;b.blur=(1-p)*18;}
     }
     return active;
   }

@@ -44,3 +44,15 @@ test('microphone WAV fallback has finite PCM duration and clamps samples',()=>{
   const buffer={length:3,numberOfChannels:1,sampleRate:16000,getChannelData:()=>[-2,0,2]},view=new DataView(C.wavePCM(buffer));
   assert.equal(view.byteLength,50);assert.equal(view.getUint32(24,true),16000);assert.equal(view.getUint32(40,true),6);assert.equal(view.getInt16(44,true),-32768);assert.equal(view.getInt16(48,true),32767);
 });
+test('new transition masks and transforms preserve audio mixing and reach clean endpoints',()=>{
+  for(const type of ['white','wipe-left','wipe-right','wipe-up','wipe-down','slide-left','slide-right','slide-up','zoom','spin','circle','blur']){
+    const p=C.schedule([clip('a',4),clip('b',4,{transition:type,fade:1})]);
+    const [a,b]=C.frame(p,3.5);assert.equal(a.gain,.5,type);assert.equal(b.gain,.5,type);assert.equal(p[1].start,3,type);
+    assert.equal(C.frame(p,4)[0].id,'b',type);assert.equal(C.frame(p,4)[0].alpha,1,type);
+    if(type.startsWith('wipe-')||type==='circle'){assert.equal(b.reveal.progress,.5);assert.equal(b.alpha,1);}
+    if(type==='white'){assert.equal(a.alpha,0);assert.equal(b.alpha,0);assert.equal(a.white,true);}
+    if(type==='slide-left'){assert.equal(a.dx,-.5);assert.equal(b.dx,.5);}
+    if(type==='spin')assert.ok(b.rotation>0&&b.scale<1);
+    if(type==='blur'){assert.equal(a.blur,9);assert.equal(b.blur,9);}
+  }
+});
