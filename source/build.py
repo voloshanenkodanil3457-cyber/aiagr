@@ -12,7 +12,7 @@ canvas=(root/'canvas.js').read_text(encoding="utf-8")
 favicon='''<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect x=%273%27 y=%273%27 width=%2726%27 height=%2726%27 rx=%278%27 fill=%27%2317171b%27 stroke=%27%235a5a66%27/%3E%3Cpath d=%27M8 22V10h3.2l4.8 6.4 4.8-6.4H24v12h-3.4v-6.6L16 21l-4.6-5.6V22z%27 fill=%27white%27/%3E%3Cpath d=%27M25 5l.8 2.2L28 8l-2.2.8L25 11l-.8-2.2L22 8l2.2-.8z%27 fill=%27%238ab8ff%27/%3E%3C/svg%3E">'''
 
 NAV=[
- ('CREATE',[('dashboard','▦','Dashboard','index.html'),('spaces','⌘','Canvas','spaces.html'),('flows','✣','Flows','flows.html'),('assets','▧','Assets','assets.html'),('captions','▣','Captions','captions.html')]),
+ ('CREATE',[('dashboard','▦','Dashboard','index.html'),('spaces','⌘','Canvas','spaces.html'),('flows','✣','Flows','flows.html'),('assets','▧','Assets','assets.html'),('editor','✂','Editor','editor.html'),('captions','▣','Captions','captions.html')]),
  ('ORGANIZE',[('projects','□','Projects','projects.html'),('presets','▤','Templates','presets.html'),('camera','☷','Camera movement','modifiers.html')]),
  ('RESULTS',[('cost','$','Cost','cost.html')]),
  ('ACCOUNT',[('integrations','⚙','My settings','integrations.html'),('users','♙','Users','users.html')])
@@ -65,14 +65,15 @@ def save(name,title,page,active,body,module=None):
     mod=f' data-module="{module}"' if module else ''
     page_head=head(title)
     extra=''
-    if page=='captions':
-        page_head=page_head.replace('</style>',(root/'captions.css').read_text(encoding='utf-8')+'</style>')
-        extra='<script>'+(root/'captions-core.js').read_text(encoding='utf-8')+'\n'+(root/'captions.js').read_text(encoding='utf-8')+'</script>'
+    if page in ['captions','editor']:
+        page_head=page_head.replace('</style>',(root/(page+'.css')).read_text(encoding='utf-8')+'</style>')
+        extra='<script>'+(root/(page+'-core.js')).read_text(encoding='utf-8')+'\n'+(root/(page+'.js')).read_text(encoding='utf-8')+'</script>'
     html=page_head+f'<body data-page="{page}"{mod}>'+shell(active)+f'<main class="app-content"><div class="page-wrap">{body}</div></main>'+scripts()+extra+'</body></html>'
     (out/name).write_text(html, encoding="utf-8")
 
 # Sign in / registration
 save('captions.html','Captions','captions','captions',(root/'captions.html').read_text(encoding='utf-8'))
+save('editor.html','Editor','editor','editor',(root/'editor.html').read_text(encoding='utf-8'))
 
 signin='''<main class="auth-page"><section class="auth-card"><div class="brand auth-brand"><span class="brand-logo"></span><span class="brand-copy"><strong>Magic</strong><small>AI Ad Creatives</small></span></div><h1 id="auth-title">Войти в Magic</h1><p id="auth-subtitle">Email + пароль</p><p class="auth-access-note">Аккаунт выдаёт суперадмин команды.</p><form id="auth-form" class="stack"><label id="auth-name-wrap" hidden>Имя<input id="auth-name" name="displayName" maxlength="80" autocomplete="name"></label><label>Email<input name="email" type="email" required autocomplete="email" placeholder="you@example.com"></label><label>Пароль<div class="password-row"><input id="auth-password" name="password" type="password" required minlength="6" autocomplete="current-password"><button id="auth-password-toggle" type="button" class="ui-button">Показать</button></div></label><p id="auth-error" class="form-error"></p><button id="auth-submit" type="submit" class="ui-button primary">Войти</button></form></section></main>'''
 (out/'signin.html').write_text(head('Sign in')+f'<body class="auth-body" data-page="signin">{signin}{scripts()}</body></html>', encoding="utf-8")
