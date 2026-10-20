@@ -63,7 +63,7 @@
     }
     if(!clips.length)$('#edit-track').append(E('p','Перетащи видео из медиа на дорожку или нажми + у файла.','muted'));
     const c=current();$('#edit-inspector').hidden=!c;
-    if(c&&!preserveFields){$('#edit-selected').textContent=c.name;$('#edit-in').value=c.in.toFixed(2);$('#edit-out').value=c.out.toFixed(2);$('#edit-in').max=c.duration;$('#edit-out').max=c.duration;$('#edit-transition').value=c.transition;$('#edit-fade').value=c.fade;$('#edit-muted').checked=c.muted;}
+    if(c&&!preserveFields){$('#edit-selected').textContent=c.name;$('#edit-in').value=c.in.toFixed(3);$('#edit-out').value=c.out.toFixed(3);$('#edit-in').max=c.duration;$('#edit-out').max=c.duration;$('#edit-transition').value=c.transition;$('#edit-fade').value=c.fade;$('#edit-muted').checked=c.muted;}
     lock();
   }
   async function addClip(asset){

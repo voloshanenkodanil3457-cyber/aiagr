@@ -9,6 +9,8 @@ test('trimming and overlaps determine exported length without triple overlap',()
   for(let t=0;t<8;t+=.01)assert.ok(C.frame(p,t).length<=2);
   assert.throws(()=>C.schedule([clip('bad',4,{in:3,out:2})]),/границы/);
   assert.throws(()=>C.schedule([clip('bad',4,{out:5})]),/границы/);
+  assert.doesNotThrow(()=>C.schedule([clip('fractional',3.0364,{out:Number((3.0364).toFixed(3))})]));
+  assert.throws(()=>C.schedule([clip('a',200),clip('b',150)]),/5 минут/);
 });
 test('dissolve blends frames and audio, black transition reaches black at midpoint',()=>{
   const p=C.schedule([clip('a',4),clip('b',4,{in:1,transition:'dissolve',fade:1})]);
