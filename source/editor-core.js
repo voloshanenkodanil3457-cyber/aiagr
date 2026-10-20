@@ -1,6 +1,7 @@
 'use strict';
 window.MagicEditor=(()=>{
   function schedule(clips){
+    if(clips.length>20||clips.reduce((sum,c)=>sum+Number(c.out)-Number(c.in),0)>300.001)throw Error('Максимум 20 клипов и 5 минут общей длины.');
     let end=0;
     return clips.map((clip,index)=>{
       const duration=Number(clip.out)-Number(clip.in);
