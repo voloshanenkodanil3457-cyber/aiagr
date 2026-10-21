@@ -21,3 +21,8 @@ FIREBASE_PROJECT_ID = "aiagr-80390"
 # [[r2_buckets]]
 # binding = "PORTRAIT_FILES"
 # bucket_name = "magic-portrait-staging"
+
+# Video reference uploads (private, lifecycle: reference-staging/ expires after 1 day).
+# [[r2_buckets]]
+# binding = "REFERENCE_FILES"
+# bucket_name = "magic-reference-staging"

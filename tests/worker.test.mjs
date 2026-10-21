@@ -106,3 +106,20 @@ test('a provider request ID alone never starts polling as a generation task',asy
  try{const r=await worker.fetch(new Request('https://worker.test/byteplus/submit',{method:'POST',headers,body:JSON.stringify({payload:{prompt:'Scene',duration:8,resolution:'720p',ratio:'16:9'}})}),env);assert.equal(r.status,502);assert.equal((await r.json()).taskToken,undefined);}
  finally{requestIdOnly=false;}
 });
+
+test('local video upload requires membership, serves signed ranges and rejects tampering',async()=>{
+ const objects=new Map(),bucket={async put(key,bytes){objects.set(key,bytes);},async head(key){const b=objects.get(key);return b?{size:b.length}:null;},async get(key,{range}){const b=objects.get(key);return b?{body:b.slice(range.offset,range.offset+range.length)}:null;}};
+ const configured={...env,REFERENCE_FILES:bucket},headers={Authorization:'Bearer '+await token(),'X-Magic-Session':(await issueSessionToken('alice',configured)).sessionToken,'Content-Type':'video/mp4'};
+ const bytes=new Uint8Array([0,0,0,16,102,116,121,112,105,115,111,109,0,0,0,0]);
+ const send=(h=headers,body=bytes)=>worker.fetch(new Request('https://worker.test/media/reference/upload',{method:'POST',headers:h,body}),configured);
+ assert.equal((await send({'Content-Type':'video/mp4'})).status,401);
+ assert.equal((await send(headers,new Uint8Array(16))).status,400);
+ const response=await send();assert.equal(response.status,200);const result=await response.json();assert.ok(result.expiresAt>Date.now());assert.equal(objects.size,1);
+ const full=await worker.fetch(new Request(result.url),configured);assert.equal(full.status,200);assert.deepEqual(new Uint8Array(await full.arrayBuffer()),bytes);
+ const part=await worker.fetch(new Request(result.url,{headers:{Range:'bytes=4-7'}}),configured);assert.equal(part.status,206);assert.equal(part.headers.get('Content-Range'),'bytes 4-7/16');assert.equal(await part.text(),'ftyp');
+ const head=await worker.fetch(new Request(result.url,{method:'HEAD'}),configured);assert.equal(head.headers.get('Content-Length'),'16');assert.equal(await head.text(),'');
+ assert.equal((await worker.fetch(new Request(result.url,{headers:{Range:'bytes=80-90'}}),configured)).status,416);
+ const altered=result.url.replace(/file\/[^?]+/,'file/wrong-id');assert.equal((await worker.fetch(new Request(altered),configured)).status,404);
+ const missing=await worker.fetch(new Request('https://worker.test/media/reference/upload',{method:'POST',headers,body:bytes}),env);assert.equal(missing.status,503);
+ objects.clear();assert.equal((await worker.fetch(new Request(result.url),configured)).status,404);
+});

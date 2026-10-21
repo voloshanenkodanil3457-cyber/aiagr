@@ -125,3 +125,16 @@ test('superuser follows another user provider link without sending credentials t
   await a.s.downloadVideo({id:'team',uid:'bob',remoteUrl:'https://cdn.test/video.mp4',gatewayUrl:'https://untrusted.test',requestId:'task',taskToken:'TASK'});
   assert.equal(d.requests.length,0);assert.equal(d.elements.find(e=>e.tag==='a').href,'https://cdn.test/video.mp4');
 });
+
+test('local video is uploaded as binary and its temporary URL is reused without changing graph metadata',async()=>{
+ const {s,c}=app('user');const file=new Blob(['video bytes'],{type:'video/mp4'}),item={id:'local-video',kind:'video',url:'blob:local'};
+ c.MagicLocal.get=async()=>({file});c.localStorage.setItem('magic.credentials.alice.gateway','https://worker.test');
+ c.__test.api.auth={currentUser:{getIdToken:async()=>'firebase-test'}};
+ c.document.querySelector=()=>({dataset:{}});let uploads=0;
+ c.fetch=async(url,options)=>{if(url.endsWith('/media/reference/upload')){uploads++;assert.equal(options.body,file);assert.equal(options.headers['Content-Type'],'video/mp4');assert.equal(options.headers['X-Magic-Session'],'session-test');return Response.json({url:'https://worker.test/media/reference/file/one?token=signed',expiresAt:Date.now()+86400000});}throw Error('Unexpected request');};
+ c.localStorage.setItem('magic.credentials.alice.session.https://worker.test',JSON.stringify({gateway:'https://worker.test',token:'session-test',expiresAt:Date.now()+86400000}));
+ const first=await s.ensureRemoteAsset(item,{provider:'byteplus'}),second=await s.ensureRemoteAsset(item,{provider:'byteplus'});
+ assert.equal(first.referenceUrl,second.referenceUrl);assert.equal(uploads,1);assert.equal(item.url,'blob:local');assert.equal(item.referenceUrl,undefined);
+ c.MagicLocal.get=async()=>({file:new Blob(['webm'],{type:'video/webm'})});
+ await assert.rejects(s.ensureRemoteAsset({...item,id:'unsupported'},{provider:'byteplus'}),/MP4/);
+});

@@ -1,3 +1,4 @@
+import {uploadReference,serveReference} from './references.js';
 import {authenticate,issueTaskToken,verifyTaskToken,issueSessionToken,verifySessionToken} from './auth.js';
 import {portraitRoute,servePortraitFile,validatePortraitReferences} from './portraits.js';
 import {openRouterRoute,serveOpenRouterMedia} from './openrouter.js';
@@ -15,7 +16,7 @@ function corsHeaders(request, env) {
   const allowed = configured === '*' ? '*' : (configured.split(',').map(x => x.trim()).includes(origin) ? origin : configured.split(',')[0].trim());
   return {
     'Access-Control-Allow-Origin': allowed || '*',
-    'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
+    'Access-Control-Allow-Methods': 'GET,HEAD,POST,OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type,Authorization,X-Task-Token,X-Magic-Session,X-OpenRouter-Key,Range',
     'Access-Control-Expose-Headers': 'Content-Length,Content-Range,Accept-Ranges',
     'Access-Control-Max-Age': '86400',
@@ -114,6 +115,7 @@ export default {
         const response=await serveOpenRouterMedia(request,env),headers=new Headers(response.headers);for(const [k,v]of Object.entries(corsHeaders(request,env)))headers.set(k,v);return new Response(response.body,{status:response.status,headers});
       }
 
+      if(url.pathname.startsWith('/media/reference/file/')&&['GET','HEAD'].includes(request.method)){const response=await serveReference(request,env),headers=new Headers(response.headers);for(const [k,v]of Object.entries(corsHeaders(request,env)))headers.set(k,v);return new Response(response.body,{status:response.status,headers});}
       const uid = await authenticate(request, env);
       if(url.pathname==='/byteplus/session' && request.method==='POST'){
         const profile=await fetch(`https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,{headers:{Authorization:request.headers.get('Authorization')}});
@@ -123,6 +125,7 @@ export default {
         return json(await issueSessionToken(uid,env,role),200,request,env);
       }
       const session=await verifySessionToken(request.headers.get('X-Magic-Session'),uid,env);
+      if(url.pathname==='/media/reference/upload'&&request.method==='POST')return json(await uploadReference(request,env,uid),200,request,env);
       if(url.pathname.startsWith('/openrouter/')&&request.method==='POST')return json(await openRouterRoute(request,env,uid,session),200,request,env);
       if(url.pathname.startsWith('/byteplus/portraits/') && request.method==='POST')return json(await portraitRoute(request,env,uid),200,request,env);
 
