@@ -56,3 +56,11 @@ test('new transition masks and transforms preserve audio mixing and reach clean 
     if(type==='blur'){assert.equal(a.blur,9);assert.equal(b.blur,9);}
   }
 });
+test('video-to-audio conversion keeps trims, speed and gain without video properties',()=>{
+  const original={...clip('video',10,{in:2,out:8,speed:2}),mediaId:'media',name:'clip.mp4',volume:.7,muted:true,rotate:90,hidden:false};
+  const audio=C.videoToAudio(original,{id:'music',lane:'music',offset:4});const p=C.audioPlan([audio]);
+  assert.equal(p[0].length,3);assert.equal(p[0].end,7);assert.equal(C.audioFrame(p,5)[0].sourceTime,4);
+  assert.equal(audio.mediaId,'media');assert.equal(audio.volume,.7);assert.equal(audio.muted,false);assert.equal(audio.rotate,undefined);assert.equal(audio.transition,undefined);
+  assert.equal(original.id,'video');assert.equal(original.muted,true);assert.equal(original.out,8);
+  assert.throws(()=>C.videoToAudio(original,{id:'bad',offset:299}),/5 минут/);
+});
