@@ -1,0 +1,9 @@
+# Deploy separately; never use a paid Workers plan for this free-only setup.
+name = "magic-video-upload"
+main = "kv-references.js"
+compatibility_date = "2026-10-21"
+[vars]
+FIREBASE_PROJECT_ID = "aiagr-80390"
+[[kv_namespaces]]
+binding = "VIDEO_FILES"
+id = "6824b20068b2416da0c765c7453f4e5f"

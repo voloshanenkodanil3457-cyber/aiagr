@@ -1,3 +1,4 @@
+import kvWorker from '../cloudflare-worker/kv-references.js';
 import {test,before,after} from 'node:test';
 import assert from 'node:assert/strict';
 import worker from '../cloudflare-worker/worker.js';
@@ -122,4 +123,17 @@ test('local video upload requires membership, serves signed ranges and rejects t
  const altered=result.url.replace(/file\/[^?]+/,'file/wrong-id');assert.equal((await worker.fetch(new Request(altered),configured)).status,404);
  const missing=await worker.fetch(new Request('https://worker.test/media/reference/upload',{method:'POST',headers,body:bytes}),env);assert.equal(missing.status,503);
  objects.clear();assert.equal((await worker.fetch(new Request(result.url),configured)).status,404);
+});
+
+test('free KV uploads expire automatically, require a team user and preserve byte ranges',async()=>{
+ const objects=new Map();let options;
+ const kv={async put(k,v,o){options=o;objects.set(k,{value:v.buffer.slice(v.byteOffset,v.byteOffset+v.byteLength),metadata:o.metadata});},async getWithMetadata(k){return objects.get(k)||{value:null,metadata:null};}};
+ const e={FIREBASE_PROJECT_ID:env.FIREBASE_PROJECT_ID,VIDEO_FILES:kv},url='https://upload.test/media/reference/upload',headers={Authorization:'Bearer '+await token(),'Content-Type':'video/mp4',Origin:'https://voloshanenkodanil3457-cyber.github.io'},bytes=new Uint8Array([0,0,0,16,102,116,121,112,105,115,111,109,0,0,0,0]);
+ assert.equal((await kvWorker.fetch(new Request(url,{method:'POST',body:bytes}),e)).status,401);
+ assert.equal((await kvWorker.fetch(new Request(url,{method:'POST',headers:{...headers,Origin:'https://untrusted.test'},body:bytes}),e)).status,403);
+ const result=await kvWorker.fetch(new Request(url,{method:'POST',headers,body:bytes}),e);assert.equal(result.status,200);const data=await result.json();assert.equal(options.expirationTtl,21600);assert.ok(data.readyAt>Date.now()+60000);
+ const partial=await kvWorker.fetch(new Request(data.url,{headers:{Range:'bytes=4-7'}}),e);assert.equal(partial.status,206);assert.equal(await partial.text(),'ftyp');
+ const key=[...objects.keys()][0];objects.get(key).metadata.expiresAt=Date.now()-1;assert.equal((await kvWorker.fetch(new Request(data.url),e)).status,404);
+ membershipRole=null;assert.equal((await kvWorker.fetch(new Request(url,{method:'POST',headers,body:bytes}),e)).status,403);membershipRole='user';
+ const limit=await kvWorker.fetch(new Request(url,{method:'POST',headers:{...headers,'Content-Length':String(21*1024*1024)},body:bytes}),e);assert.equal(limit.status,413);
 });
