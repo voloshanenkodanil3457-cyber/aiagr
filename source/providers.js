@@ -7,7 +7,18 @@
     try{const u=new URL(url);if(u.protocol==='https:'&&!u.username&&!u.password)return true;}catch{}
     return kind==='image'&&/^data:image\/(jpeg|png|webp|bmp|tiff|gif|heic|heif);base64,[A-Za-z0-9+/]+={0,2}$/.test(url);
   }
+  function byteplusTask(p={}){
+    const mode=p.omni_reference_task_type||'auto',videos=p.reference_videos||[],hasVideo=Array.isArray(videos)&&videos.length>0;
+    if(!['auto','reference','edit','extend'].includes(mode))fail('Неизвестный режим Seedance.');
+    if(['edit','extend'].includes(mode)&&!hasVideo)fail('Для редактирования или продления добавь видеореференс.');
+    const adaptive=mode==='edit'||mode==='extend'||(mode==='auto'&&hasVideo),sourceDuration=mode==='edit'||(mode==='auto'&&hasVideo);
+    const duration=sourceDuration?-1:Number(p.duration??8),ratio=adaptive?'adaptive':p.aspect_ratio||p.ratio||'16:9';
+    if(duration!==-1&&(!Number.isInteger(duration)||duration<4||duration>30))fail('Длительность: 4–30 секунд или автоматически.');
+    if(!['adaptive','21:9','16:9','4:3','1:1','3:4','9:16'].includes(ratio))fail('Неподдерживаемый формат видео.');
+    return {...p,duration,ratio,aspect_ratio:ratio,omni_reference_task_type:mode};
+  }
   function buildOpenRouterRequest(p={}){
+    if(['edit','extend'].includes(p.omni_reference_task_type))fail('Режим редактирования и продления подключён для BytePlus. Выбери BytePlus в My settings.');
     const prompt=String(p.prompt||'').trim();if(!prompt||prompt.length>32000)fail('Промпт должен содержать от 1 до 32000 символов.');
     const images=p.reference_images||[],videos=p.reference_videos||[];
     if(!Array.isArray(images)||!Array.isArray(videos)||images.length+videos.length>15)fail('Допускается до 15 референсов.');
@@ -31,5 +42,5 @@
   }
   function contentUrl(taskId){if(typeof taskId!=='string'||!/^[\w-]{1,180}$/.test(taskId))fail('Некорректный ID задачи OpenRouter.');return 'https://openrouter.ai/api/v1/videos/'+encodeURIComponent(taskId)+'/content';}
   const providerName=p=>p==='openrouter'?'OpenRouter':'BytePlus';
-  return {openRouterModel,buildOpenRouterRequest,validateCapabilities,contentUrl,providerName};
+  return {byteplusTask,openRouterModel,buildOpenRouterRequest,validateCapabilities,contentUrl,providerName};
 });

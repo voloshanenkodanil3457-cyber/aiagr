@@ -209,12 +209,14 @@ window.Studio=(()=>{
   async function providerKey(provider){return (await providerCredentials(provider))?.apiKey||'';}
 
   function buildBytePlusRequest(payload={}){
+    payload=MagicProviders.byteplusTask(payload);
     const content=[{type:'text',text:String(payload.prompt||'')}];
     if(payload.first_frame_url)content.push({type:'image_url',image_url:{url:payload.first_frame_url},role:'first_frame'});
     if(payload.last_frame_url)content.push({type:'image_url',image_url:{url:payload.last_frame_url},role:'last_frame'});
     for(const url of payload.reference_images||[])content.push({type:'image_url',image_url:{url},role:'reference_image'});
     for(const url of payload.reference_videos||[])content.push({type:'video_url',video_url:{url},role:'reference_video'});
     const body={model:videoModel(payload.model),content,generate_audio:payload.generate_audio!==false,watermark:false,output_format:payload.output_format||'mp4'};
+    body.omni_reference_task_type=payload.omni_reference_task_type;
     if(payload.ratio)body.ratio=payload.ratio;
     if(payload.resolution)body.resolution=payload.resolution;
     if(payload.duration!==undefined&&payload.duration!==null&&payload.duration!=='')body.duration=Number(payload.duration);
@@ -288,7 +290,7 @@ window.Studio=(()=>{
     MagicProviders.validateCapabilities({},model);write(credentialKey('openrouter.capabilities'),{model,scope,expiresAt:Date.now()+3600000});return model;
   }
   async function prepareVideoRequest(provider,payload){
-    if(provider!=='openrouter')return payload;
+    if(provider!=='openrouter')return MagicProviders.byteplusTask(payload);
     const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи OpenRouter в My settings.');
     const body=MagicProviders.buildOpenRouterRequest(payload);return MagicProviders.validateCapabilities(body,await openRouterCapabilities(credentials));
   }
@@ -603,7 +605,8 @@ window.Studio=(()=>{
       return updateVideo(videoId,{requestId:data.id,taskToken:data.taskToken||null,transport:credentials.mode,gatewayUrl:credentials.workerUrl||null,status:'queued',pct:0});
     }
     if(provider!=='byteplus')throw new Error('Провайдер пока не подключён к генератору.');
-    const body={payload:{...payload,model:videoModel(payload.model),prompt:String(payload.prompt||''),duration:Math.max(4,Math.min(30,Number(payload.duration)||8)),resolution:normalizeResolution(payload.resolution),ratio:normalizeRatio(payload.aspect_ratio||payload.ratio),generate_audio:payload.generate_audio!==false,output_format:'mp4'}};
+    payload=MagicProviders.byteplusTask(payload);
+    const body={payload:{...payload,model:videoModel(payload.model),prompt:String(payload.prompt||''),duration:payload.duration,resolution:normalizeResolution(payload.resolution),ratio:payload.ratio,generate_audio:payload.generate_audio!==false,output_format:'mp4'}};
     if(new Blob([JSON.stringify(body)]).size>60*1024*1024)throw new Error('Референсы превышают размер запроса API. Уменьши изображения или используй HTTPS-ссылки.');
     const response=await proxy('/byteplus/submit',{method:'POST',body});const data=await response.json();
     // request_id is an API diagnostic trace, not necessarily a generation task ID.
