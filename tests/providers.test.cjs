@@ -20,3 +20,13 @@ test('all 46 supplied camera moves retain names, HTTPS videos and full prompts',
   for(const clip of C.clips){assert.ok(clip.prompt.startsWith('Camera: '));assert.ok(clip.prompt.includes('Movement:')&&clip.prompt.includes('Speed:')&&clip.prompt.includes('Framing:')&&clip.prompt.includes('End:'));assert.ok(clip.url.startsWith('https://aicameramovements.com/previews/hq/'));}
   assert.equal(C.get('02B').url,'https://aicameramovements.com/previews/hq/2b-pan-left-hq.mp4');assert.equal(C.filter('  orbit  ').length,2);assert.equal(C.filter('','Dolly/Track').length,9);
 });
+
+test('BytePlus video edits preserve source dimensions and duration and never mutate saved settings',()=>{
+ const p={duration:4,aspect_ratio:'9:16',reference_videos:['https://cdn.test/video.mp4']};
+ const auto=P.byteplusTask(p);assert.equal(auto.duration,-1);assert.equal(auto.ratio,'adaptive');assert.equal(auto.omni_reference_task_type,'auto');assert.equal(p.duration,4);
+ const edit=P.byteplusTask({...p,omni_reference_task_type:'edit'});assert.equal(edit.duration,-1);assert.equal(edit.aspect_ratio,'adaptive');
+ const fresh=P.byteplusTask({...p,omni_reference_task_type:'reference'});assert.equal(fresh.duration,4);assert.equal(fresh.ratio,'9:16');
+ const extend=P.byteplusTask({...p,duration:10,omni_reference_task_type:'extend'});assert.equal(extend.duration,10);assert.equal(extend.ratio,'adaptive');
+ assert.throws(()=>P.byteplusTask({omni_reference_task_type:'edit'}),/видеореференс/);assert.throws(()=>P.byteplusTask({duration:2}));
+ assert.throws(()=>P.buildOpenRouterRequest({...p,prompt:'Edit video',omni_reference_task_type:'edit'}),/BytePlus/);
+});

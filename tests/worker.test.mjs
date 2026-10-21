@@ -137,3 +137,10 @@ test('free KV uploads expire automatically, require a team user and preserve byt
  membershipRole=null;assert.equal((await kvWorker.fetch(new Request(url,{method:'POST',headers,body:bytes}),e)).status,403);membershipRole='user';
  const limit=await kvWorker.fetch(new Request(url,{method:'POST',headers:{...headers,'Content-Length':String(21*1024*1024)},body:bytes}),e);assert.equal(limit.status,413);
 });
+
+test('BytePlus Worker sends source-preserving edit settings rather than fixed ratio and duration',async()=>{
+ const headers={Authorization:'Bearer '+await token(),'X-Magic-Session':(await issueSessionToken('alice',env)).sessionToken};
+ const payload={prompt:'Edit video',duration:4,ratio:'9:16',resolution:'480p',reference_videos:['https://cdn.test/ref.mp4'],omni_reference_task_type:'edit'};
+ const response=await worker.fetch(new Request('https://worker.test/byteplus/submit',{method:'POST',headers,body:JSON.stringify({payload})}),env);
+ assert.equal(response.status,200);assert.equal(lastProviderBody.duration,-1);assert.equal(lastProviderBody.ratio,'adaptive');assert.equal(lastProviderBody.omni_reference_task_type,'edit');
+});

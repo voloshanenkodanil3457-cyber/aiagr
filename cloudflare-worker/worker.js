@@ -1,3 +1,4 @@
+import Providers from '../source/providers.js';
 import {uploadReference,serveReference} from './references.js';
 import {authenticate,issueTaskToken,verifyTaskToken,issueSessionToken,verifySessionToken} from './auth.js';
 import {portraitRoute,servePortraitFile,validatePortraitReferences} from './portraits.js';
@@ -76,6 +77,7 @@ function buildGenerationBody(payload = {}, env) {
     watermark: false,
     output_format: payload.output_format || 'mp4'
   };
+  out.omni_reference_task_type=payload.omni_reference_task_type||'auto';
   if (payload.ratio) out.ratio = payload.ratio;
   if (payload.resolution) out.resolution = payload.resolution;
   if (payload.duration !== undefined && payload.duration !== null && payload.duration !== '') out.duration = Number(payload.duration);
@@ -86,7 +88,7 @@ function buildGenerationBody(payload = {}, env) {
 function validatePayload(p) {
   const fail=message=>{throw Object.assign(new Error(message),{status:400});};
   if(typeof p.prompt!=='string'||!p.prompt.trim()||p.prompt.length>32000)fail('Prompt must contain 1–32000 characters');
-  if(!Number.isFinite(Number(p.duration))||p.duration<4||p.duration>30)fail('Duration must be 4–30 seconds');
+  if(!Number.isFinite(Number(p.duration))||(Number(p.duration)!==-1&&(p.duration<4||p.duration>30)))fail('Duration must be 4–30 seconds');
   if(!['480p','720p','1080p'].includes(p.resolution))fail('Unsupported resolution');
   if(!['adaptive','21:9','16:9','4:3','1:1','3:4','9:16'].includes(p.ratio))fail('Unsupported aspect ratio');
   if(p.first_frame_url||p.last_frame_url)fail('Only Omni Reference mode is supported');
@@ -136,7 +138,7 @@ export default {
 
       if (url.pathname === '/byteplus/submit' && request.method === 'POST') {
         const body = await readJson(request);
-        const payload = body.payload || body;
+        const payload = Providers.byteplusTask(body.payload || body);
         validatePayload(payload);
         await validatePortraitReferences(payload,uid,env);
         const reqBody = buildGenerationBody(payload, env);

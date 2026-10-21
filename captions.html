@@ -312,7 +312,18 @@ window.MagicDomain = (() => {
     try{const u=new URL(url);if(u.protocol==='https:'&&!u.username&&!u.password)return true;}catch{}
     return kind==='image'&&/^data:image\/(jpeg|png|webp|bmp|tiff|gif|heic|heif);base64,[A-Za-z0-9+/]+={0,2}$/.test(url);
   }
+  function byteplusTask(p={}){
+    const mode=p.omni_reference_task_type||'auto',videos=p.reference_videos||[],hasVideo=Array.isArray(videos)&&videos.length>0;
+    if(!['auto','reference','edit','extend'].includes(mode))fail('Неизвестный режим Seedance.');
+    if(['edit','extend'].includes(mode)&&!hasVideo)fail('Для редактирования или продления добавь видеореференс.');
+    const adaptive=mode==='edit'||mode==='extend'||(mode==='auto'&&hasVideo),sourceDuration=mode==='edit'||(mode==='auto'&&hasVideo);
+    const duration=sourceDuration?-1:Number(p.duration??8),ratio=adaptive?'adaptive':p.aspect_ratio||p.ratio||'16:9';
+    if(duration!==-1&&(!Number.isInteger(duration)||duration<4||duration>30))fail('Длительность: 4–30 секунд или автоматически.');
+    if(!['adaptive','21:9','16:9','4:3','1:1','3:4','9:16'].includes(ratio))fail('Неподдерживаемый формат видео.');
+    return {...p,duration,ratio,aspect_ratio:ratio,omni_reference_task_type:mode};
+  }
   function buildOpenRouterRequest(p={}){
+    if(['edit','extend'].includes(p.omni_reference_task_type))fail('Режим редактирования и продления подключён для BytePlus. Выбери BytePlus в My settings.');
     const prompt=String(p.prompt||'').trim();if(!prompt||prompt.length>32000)fail('Промпт должен содержать от 1 до 32000 символов.');
     const images=p.reference_images||[],videos=p.reference_videos||[];
     if(!Array.isArray(images)||!Array.isArray(videos)||images.length+videos.length>15)fail('Допускается до 15 референсов.');
@@ -336,7 +347,7 @@ window.MagicDomain = (() => {
   }
   function contentUrl(taskId){if(typeof taskId!=='string'||!/^[\w-]{1,180}$/.test(taskId))fail('Некорректный ID задачи OpenRouter.');return 'https://openrouter.ai/api/v1/videos/'+encodeURIComponent(taskId)+'/content';}
   const providerName=p=>p==='openrouter'?'OpenRouter':'BytePlus';
-  return {openRouterModel,buildOpenRouterRequest,validateCapabilities,contentUrl,providerName};
+  return {byteplusTask,openRouterModel,buildOpenRouterRequest,validateCapabilities,contentUrl,providerName};
 });
 
 'use strict';
@@ -580,12 +591,14 @@ window.Studio=(()=>{
   async function providerKey(provider){return (await providerCredentials(provider))?.apiKey||'';}
 
   function buildBytePlusRequest(payload={}){
+    payload=MagicProviders.byteplusTask(payload);
     const content=[{type:'text',text:String(payload.prompt||'')}];
     if(payload.first_frame_url)content.push({type:'image_url',image_url:{url:payload.first_frame_url},role:'first_frame'});
     if(payload.last_frame_url)content.push({type:'image_url',image_url:{url:payload.last_frame_url},role:'last_frame'});
     for(const url of payload.reference_images||[])content.push({type:'image_url',image_url:{url},role:'reference_image'});
     for(const url of payload.reference_videos||[])content.push({type:'video_url',video_url:{url},role:'reference_video'});
     const body={model:videoModel(payload.model),content,generate_audio:payload.generate_audio!==false,watermark:false,output_format:payload.output_format||'mp4'};
+    body.omni_reference_task_type=payload.omni_reference_task_type;
     if(payload.ratio)body.ratio=payload.ratio;
     if(payload.resolution)body.resolution=payload.resolution;
     if(payload.duration!==undefined&&payload.duration!==null&&payload.duration!=='')body.duration=Number(payload.duration);
@@ -659,7 +672,7 @@ window.Studio=(()=>{
     MagicProviders.validateCapabilities({},model);write(credentialKey('openrouter.capabilities'),{model,scope,expiresAt:Date.now()+3600000});return model;
   }
   async function prepareVideoRequest(provider,payload){
-    if(provider!=='openrouter')return payload;
+    if(provider!=='openrouter')return MagicProviders.byteplusTask(payload);
     const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи OpenRouter в My settings.');
     const body=MagicProviders.buildOpenRouterRequest(payload);return MagicProviders.validateCapabilities(body,await openRouterCapabilities(credentials));
   }
@@ -974,7 +987,8 @@ window.Studio=(()=>{
       return updateVideo(videoId,{requestId:data.id,taskToken:data.taskToken||null,transport:credentials.mode,gatewayUrl:credentials.workerUrl||null,status:'queued',pct:0});
     }
     if(provider!=='byteplus')throw new Error('Провайдер пока не подключён к генератору.');
-    const body={payload:{...payload,model:videoModel(payload.model),prompt:String(payload.prompt||''),duration:Math.max(4,Math.min(30,Number(payload.duration)||8)),resolution:normalizeResolution(payload.resolution),ratio:normalizeRatio(payload.aspect_ratio||payload.ratio),generate_audio:payload.generate_audio!==false,output_format:'mp4'}};
+    payload=MagicProviders.byteplusTask(payload);
+    const body={payload:{...payload,model:videoModel(payload.model),prompt:String(payload.prompt||''),duration:payload.duration,resolution:normalizeResolution(payload.resolution),ratio:payload.ratio,generate_audio:payload.generate_audio!==false,output_format:'mp4'}};
     if(new Blob([JSON.stringify(body)]).size>60*1024*1024)throw new Error('Референсы превышают размер запроса API. Уменьши изображения или используй HTTPS-ссылки.');
     const response=await proxy('/byteplus/submit',{method:'POST',body});const data=await response.json();
     // request_id is an API diagnostic trace, not necessarily a generation task ID.

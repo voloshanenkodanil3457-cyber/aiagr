@@ -7,9 +7,10 @@ const {webcrypto}=require('node:crypto');
 function app(role='superuser',uid='alice',config={}){
   const storage={};
   Object.defineProperties(storage,{getItem:{value:k=>storage[k]??null},setItem:{value:(k,v)=>storage[k]=v},removeItem:{value:k=>delete storage[k]}});
-  const context=vm.createContext({MAGIC_APP_CONFIG:config,addEventListener:()=>{},console,structuredClone,crypto:webcrypto,localStorage:storage,sessionStorage:storage,queueMicrotask,Blob,URL,AbortController,setTimeout,clearTimeout,location:{origin:'http://localhost'},document:{documentElement:{dataset:{}},querySelector:()=>null},MagicLocal:{get:async()=>null},window:{}});
+  const context=vm.createContext({MAGIC_APP_CONFIG:config,addEventListener:()=>{},console,structuredClone,crypto:webcrypto,localStorage:storage,sessionStorage:storage,queueMicrotask,Blob,Response,URL,AbortController,setTimeout,clearTimeout,location:{origin:'http://localhost'},document:{documentElement:{dataset:{}},querySelector:()=>null},MagicLocal:{get:async()=>null},window:{}});
   vm.runInContext('window=globalThis',context);
   vm.runInContext(fs.readFileSync('source/domain.js','utf8'),context);
+  vm.runInContext(fs.readFileSync('source/providers.js','utf8'),context);
   vm.runInContext(fs.readFileSync('tests/firebase-mock.js','utf8'),context);
   const docs=context.__qa.get('docs',{});docs['users/alice'].role=role;context.__qa.put('docs',docs);
   context.__test={user:{uid},profile:{uid,role,displayName:uid},api:{db:{},fsM:context.__qa.sdk}};
@@ -145,4 +146,12 @@ test('dedicated free uploader works with Direct API and does not receive a provi
  c.fetch=async(url,o)=>{assert.equal(url,'https://upload.test/media/reference/upload');assert.equal(o.headers.Authorization,'Bearer firebase-only');assert.equal(o.headers['X-OpenRouter-Key'],undefined);assert.equal(o.body,file);return Response.json({url:'https://upload.test/media/reference/file/one/two',expiresAt:Date.now()+21600000});};
  const value=await s.ensureRemoteAsset({id:'v',kind:'video'},{provider:'byteplus'});assert.ok(value.referenceUrl.startsWith('https://upload.test/'));
  c.MagicLocal.get=async()=>({file:{type:'video/mp4',size:21*1024*1024}});await assert.rejects(s.ensureRemoteAsset({id:'big',kind:'video'},{provider:'byteplus'}),/20 МБ/);
+});
+
+test('Direct BytePlus submission keeps edit duration -1 instead of clamping it to four seconds',async()=>{
+ const {s,c}=app('user');c.localStorage.setItem('magic.credentials.alice.apiKey','test-provider-key');
+ c.localStorage.setItem('magic.job.v3.alice.edit-one',JSON.stringify({id:'edit-one',uid:'alice',status:'queued'}));let sent;
+ c.fetch=async(url,o)=>{sent=JSON.parse(o.body);return Response.json({id:'task-edit'});};
+ await s.submitGeneration('edit-one',{prompt:'Edit @Video1',duration:4,aspect_ratio:'9:16',resolution:'480p',reference_videos:['https://cdn.test/ref.mp4'],omni_reference_task_type:'edit'},'byteplus');
+ assert.equal(sent.duration,-1);assert.equal(sent.ratio,'adaptive');assert.equal(sent.omni_reference_task_type,'edit');assert.equal(sent.content[1].type,'video_url');
 });
