@@ -232,6 +232,7 @@ window.MAGIC_APP_CONFIG = {
   // Optional Cloudflare Worker gateway. Leave empty for Direct browser test mode.
   // Set it in My settings after deploying cloudflare-worker/.
   apiGatewayUrl: '',
+  referenceUploadUrl: 'https://magic-video-upload.danmgcmgc.workers.dev',
   byteplusBaseUrl: 'https://ark.ap-southeast.bytepluses.com/api/v3'
 };
 
@@ -762,15 +763,17 @@ window.Studio=(()=>{
     if(!stored?.file)throw new Error(`Добавь файл «${item.name}» повторно: локальная копия недоступна.`);
     if(item.kind==='video'){
       if(!['video/mp4','video/quicktime'].includes(stored.file.type))throw new Error('Для видеореференса выбери MP4 или MOV.');
-      if(stored.file.size>30*1024*1024)throw new Error('Видеореференс должен быть не больше 30 МБ. Обрежь или сожми его в Editor.');
-      const credentials=await providerCredentials(provider),base=credentials?.workerUrl||apiGatewayBase();
+      const uploadBase=String(CFG.referenceUploadUrl||'').replace(/\/$/,'');
+      if(stored.file.size>(uploadBase?20:30)*1024*1024)throw new Error(`Видеореференс должен быть не больше ${uploadBase?20:30} МБ. Обрежь или сожми его в Editor.`);
+      const credentials=await providerCredentials(provider),base=uploadBase||credentials?.workerUrl||apiGatewayBase();
       if(!base)throw new Error('Для загрузки видео подключи Worker URL с хранилищем R2 в My settings. Сам файл выбирается здесь, ссылка создаётся автоматически.');
       const key=cache.user.uid+'/'+base+'/'+item.id,cached=temporaryVideoUploads.get(key);
       if(cached?.expiresAt>Date.now()+3600000)return {...item,referenceUrl:cached.url};
       notify('Загружаем видеореференс во временное хранилище…');
-      const headers={...await gatewayHeaders(null,base),'Content-Type':stored.file.type};
+      const headers={...(uploadBase?{Authorization:'Bearer '+await api.auth.currentUser.getIdToken()}:await gatewayHeaders(null,base)),'Content-Type':stored.file.type};
       const result=await requestApi(base+'/media/reference/upload',{method:'POST',headers,body:stored.file},'Загрузка видео');
       if(!/^https:\/\//.test(result?.url||'')||!(result.expiresAt>Date.now()))throw new Error('Worker не вернул ссылку на видео. Обнови Worker до версии с загрузкой видеореференсов.');
+      if(result.readyAt>Date.now()){notify('Видео загружено. Ожидаем распространения файла, примерно минуту…');await new Promise(resolve=>setTimeout(resolve,Math.min(90000,result.readyAt-Date.now())));}
       temporaryVideoUploads.set(key,result);return {...item,referenceUrl:result.url};
     }
     if(!/^image\/(jpeg|png|webp|bmp|tiff|gif|heic|heif)$/.test(stored.file.type))throw new Error('Для API выбери JPG, PNG, WebP, BMP, TIFF, GIF, HEIC или HEIF.');

@@ -4,10 +4,10 @@ const fs=require('node:fs');
 const vm=require('node:vm');
 const {webcrypto}=require('node:crypto');
 
-function app(role='superuser',uid='alice'){
+function app(role='superuser',uid='alice',config={}){
   const storage={};
   Object.defineProperties(storage,{getItem:{value:k=>storage[k]??null},setItem:{value:(k,v)=>storage[k]=v},removeItem:{value:k=>delete storage[k]}});
-  const context=vm.createContext({addEventListener:()=>{},console,structuredClone,crypto:webcrypto,localStorage:storage,sessionStorage:storage,queueMicrotask,Blob,URL,AbortController,setTimeout,clearTimeout,location:{origin:'http://localhost'},document:{documentElement:{dataset:{}},querySelector:()=>null},MagicLocal:{get:async()=>null},window:{}});
+  const context=vm.createContext({MAGIC_APP_CONFIG:config,addEventListener:()=>{},console,structuredClone,crypto:webcrypto,localStorage:storage,sessionStorage:storage,queueMicrotask,Blob,URL,AbortController,setTimeout,clearTimeout,location:{origin:'http://localhost'},document:{documentElement:{dataset:{}},querySelector:()=>null},MagicLocal:{get:async()=>null},window:{}});
   vm.runInContext('window=globalThis',context);
   vm.runInContext(fs.readFileSync('source/domain.js','utf8'),context);
   vm.runInContext(fs.readFileSync('tests/firebase-mock.js','utf8'),context);
@@ -137,4 +137,12 @@ test('local video is uploaded as binary and its temporary URL is reused without 
  assert.equal(first.referenceUrl,second.referenceUrl);assert.equal(uploads,1);assert.equal(item.url,'blob:local');assert.equal(item.referenceUrl,undefined);
  c.MagicLocal.get=async()=>({file:new Blob(['webm'],{type:'video/webm'})});
  await assert.rejects(s.ensureRemoteAsset({...item,id:'unsupported'},{provider:'byteplus'}),/MP4/);
+});
+
+test('dedicated free uploader works with Direct API and does not receive a provider API key',async()=>{
+ const {s,c}=app('user','alice',{referenceUploadUrl:'https://upload.test'}),file=new Blob(['video'],{type:'video/mp4'});
+ c.MagicLocal.get=async()=>({file});c.__test.api.auth={currentUser:{getIdToken:async()=>'firebase-only'}};c.document.querySelector=()=>({dataset:{}});
+ c.fetch=async(url,o)=>{assert.equal(url,'https://upload.test/media/reference/upload');assert.equal(o.headers.Authorization,'Bearer firebase-only');assert.equal(o.headers['X-OpenRouter-Key'],undefined);assert.equal(o.body,file);return Response.json({url:'https://upload.test/media/reference/file/one/two',expiresAt:Date.now()+21600000});};
+ const value=await s.ensureRemoteAsset({id:'v',kind:'video'},{provider:'byteplus'});assert.ok(value.referenceUrl.startsWith('https://upload.test/'));
+ c.MagicLocal.get=async()=>({file:{type:'video/mp4',size:21*1024*1024}});await assert.rejects(s.ensureRemoteAsset({id:'big',kind:'video'},{provider:'byteplus'}),/20 МБ/);
 });
