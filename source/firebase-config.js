@@ -17,6 +17,7 @@ window.MAGIC_APP_CONFIG = {
   // Optional Cloudflare Worker gateway. Leave empty for Direct browser test mode.
   // Set it in My settings after deploying cloudflare-worker/.
   apiGatewayUrl: '',
+  higgsfieldGatewayUrl: 'https://magic-higgsfield.danmgcmgc.workers.dev',
   referenceUploadUrl: 'https://magic-video-upload.danmgcmgc.workers.dev',
   byteplusBaseUrl: 'https://ark.ap-southeast.bytepluses.com/api/v3'
 };

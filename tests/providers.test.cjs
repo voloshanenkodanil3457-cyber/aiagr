@@ -30,3 +30,14 @@ test('BytePlus video edits preserve source dimensions and duration and never mut
  assert.throws(()=>P.byteplusTask({omni_reference_task_type:'edit'}),/видеореференс/);assert.throws(()=>P.byteplusTask({duration:2}));
  assert.throws(()=>P.buildOpenRouterRequest({...p,prompt:'Edit video',omni_reference_task_type:'edit'}),/BytePlus/);
 });
+
+test('Higgsfield routing requires HTTPS inputs and face fallback is limited to explicit face refusals',()=>{
+ assert.equal(P.isFaceRejection('BytePlus: input may contain real person'),true);assert.equal(P.isFaceRejection('PrivacyInformation.RealPerson'),true);
+ for(const error of ['HTTP 429','insufficient balance','Failed to fetch','image format invalid','content moderated'])assert.equal(P.isFaceRejection(error),false);
+ const p={prompt:'Scene',duration:5,resolution:'720p',aspect_ratio:'16:9'};
+ assert.ok(P.buildHiggsfieldRequest(p).endpoint.endsWith('text-to-video'));
+ const image=P.buildHiggsfieldRequest({...p,reference_images:['https://cdn.test/a.jpg']});assert.ok(image.endpoint.endsWith('image-to-video'));assert.equal(image.input.image_url,'https://cdn.test/a.jpg');
+ const video=P.buildHiggsfieldRequest({...p,reference_videos:['https://cdn.test/a.mp4']});assert.ok(video.endpoint.endsWith('reference-to-video'));assert.deepEqual(video.input.video_urls,['https://cdn.test/a.mp4']);
+ for(const url of ['asset://abc','blob:video','data:image/png;base64,YWJj'])assert.throws(()=>P.buildHiggsfieldRequest({...p,reference_images:[url]}));
+ assert.throws(()=>P.buildHiggsfieldRequest({...p,duration:-1}));
+});
