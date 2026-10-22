@@ -4,3 +4,6 @@ compatibility_date = "2026-10-22"
 # Deploy on Workers Free. Set HF_CREDENTIALS via Cloudflare Secrets, never here.
 [vars]
 FIREBASE_PROJECT_ID = "aiagr-80390"
+
+[ai]
+binding = "AI"
