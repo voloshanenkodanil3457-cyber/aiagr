@@ -50,7 +50,7 @@ window.MagicDomain = (() => {
       const cost = videoCost(v);
       if (cost != null) {
         out.cost = Math.round((out.cost + cost) * 1000000) / 1000000;
-        if (v.cost == null || v.costSource === 'tariff') out.estimatedCostCount++;
+        if (v.cost == null || ['tariff','api_estimate'].includes(v.costSource)) out.estimatedCostCount++;
       } else if (v.status === 'completed') out.unknownCost++;
       return out;
     }, { total: 0, completed: 0, failed: 0, running: 0, cost: 0, unknownCost: 0, xp: 0, estimatedCostCount: 0 });

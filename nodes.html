@@ -453,7 +453,7 @@ window.MagicDomain = (() => {
       const cost = videoCost(v);
       if (cost != null) {
         out.cost = Math.round((out.cost + cost) * 1000000) / 1000000;
-        if (v.cost == null || v.costSource === 'tariff') out.estimatedCostCount++;
+        if (v.cost == null || ['tariff','api_estimate'].includes(v.costSource)) out.estimatedCostCount++;
       } else if (v.status === 'completed') out.unknownCost++;
       return out;
     }, { total: 0, completed: 0, failed: 0, running: 0, cost: 0, unknownCost: 0, xp: 0, estimatedCostCount: 0 });
@@ -1180,7 +1180,7 @@ window.Studio=(()=>{
   async function submitGeneration(videoId,payload,provider=activeVideoProvider()){
     if(provider!=='higgsfield'&&provider!==activeVideoProvider())throw Object.assign(new Error('Активный провайдер изменился. Запусти генерацию заново с текущим подключением.'),{httpStatus:400});
     const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи API в My settings → Integrations.');
-    if(provider==='higgsfield'){if(payload.higgsfieldConfirmed!==true)throw Object.assign(Error('Подтверди повышенную стоимость Higgsfield.'),{httpStatus:409});const data=await higgsfieldRequest('submit',{payload,confirmed:true});return updateVideo(videoId,{requestId:data.id,taskToken:data.taskToken,transport:'worker',gatewayUrl:credentials.workerUrl,status:'queued',pct:0});}
+    if(provider==='higgsfield'){if(payload.higgsfieldConfirmed!==true)throw Object.assign(Error('Подтверди повышенную стоимость Higgsfield.'),{httpStatus:409});const quote=await higgsfieldRequest('estimate',{payload});if(quote.usd==null||!Number.isFinite(Number(quote.usd))||Number(quote.usd)<0)throw Error('Не получена стоимость Higgsfield. Генерация не отправлена.');await updateVideo(videoId,{estimatedCost:Number(quote.usd),estimateSource:'api_estimate',estimatedAt:now(),estimatedCredits:quote.credits??null});const data=await higgsfieldRequest('submit',{payload,confirmed:true});return updateVideo(videoId,{requestId:data.id,taskToken:data.taskToken,transport:'worker',gatewayUrl:credentials.workerUrl,status:'queued',pct:0});}
     if(provider==='openrouter'){
       const request=await prepareVideoRequest(provider,payload),data=await openRouterRequest('submit',{body:{payload:request},credentials});
       if(!data.id)throw new Error('OpenRouter не вернул ID задачи. Проверь историю перед новым запуском.');
@@ -1203,13 +1203,13 @@ window.Studio=(()=>{
     const videoUrl=remote,storagePath=null,archiveWarning=null;
     const providerTime=Number(result?.updated_at||result?.finished_at);
     const providerUrlExpiresAt=['openrouter','higgsfield'].includes(record.provider)?null:(providerTime>0?(providerTime<1e12?providerTime*1000:providerTime):now())+24*60*60*1000;
-    const metrics=result?.metrics||result?.usage||result?.data?.metrics||{},rawCost=result?.cost??metrics.cost??record.cost;
+    const metrics=result?.metrics||result?.usage||result?.data?.metrics||{},reportedCost=result?.cost??metrics.cost,rawCost=reportedCost??record.cost??(record.provider==='higgsfield'?record.estimatedCost:null);
     const actualDuration=Number(result?.duration??result?.content?.duration??metrics.duration);
     const patch={status:'completed',pct:100,remoteUrl:remote,videoUrl,storagePath,providerUrlExpiresAt,
       cost:rawCost!=null&&Number.isFinite(Number(rawCost))?Number(rawCost):null,finishedAt:now(),error:null,archiveWarning};
     if(actualDuration>=4&&actualDuration<=30)patch.seconds=actualDuration;
     if(['480p','720p','1080p'].includes(result?.resolution))patch.resolution=result.resolution;
-    patch.costSource=patch.cost!=null?'api':null;
+    patch.costSource=patch.cost==null?null:reportedCost!=null?'api':record.costSource||(record.provider==='higgsfield'?'api_estimate':'api');
     if(patch.cost==null&&record.provider!=='higgsfield'){patch.cost=MagicDomain.estimateCost({...record,...patch});if(patch.cost!=null){patch.costSource='tariff';patch.pricingVersion=MagicDomain.pricingVersion;}}
     return updateVideo(record.id,patch);
   }
