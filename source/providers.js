@@ -8,19 +8,22 @@
     return kind==='image'&&/^data:image\/(jpeg|png|webp|bmp|tiff|gif|heic|heif);base64,[A-Za-z0-9+/]+={0,2}$/.test(url);
   }
   function isFaceRejection(error){return /may contain (?:a )?real person|PrivacyInformation[.:_-]*RealPerson|real.person.{0,70}(?:not supported|not allowed|prohibit)|(?:face|portrait).{0,40}(?:verification required|authorization required)/i.test(String(error||''));}
+  function higgsfieldModel(value){const model=value||'bytedance/seedance-2.5';if(!['bytedance/seedance-2.5','bytedance/seedance-2.0'].includes(model))fail('Неизвестная модель Higgsfield.');return model;}
   function buildHiggsfieldRequest(p={}){
+    const model=higgsfieldModel(p.model),maxDuration=model.endsWith('2.0')?15:30;
     const images=p.reference_images||[],videos=p.reference_videos||[],prompt=String(p.prompt||'').trim();
     if(!prompt||prompt.length>32000)fail('Добавь промпт до 32000 символов.');
     if(!Array.isArray(images)||!Array.isArray(videos)||images.length+videos.length>15)fail('Максимум 15 референсов.');
     if([...images,...videos].some(u=>typeof u!=='string'||!source(u,'video')))fail('Higgsfield нужны публичные HTTPS-референсы.');
     const duration=Number(p.duration),ratio=p.aspect_ratio||p.ratio;
-    if(!Number.isInteger(duration)||duration<4||duration>30)fail('Для Higgsfield выбери длину 4–30 секунд.');
+    if(!Number.isInteger(duration)||duration<4||duration>maxDuration)fail('Для выбранной модели Higgsfield длина: 4–'+maxDuration+' секунд.');
     if(!['16:9','4:3','1:1','3:4','9:16','21:9'].includes(ratio))fail('Для Higgsfield выбери явный формат видео.');
     if(!['480p','720p','1080p'].includes(p.resolution))fail('Выбери разрешение Higgsfield.');
     const input={prompt,duration,resolution:p.resolution,output_format:'mp4',generate_audio:p.generate_audio!==false};
-    let endpoint='bytedance/seedance-2.5/text-to-video';
-    if(videos.length||images.length>1){endpoint='bytedance/seedance-2.5/reference-to-video';input.image_urls=images;input.video_urls=videos;input.aspect_ratio=ratio;}
-    else if(images.length){endpoint='bytedance/seedance-2.5/image-to-video';input.image_url=images[0];}
+    if(model.endsWith('2.0'))delete input.output_format;
+    let endpoint=model+'/text-to-video';
+    if(videos.length||images.length>1){endpoint=model+'/reference-to-video';input.image_urls=images;input.video_urls=videos;input.aspect_ratio=ratio;}
+    else if(images.length){endpoint=model+'/image-to-video';input.image_url=images[0];}
     else input.aspect_ratio=ratio;
     return {endpoint,input};
   }
@@ -59,5 +62,5 @@
   }
   function contentUrl(taskId){if(typeof taskId!=='string'||!/^[\w-]{1,180}$/.test(taskId))fail('Некорректный ID задачи OpenRouter.');return 'https://openrouter.ai/api/v1/videos/'+encodeURIComponent(taskId)+'/content';}
   const providerName=p=>p==='higgsfield'?'Higgsfield':p==='openrouter'?'OpenRouter':'BytePlus';
-  return {isFaceRejection,buildHiggsfieldRequest,byteplusTask,openRouterModel,buildOpenRouterRequest,validateCapabilities,contentUrl,providerName};
+  return {higgsfieldModel,isFaceRejection,buildHiggsfieldRequest,byteplusTask,openRouterModel,buildOpenRouterRequest,validateCapabilities,contentUrl,providerName};
 });

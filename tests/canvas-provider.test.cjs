@@ -49,3 +49,11 @@ test('composer uses an explicit API selector and the same Generate action for bo
  const body=code.slice(code.indexOf('  function assetElement('),code.indexOf('  function incoming('));assert.ok(body.includes('selectedVideoProvider(owner)'));assert.ok(!body.includes('selectedVideoProvider(n)'));
  assert.ok(!code.includes('if(src.id===n.id){const remove='));
  });
+
+test('Seedance 2.0 consent preserves the chosen model in the task record and API payload',async()=>{
+ const f=fixture();f.source.fields.higgsfieldModel='bytedance/seedance-2.0';await f.context.run(f.source);assert.match(f.controls['[data-hf-summary]'].textContent,/Seedance 2.0/);await f.controls['[data-hf-submit]'].onclick();assert.equal(f.records[0].model,'bytedance/seedance-2.0');assert.equal(f.calls.find(c=>c[0]==='submit')[2].model,'bytedance/seedance-2.0');
+});
+test('Higgsfield model IDs route text, image and video requests separately and enforce duration',()=>{
+ const P=require('../source/providers.js');for(const version of ['2.0','2.5']){const base={model:'bytedance/seedance-'+version,prompt:'Sunset',duration:5,resolution:'720p',aspect_ratio:'16:9'};for(const [suffix,refs]of [['text-to-video',{}],['image-to-video',{reference_images:['https://example.com/a.jpg']}],['reference-to-video',{reference_videos:['https://example.com/a.mp4']}]] )assert.equal(P.buildHiggsfieldRequest({...base,...refs}).endpoint,base.model+'/'+suffix);}
+ const base={model:'bytedance/seedance-2.0',prompt:'Sunset',duration:16,resolution:'720p',aspect_ratio:'16:9'};assert.throws(()=>P.buildHiggsfieldRequest(base),/15/);assert.throws(()=>P.buildHiggsfieldRequest({...base,model:'other'}),/модель/);
+});

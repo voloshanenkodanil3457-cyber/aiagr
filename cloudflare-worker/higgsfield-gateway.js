@@ -20,7 +20,7 @@ export default {async fetch(request,env){
   const project=env.FIREBASE_PROJECT_ID||'aiagr-80390',uid=await authenticate(request,{...env,FIREBASE_PROJECT_ID:project});
   const member=await fetch(`https://firestore.googleapis.com/v1/projects/${project}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,{headers:{Authorization:request.headers.get('Authorization')}});
   if(!member.ok||!['user','superuser'].includes((await member.json()).fields?.role?.stringValue))fail('Нужен профиль команды.',403);
-  if(url.pathname==='/higgsfield/config')return json({ready:!!env.HF_CREDENTIALS,model:'Seedance 2.5',paid:true});
+  if(url.pathname==='/higgsfield/config')return json({ready:!!env.HF_CREDENTIALS,model:'Seedance 2.5',models:['bytedance/seedance-2.5','bytedance/seedance-2.0'],paid:true});
   if(!env.HF_CREDENTIALS)fail('Добавь HF_CREDENTIALS в Secrets этого Worker. Значение не должно быть в браузере.',503);
   let body;try{body=await request.json();}catch{fail('Неверный JSON.');}
   if(url.pathname==='/higgsfield/upload-url'){
