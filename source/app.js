@@ -181,7 +181,7 @@ window.Studio=(()=>{
   }
   function integrationVerified(provider){return read(credentialKey(provider+'.verified'),null);}
   function openRouterGateway(){return String(localStorage.getItem(credentialKey('openrouter.gateway'))||'').replace(/\/$/,'');}
-  function videoModelFor(provider,value){return provider==='openrouter'?MagicProviders.openRouterModel:videoModel(value);}
+  function videoModelFor(provider,value){return provider==='higgsfield'?MagicProviders.higgsfieldModel(value):provider==='openrouter'?MagicProviders.openRouterModel:videoModel(value);}
   async function removeIntegration(provider){
     if(activeVideoProvider()===provider)setVideoProvider(null);
     if(provider==='byteplus'){
@@ -462,7 +462,7 @@ window.Studio=(()=>{
   async function createVideoRecord(data){
     assertFirebase();await loadVideoPricing();const me=current();
     const row={id:uid(),uid:me.uid,user:me.name,spaceId:data.spaceId||null,spaceName:data.spaceName||'',sourceNodeId:data.sourceNodeId||null,outputNodeId:data.outputNodeId||null,
-      prompt:data.prompt||'',provider:data.provider||'byteplus',model:data.provider==='higgsfield'?'bytedance/seedance-2.5':videoModelFor(data.provider,data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
+      prompt:data.prompt||'',provider:data.provider||'byteplus',model:videoModelFor(data.provider,data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
       transport:data.transport||'direct',gatewayUrl:data.gatewayUrl||null,pricingRates:MagicDomain.videoPrices,
       seconds:Math.max(4,Math.min(30,Number(data.seconds)||8)),referenceCount:Math.max(0,Math.min(15,Number(data.referenceCount)||0)),videoReferenceCount:Math.max(0,Math.min(15,Number(data.videoReferenceCount)||0)),hasRef:Boolean(data.hasRef),refMode:'reference',generateAudio:data.generateAudio!==false,
       status:'queued',pct:0,cost:null,error:null,requestId:null,videoUrl:null,remoteUrl:null,storagePath:null,createdAt:now(),updatedAt:now(),cloudSaved:false};
