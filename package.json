@@ -1,17 +1,24 @@
 {
   "name": "magic-canvas",
   "private": true,
-  "version": "0.12.4",
+  "version": "0.13.0",
   "scripts": {
     "build": "python3 source/build.py",
     "test": "node --test tests/domain.test.cjs tests/worker.test.mjs tests/portraits.test.mjs tests/providers.test.cjs tests/openrouter.test.mjs tests/assets.test.cjs tests/cost-ui.test.cjs tests/captions.test.cjs tests/captions-language.test.cjs tests/editor.test.cjs",
     "test:rules": "firebase emulators:exec --only firestore,storage --project demo-magic-tests \"node --test tests/firestore.test.cjs\"",
-    "test:browser": "node tests/browser.test.mjs && node tests/portraits.browser.test.mjs && node tests/refresh.browser.test.mjs"
+    "test:browser": "node tests/browser.test.mjs && node tests/portraits.browser.test.mjs && node tests/refresh.browser.test.mjs",
+    "higgsfield:example": "tsx index.ts"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "3.0.4",
     "firebase": "10.12.0",
     "firebase-tools": "13.35.1",
-    "playwright": "1.62.1"
+    "playwright": "1.62.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "@higgsfield/client": "^0.2.6",
+    "dotenv": "^18.0.8"
   }
 }

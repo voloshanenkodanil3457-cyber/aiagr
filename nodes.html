@@ -390,6 +390,7 @@ window.MAGIC_APP_CONFIG = {
   // Optional Cloudflare Worker gateway. Leave empty for Direct browser test mode.
   // Set it in My settings after deploying cloudflare-worker/.
   apiGatewayUrl: '',
+  higgsfieldGatewayUrl: 'https://magic-higgsfield.danmgcmgc.workers.dev',
   referenceUploadUrl: 'https://magic-video-upload.danmgcmgc.workers.dev',
   byteplusBaseUrl: 'https://ark.ap-southeast.bytepluses.com/api/v3'
 };
@@ -424,7 +425,8 @@ window.MagicDomain = (() => {
     return result;
   }
   function setVideoPrices(prices){videoPrices=validatePrices(prices);return {...videoPrices};}
-  function estimateCost({seconds, resolution, videoReferenceCount = 0, pricingRates} = {}, rates = pricingRates || videoPrices) {
+  function estimateCost({provider, seconds, resolution, videoReferenceCount = 0, pricingRates} = {}, rates = pricingRates || videoPrices) {
+    if(provider==='higgsfield')return null;
     const duration = Number(seconds), price = rates[resolution];
     if (!Number.isFinite(duration) || duration < 4 || duration > 30 || !price || Number(videoReferenceCount) > 0) return null;
     return Math.round(price * 1000000 * duration) / 1000000;
@@ -470,6 +472,23 @@ window.MagicDomain = (() => {
     try{const u=new URL(url);if(u.protocol==='https:'&&!u.username&&!u.password)return true;}catch{}
     return kind==='image'&&/^data:image\/(jpeg|png|webp|bmp|tiff|gif|heic|heif);base64,[A-Za-z0-9+/]+={0,2}$/.test(url);
   }
+  function isFaceRejection(error){return /may contain (?:a )?real person|PrivacyInformation[.:_-]*RealPerson|real.person.{0,70}(?:not supported|not allowed|prohibit)|(?:face|portrait).{0,40}(?:verification required|authorization required)/i.test(String(error||''));}
+  function buildHiggsfieldRequest(p={}){
+    const images=p.reference_images||[],videos=p.reference_videos||[],prompt=String(p.prompt||'').trim();
+    if(!prompt||prompt.length>32000)fail('Добавь промпт до 32000 символов.');
+    if(!Array.isArray(images)||!Array.isArray(videos)||images.length+videos.length>15)fail('Максимум 15 референсов.');
+    if([...images,...videos].some(u=>typeof u!=='string'||!source(u,'video')))fail('Higgsfield нужны публичные HTTPS-референсы.');
+    const duration=Number(p.duration),ratio=p.aspect_ratio||p.ratio;
+    if(!Number.isInteger(duration)||duration<4||duration>30)fail('Для Higgsfield выбери длину 4–30 секунд.');
+    if(!['16:9','4:3','1:1','3:4','9:16','21:9'].includes(ratio))fail('Для Higgsfield выбери явный формат видео.');
+    if(!['480p','720p','1080p'].includes(p.resolution))fail('Выбери разрешение Higgsfield.');
+    const input={prompt,duration,resolution:p.resolution,output_format:'mp4',generate_audio:p.generate_audio!==false};
+    let endpoint='bytedance/seedance-2.5/text-to-video';
+    if(videos.length||images.length>1){endpoint='bytedance/seedance-2.5/reference-to-video';input.image_urls=images;input.video_urls=videos;input.aspect_ratio=ratio;}
+    else if(images.length){endpoint='bytedance/seedance-2.5/image-to-video';input.image_url=images[0];}
+    else input.aspect_ratio=ratio;
+    return {endpoint,input};
+  }
   function byteplusTask(p={}){
     const mode=p.omni_reference_task_type||'auto',videos=p.reference_videos||[],hasVideo=Array.isArray(videos)&&videos.length>0;
     if(!['auto','reference','edit','extend'].includes(mode))fail('Неизвестный режим Seedance.');
@@ -504,8 +523,8 @@ window.MagicDomain = (() => {
     return body;
   }
   function contentUrl(taskId){if(typeof taskId!=='string'||!/^[\w-]{1,180}$/.test(taskId))fail('Некорректный ID задачи OpenRouter.');return 'https://openrouter.ai/api/v1/videos/'+encodeURIComponent(taskId)+'/content';}
-  const providerName=p=>p==='openrouter'?'OpenRouter':'BytePlus';
-  return {byteplusTask,openRouterModel,buildOpenRouterRequest,validateCapabilities,contentUrl,providerName};
+  const providerName=p=>p==='higgsfield'?'Higgsfield':p==='openrouter'?'OpenRouter':'BytePlus';
+  return {isFaceRejection,buildHiggsfieldRequest,byteplusTask,openRouterModel,buildOpenRouterRequest,validateCapabilities,contentUrl,providerName};
 });
 
 'use strict';
@@ -737,6 +756,7 @@ window.Studio=(()=>{
   function byteplusBase(){return String(CFG.byteplusBaseUrl||'https://ark.ap-southeast.bytepluses.com/api/v3').replace(/\/$/,'');}
   function byteplusMode(){return apiGatewayBase()?'worker':'direct';}
   async function providerCredentials(provider){
+    if(provider==='higgsfield'){const workerUrl=higgsfieldGateway();return workerUrl?{workerUrl,mode:'worker',connected:true}:null;}
     if(provider==='byteplus'){
       const workerUrl=apiGatewayBase();
       if(workerUrl)return {workerUrl,connected:true,mode:'worker'};
@@ -830,6 +850,7 @@ window.Studio=(()=>{
     MagicProviders.validateCapabilities({},model);write(credentialKey('openrouter.capabilities'),{model,scope,expiresAt:Date.now()+3600000});return model;
   }
   async function prepareVideoRequest(provider,payload){
+    if(provider==='higgsfield')return MagicProviders.buildHiggsfieldRequest(payload);
     if(provider!=='openrouter')return MagicProviders.byteplusTask(payload);
     const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи OpenRouter в My settings.');
     const body=MagicProviders.buildOpenRouterRequest(payload);return MagicProviders.validateCapabilities(body,await openRouterCapabilities(credentials));
@@ -926,7 +947,23 @@ window.Studio=(()=>{
     await MagicLocal.put(cache.user.uid,assetId,{meta,cloudSaved:false});return meta;
   }
   const temporaryVideoUploads=new Map();
+  const higgsfieldGateway=()=>String(localStorage.getItem(credentialKey('higgsfield.gateway'))||CFG.higgsfieldGatewayUrl||'').replace(/\/$/,'');
+  function setHiggsfieldGateway(value){const base=String(value||'').trim().replace(/\/$/,'');if(base){const u=new URL(base);if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash)throw Error('Нужен HTTPS URL Worker без параметров.');}localStorage.setItem(credentialKey('higgsfield.gateway'),base);return base;}
+  async function higgsfieldRequest(path,body={},base=higgsfieldGateway()){
+    if(!base)throw Error('Подключи Higgsfield Worker в My settings. Ключ устанавливается только на сервере.');
+    return requestApi(base+'/higgsfield/'+path,{method:'POST',headers:{Authorization:'Bearer '+await api.auth.currentUser.getIdToken(),'Content-Type':'application/json'},body:JSON.stringify(body)},'Higgsfield');
+  }
+
   async function ensureRemoteAsset(item,{provider=activeVideoProvider()}={}){
+    if(provider==='higgsfield'&&item.kind==='image'){
+      if(/^https:\/\//.test(item.url||''))return {...item,referenceUrl:item.url};
+      const stored=await MagicLocal.get(cache.user.uid,item.id),file=stored?.file;
+      if(!file||file.size>=30*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type))throw Error('Для Higgsfield добавь JPG, PNG или WebP меньше 30 МБ.');
+      const target=await higgsfieldRequest('upload-url',{content_type:file.type});
+      const response=await fetch(target.upload_url,{method:'PUT',headers:target.upload_headers,body:file,credentials:'omit'});
+      if(!response.ok)throw Error('Не удалось загрузить референс в Higgsfield.');
+      return {...item,referenceUrl:target.public_url};
+    }
     if(item.portraitGroupId&&provider!=='openrouter')return MagicPortraits.ensure(item);
     // Only the API request carries image bytes. The graph and Firestore keep metadata.
     if(/^https:\/\//.test(item.url||''))return {...item,referenceUrl:item.url};
@@ -984,7 +1021,7 @@ window.Studio=(()=>{
   async function createVideoRecord(data){
     assertFirebase();await loadVideoPricing();const me=current();
     const row={id:uid(),uid:me.uid,user:me.name,spaceId:data.spaceId||null,spaceName:data.spaceName||'',sourceNodeId:data.sourceNodeId||null,outputNodeId:data.outputNodeId||null,
-      prompt:data.prompt||'',provider:data.provider||'byteplus',model:videoModelFor(data.provider,data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
+      prompt:data.prompt||'',provider:data.provider||'byteplus',model:data.provider==='higgsfield'?'bytedance/seedance-2.5':videoModelFor(data.provider,data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
       transport:data.transport||'direct',gatewayUrl:data.gatewayUrl||null,pricingRates:MagicDomain.videoPrices,
       seconds:Math.max(4,Math.min(30,Number(data.seconds)||8)),referenceCount:Math.max(0,Math.min(15,Number(data.referenceCount)||0)),videoReferenceCount:Math.max(0,Math.min(15,Number(data.videoReferenceCount)||0)),hasRef:Boolean(data.hasRef),refMode:'reference',generateAudio:data.generateAudio!==false,
       status:'queued',pct:0,cost:null,error:null,requestId:null,videoUrl:null,remoteUrl:null,storagePath:null,createdAt:now(),updatedAt:now(),cloudSaved:false};
@@ -1134,10 +1171,11 @@ window.Studio=(()=>{
     const preferred=['video_url','videoUrl','url','output_url','output'];for(const k of preferred)if(k in value){const u=extractMediaUrl(value[k]);if(u)return u;}
     for(const k of ['video','videos','content','data','result','results','outputs'])if(k in value){const u=extractMediaUrl(value[k]);if(u)return u;}return null;
   }
-  function statusName(raw){const s=String(raw||'').toUpperCase();if(['COMPLETED','SUCCEEDED','SUCCESS'].includes(s))return'completed';if(['CANCELLED','CANCELED'].includes(s))return'cancelled';if(['FAILED','ERROR','EXPIRED'].includes(s))return'failed';if(['QUEUED','PENDING'].includes(s))return'queued';return'running';}
+  function statusName(raw){const s=String(raw||'').toUpperCase();if(['COMPLETED','SUCCEEDED','SUCCESS'].includes(s))return'completed';if(['CANCELLED','CANCELED'].includes(s))return'cancelled';if(['FAILED','ERROR','EXPIRED','NSFW'].includes(s))return'failed';if(['QUEUED','PENDING'].includes(s))return'queued';return'running';}
   async function submitGeneration(videoId,payload,provider=activeVideoProvider()){
-    if(provider!==activeVideoProvider())throw Object.assign(new Error('Активный провайдер изменился. Запусти генерацию заново с текущим подключением.'),{httpStatus:400});
+    if(provider!=='higgsfield'&&provider!==activeVideoProvider())throw Object.assign(new Error('Активный провайдер изменился. Запусти генерацию заново с текущим подключением.'),{httpStatus:400});
     const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи API в My settings → Integrations.');
+    if(provider==='higgsfield'){if(payload.higgsfieldConfirmed!==true)throw Object.assign(Error('Подтверди повышенную стоимость Higgsfield.'),{httpStatus:409});const data=await higgsfieldRequest('submit',{payload,confirmed:true});return updateVideo(videoId,{requestId:data.id,taskToken:data.taskToken,transport:'worker',gatewayUrl:credentials.workerUrl,status:'queued',pct:0});}
     if(provider==='openrouter'){
       const request=await prepareVideoRequest(provider,payload),data=await openRouterRequest('submit',{body:{payload:request},credentials});
       if(!data.id)throw new Error('OpenRouter не вернул ID задачи. Проверь историю перед новым запуском.');
@@ -1159,7 +1197,7 @@ window.Studio=(()=>{
     if(!remote)throw new Error('API завершил задачу, но URL видео пока не найден.');
     const videoUrl=remote,storagePath=null,archiveWarning=null;
     const providerTime=Number(result?.updated_at||result?.finished_at);
-    const providerUrlExpiresAt=record.provider==='openrouter'?null:(providerTime>0?(providerTime<1e12?providerTime*1000:providerTime):now())+24*60*60*1000;
+    const providerUrlExpiresAt=['openrouter','higgsfield'].includes(record.provider)?null:(providerTime>0?(providerTime<1e12?providerTime*1000:providerTime):now())+24*60*60*1000;
     const metrics=result?.metrics||result?.usage||result?.data?.metrics||{},rawCost=result?.cost??metrics.cost??record.cost;
     const actualDuration=Number(result?.duration??result?.content?.duration??metrics.duration);
     const patch={status:'completed',pct:100,remoteUrl:remote,videoUrl,storagePath,providerUrlExpiresAt,
@@ -1167,7 +1205,7 @@ window.Studio=(()=>{
     if(actualDuration>=4&&actualDuration<=30)patch.seconds=actualDuration;
     if(['480p','720p','1080p'].includes(result?.resolution))patch.resolution=result.resolution;
     patch.costSource=patch.cost!=null?'api':null;
-    if(patch.cost==null){patch.cost=MagicDomain.estimateCost({...record,...patch});if(patch.cost!=null){patch.costSource='tariff';patch.pricingVersion=MagicDomain.pricingVersion;}}
+    if(patch.cost==null&&record.provider!=='higgsfield'){patch.cost=MagicDomain.estimateCost({...record,...patch});if(patch.cost!=null){patch.costSource='tariff';patch.pricingVersion=MagicDomain.pricingVersion;}}
     return updateVideo(record.id,patch);
   }
   const playbackCache=new Map();
@@ -1246,7 +1284,8 @@ window.Studio=(()=>{
     if(MagicDomain.terminal(record.status)||!record.requestId)return record;
     const router=record.provider==='openrouter';
     let data;
-    if(router){const credentials=record.transport==='worker'?{mode:'worker',workerUrl:record.gatewayUrl}:await providerCredentials('openrouter');if(!credentials)throw new Error('Настрой OpenRouter для продолжения задачи.');data=await openRouterRequest('status',{credentials,body:{taskId:record.requestId,taskToken:record.taskToken}});}
+    if(record.provider==='higgsfield')data=await higgsfieldRequest('status',{taskId:record.requestId,taskToken:record.taskToken},record.gatewayUrl);
+    else if(router){const credentials=record.transport==='worker'?{mode:'worker',workerUrl:record.gatewayUrl}:await providerCredentials('openrouter');if(!credentials)throw new Error('Настрой OpenRouter для продолжения задачи.');data=await openRouterRequest('status',{credentials,body:{taskId:record.requestId,taskToken:record.taskToken}});}
     else{if(!await providerCredentials(record.provider||'byteplus'))throw new Error('Настрой BytePlus для продолжения задачи.');data=await (await proxy('/byteplus/status',{method:'POST',body:{taskId:record.requestId,taskToken:record.taskToken||null}})).json();}
     const status=statusName(data.status||data.state);
     if(['failed','cancelled'].includes(status)){
@@ -1322,7 +1361,7 @@ window.Studio=(()=>{
 
   return {ready,requireUser,current,isAdmin,signIn,signUp,logout,updateProfile,uploadProfilePhoto,listUsers,createUser,updateUserRole,uid,read,write,notify,download,element:el,timestamp,
     listFolders,listPresets,canEdit,saveFolder,deleteFolder,savePreset,deletePreset,loadTemplates,ensureTemplates,
-    portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,integrationVerified,activeVideoProvider,setVideoProvider,videoModelFor,prepareVideoRequest,providerKey,providerCredentials,apiGatewayBase,openRouterGateway,
+    higgsfieldGateway,setHiggsfieldGateway,higgsfieldRequest,portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,integrationVerified,activeVideoProvider,setVideoProvider,videoModelFor,prepareVideoRequest,providerKey,providerCredentials,apiGatewayBase,openRouterGateway,
     listSpaces,createSpace,getSpace,renameSpace,duplicateSpace,deleteSpace,saveSpaceState,queueSpaceState,flushSpaceState,flushPendingWork,
     uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,permanentlyDeleteVideo,submitGeneration,refreshGeneration,watchGeneration,resolveVideoSource,downloadVideo,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
     loadVideoPricing,saveVideoPricing,getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
@@ -1589,7 +1628,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
 Можно использовать @image1 и @video1"></textarea><span class="prompt-node-hint">✦ Seedance · нажми для настройки</span></div>`;}
   function presetBody(){return '<div class="preset-node-body"><h3 class="preset-heading"></h3><div class="camera-node-preview" hidden><video controls muted loop playsinline preload="metadata" controlslist="nodownload nofullscreen"></video><small class="camera-node-error" hidden>Пример недоступен. Промпт камеры сохранён.</small><small>Пример движения камеры</small></div><p class="preset-excerpt" tabindex="0" role="button" aria-label="Редактировать пресет"></p></div>';}
 
-  function outputBody(){return `<div class="output-preview"><video class="output-video" controls controlslist="nofullscreen" playsinline preload="metadata" hidden></video><button class="output-expand" aria-label="Предпросмотр видео" title="Предпросмотр" hidden>↗</button><span class="play-mark">▷</span><div class="loading-view" hidden><div class="loading-percent">0%</div><div class="loading-track" role="progressbar" aria-label="Generation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="loading-marker"></span></div><span class="loading-label">Seedance 2.5 · generating</span></div><div class="output-message"><output>Ожидание</output><small class="output-status">Подключи Video generation</small></div><button class="cancel-generation" hidden>Остановить отслеживание</button><button class="resume-generation" hidden>Продолжить отслеживание</button></div><button class="output-download" hidden>Скачать видео</button>`;}
+  function outputBody(){return `<div class="output-preview"><video class="output-video" controls controlslist="nofullscreen" playsinline preload="metadata" hidden></video><button class="output-expand" aria-label="Предпросмотр видео" title="Предпросмотр" hidden>↗</button><span class="play-mark">▷</span><div class="loading-view" hidden><div class="loading-percent">0%</div><div class="loading-track" role="progressbar" aria-label="Generation progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="loading-marker"></span></div><span class="loading-label">Seedance 2.5 · generating</span></div><div class="output-message"><output>Ожидание</output><small class="output-status">Подключи Video generation</small></div><button class="cancel-generation" hidden>Остановить отслеживание</button><button class="resume-generation" hidden>Продолжить отслеживание</button></div><button class="output-download" hidden>Скачать видео</button><button class="higgsfield-fallback ui-button" hidden>Лицо отклонено · Перейти на Higgsfield</button>`;}
   function nodeName(n){return n.fields.name?.trim()||`${n.type==='generation'?'Video':n.type==='text'?'Text':types[n.type].title} ${n.id}`;}
   function renameNode(n){const title=$('.node-title',n.el),input=$('.node-name-input',n.el);if(!input.hidden)return;input.dataset.original=n.fields.name;title.hidden=true;input.hidden=false;input.focus();input.select();}
   function endRename(n,cancel=false){const input=$('.node-name-input',n.el);if(cancel){n.fields.name=input.dataset.original||'';input.value=n.fields.name;}else if(!n.fields.name?.trim()){n.fields.name=nodeName(n);input.value=n.fields.name;}syncFields(n);finishEdit();input.hidden=true;$('.node-title',n.el).hidden=false;schedule();}
@@ -1598,6 +1637,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
   async function outputRecord(n){return n.videoRecord?.uid?n.videoRecord:n.fields.generationId?await Studio.getVideo(n.fields.generationId):{id:n.id,uid:Studio.current().uid,videoUrl:n.fields.videoUrl,ratio:n.fields.ratio};}
   async function showOutput(n){try{MagicVideoViewer.show(await outputRecord(n),{mode:'output'});}catch(e){notify(e.message);}}
   function paintOutput(n){
+    const fallback=$('.higgsfield-fallback',n.el);if(fallback)fallback.hidden=!(n.fields.status==='failed'&&(n.fields.provider||'byteplus')==='byteplus'&&MagicProviders.isFaceRejection(n.fields.error));
     const download=$('.output-download',n.el);download.hidden=!n.fields.videoUrl;
     $('.output-expand',n.el).hidden=!n.fields.videoUrl;
     if(n.fields.videoUrl){download.textContent=n.fields.providerUrlExpiresAt&&Date.now()>=n.fields.providerUrlExpiresAt?'Ссылка могла истечь':'Скачать видео';download.title='Сохрани видео на компьютер.';}
@@ -1639,6 +1679,43 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     }catch(error){output.fields.trackingPaused=true;output.fields.trackingWarning=error.message;paintOutput(output);}
   }
   function cancelGeneration(id){const job=jobs.get(id);if(!job)return;job.controller.abort();jobs.delete(id);const out=nodes.get(id);if(out){out.fields.trackingPaused=true;paintOutput(out);}updateGenerateButtons();saveSession();notify('Отслеживание остановлено. Задача в BytePlus продолжает работать.');}
+  const hfDialogs=new Set();
+  async function requestHiggsfield(source,failedOutput=null){
+    if(!source||source.type!=='generation'||hfDialogs.has(source.id)||submittingSources.has(source.id)||[...jobs.values()].some(j=>j.source===source.id))return;
+    const saved=failedOutput?.fields.fallbackSpec,spec=saved?structuredClone(saved):{prompt:failedOutput?.videoRecord?.prompt||compiledPrompt(source).trim(),options:{duration:Number(source.fields.duration)||8,resolution:source.fields.resolution,aspect_ratio:source.fields.ratio,generate_audio:source.fields.generateAudio!=='false'},assetIds:[...new Set([...incoming(source.id,'media').flatMap(n=>n.assets),...source.assets])]};
+    if(!spec.assetIds.length){notify('Для задачи без медиа используй основной BytePlus.');return;}
+    if(spec.assetIds.some(id=>!assets.has(id))){notify('Исходный референс недоступен. Добавь его повторно.');return;}
+    if(!spec.prompt){notify('Добавь промпт.');return;}
+    hfDialogs.add(source.id);
+    const dialog=document.createElement('dialog');dialog.className='studio-dialog';dialog.setAttribute('aria-label','Подтверждение перехода на Higgsfield');
+    dialog.innerHTML='<header><h2>Повышенная стоимость · Higgsfield</h2><button type="button" class="icon-button" data-hf-close>×</button></header><div class="stack"><p>Новая платная генерация через Higgsfield API. Модель — Seedance 2.5. Стоимость может быть выше BytePlus; его тариф к этой задаче не применяется.</p><p>Higgsfield также проверяет референсы: успешная генерация с любыми лицами не гарантируется.</p><a href="https://open.higgsfield.ai/pricing" target="_blank" rel="noopener noreferrer">Тарифы Higgsfield API ↗</a><label>Длина нового ролика, секунд<input data-hf-duration type="number" min="4" max="30" step="1"></label><label>Формат<select data-hf-ratio></select></label><p data-hf-summary></p><p data-hf-error class="form-error" role="alert"></p><button type="button" class="ui-button" data-hf-cancel>Остаться на BytePlus</button><button type="button" class="ui-button primary" data-hf-submit>Подтверждаю стоимость — запустить Higgsfield</button></div>';
+    $('[data-hf-duration]',dialog).value=spec.options.duration;const ratio=$('[data-hf-ratio]',dialog);for(const value of ['9:16','16:9','1:1','4:3','3:4','21:9'])ratio.add(new Option(value,value));ratio.value=['9:16','16:9','1:1','4:3','3:4','21:9'].includes(spec.options.aspect_ratio)?spec.options.aspect_ratio:'9:16';
+    $('[data-hf-summary]',dialog).textContent=`${spec.options.resolution} · ${spec.assetIds.length} референсов · 1 результат. Точная сумма зависит от тарифа API. Фото передаются в Higgsfield. Для одного фото формат берётся из изображения.`;
+    for(const b of dialog.querySelectorAll('[data-hf-close],[data-hf-cancel]'))b.onclick=()=>dialog.close();
+    dialog.onclose=()=>{hfDialogs.delete(source.id);dialog.remove();};
+    let sending=false;
+    $('[data-hf-submit]',dialog).onclick=async()=>{
+      if(sending)return;sending=true;const button=$('[data-hf-submit]',dialog),error=$('[data-hf-error]',dialog);button.disabled=true;error.textContent='';
+      try{
+        const options={...spec.options,duration:Number($('[data-hf-duration]',dialog).value),aspect_ratio:ratio.value};
+        MagicProviders.buildHiggsfieldRequest({...options,prompt:spec.prompt,reference_images:[],reference_videos:[]});
+        const config=await Studio.higgsfieldRequest('config');if(!config.ready)throw Error('Higgsfield не подключён: установи HF_CREDENTIALS в Secrets сервера.');
+        button.textContent='Подготовка референсов…';
+        const refs=[];for(const id of spec.assetIds)refs.push(await Studio.ensureRemoteAsset(assets.get(id),{provider:'higgsfield'}));
+        const payload={...options,prompt:spec.prompt,reference_images:refs.filter(a=>a.kind==='image').map(a=>a.referenceUrl),reference_videos:refs.filter(a=>a.kind==='video').map(a=>a.referenceUrl),higgsfieldConfirmed:true};
+        MagicProviders.buildHiggsfieldRequest(payload);
+        if(!dialog.open||nodes.get(source.id)!==source)return;
+        let output;mutate('Подтверждён платный переход на Higgsfield',()=>{const pos={x:source.x+source.el.offsetWidth+110,y:failedOutput?failedOutput.y+failedOutput.el.offsetHeight+90:source.y+310};let guard=0;while([...nodes.values()].some(n=>pos.x<n.x+n.el.offsetWidth+24&&pos.x+280>n.x&&pos.y<n.y+n.el.offsetHeight+24&&pos.y+260>n.y)&&guard++<100)pos.y+=310;output=addNode('output',pos);connectRaw(source.id,output.id);output.fields.provider='higgsfield';});
+        const record=await Studio.createVideoRecord({spaceId:SPACE_ID,spaceName:SPACE.name,sourceNodeId:source.id,outputNodeId:output.id,prompt:spec.prompt,provider:'higgsfield',transport:'worker',gatewayUrl:Studio.higgsfieldGateway(),resolution:options.resolution,ratio:options.aspect_ratio,seconds:options.duration,referenceCount:refs.length,videoReferenceCount:payload.reference_videos.length,hasRef:true,generateAudio:options.generate_audio});
+        if(!dialog.open){await Studio.updateVideo(record.id,{status:'cancelled',error:'Пользователь отменил переход до отправки.'});return;}
+        applyVideoRecord(output,{...record,status:'submitting'});paintOutput(output);dialog.close();saveSession();
+        try{const submitted=await Studio.submitGeneration(record.id,payload,'higgsfield');applyVideoRecord(output,submitted);saveSession();trackOutput(output,source,submitted);}
+        catch(e){const definite=e.httpStatus>=400&&e.httpStatus<500,failed=await Studio.updateVideo(record.id,{status:definite?'failed':'submission_unknown',error:e.message});applyVideoRecord(output,failed);paintOutput(output);saveSession();notify(e.message);}
+      }catch(e){error.textContent=e.message;}
+      finally{sending=false;button.disabled=false;button.textContent='Подтверждаю стоимость — запустить Higgsfield';}
+    };
+    document.body.append(dialog);dialog.showModal();
+  }
   async function startGeneration(source){
     if(!source||source.type!=='generation'||submittingSources.has(source.id)||[...jobs.values()].some(j=>j.source===source.id))return;
     finishEdit();const prompt=compiledPrompt(source).trim();if(!prompt){notify('Добавь промпт перед генерацией.');return;}
@@ -1664,7 +1741,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
             while([...nodes.values()].some(n=>pos.x<n.x+n.el.offsetWidth+24&&pos.x+280>n.x&&pos.y<n.y+n.el.offsetHeight+24&&pos.y+260>n.y)&&guard++<100)pos.y+=310;
             output=addNode('output',pos);connectRaw(source.id,output.id);
           }
-          output.fields={name:output.fields.name,status:'submitting',progress:0};runs.push(output);
+          output.fields={name:output.fields.name,status:'submitting',progress:0,fallbackSpec:{prompt,options:{...options},assetIds:localRefs.map(a=>a.id)}};runs.push(output);
         }
         selected.clear();selected.add(source.id);refreshContent();updateStatus();
       },`${nodeName(source)} · ${count} результатов`);
@@ -1702,6 +1779,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     $('.save-node-preset',n.el)?.addEventListener('click',()=>saveNodePreset(n));
     $('[data-generate]',n.el)?.addEventListener('click',()=>startGeneration(n));
     $('.output-expand',n.el)?.addEventListener('click',()=>showOutput(n));$('.output-video',n.el)?.addEventListener('dblclick',()=>showOutput(n));$('.output-download',n.el)?.addEventListener('click',async e=>{const button=e.currentTarget;button.disabled=true;try{await Studio.downloadVideo(await outputRecord(n));}catch(e){notify(e.message);}finally{button.disabled=false;}});
+    $('.higgsfield-fallback',n.el)?.addEventListener('click',()=>requestHiggsfield(incoming(n.id)[0],n));
     $('.cancel-generation',n.el)?.addEventListener('click',()=>cancelGeneration(n.id));$('.resume-generation',n.el)?.addEventListener('click',()=>resumeOutput(n));$('.preset-excerpt',n.el)?.addEventListener('click',()=>{selectNode(n.id);openPanel('settings');});$('.preset-excerpt',n.el)?.addEventListener('keydown',e=>{if(e.key==='Enter'){selectNode(n.id);openPanel('settings');}});
     n.el.addEventListener('toggle',schedule,true);
     n.el.addEventListener('dragover',e=>{if(hasFiles(e)&&['media','generation'].includes(n.type)){e.preventDefault();e.stopPropagation();n.el.classList.add('file-over');e.dataTransfer.dropEffect='copy';}});
@@ -1887,11 +1965,12 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     host.style.left=left+'px';host.style.top=top+'px';host.style.bottom='auto';host.style.transform='none';
   }
 
-  function renderComposer(){const host=$('#generation-composer');if(!host)return;const n=selected.size===1?nodes.get([...selected][0]):null;if(!n||n.type!=='generation'){host.hidden=true;composerNode=null;return;}host.hidden=false;if(composerNode!==n.id){composerNode=n.id;host.dataset.panelNode=n.id;host.innerHTML=`<div class="composer-top"><div class="composer-references"></div><button id="composer-expand" class="icon-button" aria-label="Развернуть панель" title="Развернуть">⤢</button></div><textarea id="composer-prompt" data-panel-field="${n.type==='text'?'instruction':'prompt'}" placeholder="Добавь референсы, опиши идею. Используй @image1 и @video1 для обращения к медиа." aria-label="Промпт" rows="3"></textarea><div id="composer-presets"></div><div class="composer-bottom"><label class="model-choice"><span>◇</span><select data-panel-field="model" aria-label="Модель">${n.type==='generation'?'<option value="dreamina-seedance-2-5-260628">Seedance 2.5</option>':'<option value="none">Text · модель не подключена</option>'}</select></label>${n.type==='generation'?`<select data-panel-field="taskMode" class="reference-mode" aria-label="Задача Seedance"><option value="auto">Omni · Авто</option><option value="reference">Новое видео</option><option value="edit">Редактировать видео</option><option value="extend">Продлить видео</option></select><details class="composer-settings"><summary id="composer-settings-label">Settings</summary><div class="settings-popover"><div class="settings-heading"><strong>Settings</strong><span class="settings-heading-actions"><button type="button" id="settings-auto" class="switch-button" title="Вернуть стандартные параметры">Сбросить</button><button type="button" id="settings-close" class="icon-button" aria-label="Закрыть настройки">×</button></span></div><label>Разрешение</label><div class="settings-segments" role="group" aria-label="Разрешение">${['480p','720p','1080p'].map(v=>`<button type="button" data-setting="resolution" data-value="${v}">${v}</button>`).join('')}</div><label>Длительность <span id="duration-label">Авто</span><input type="range" data-panel-field="duration" min="4" max="30" step="1" aria-label="Длительность видео"></label><div class="range-ends"><span>4s</span><span>30s</span></div><label>Формат</label><div class="settings-segments ratios" role="group" aria-label="Формат">${['21:9','16:9','4:3','1:1','3:4','9:16'].map(v=>`<button type="button" data-setting="ratio" data-value="${v}">${v}</button>`).join('')}</div><label class="audio-setting">Аудио<select data-panel-field="generateAudio" aria-label="Аудио"><option value="true">Со звуком</option><option value="false">Без звука</option></select></label></div></details>`:''}<span class="composer-spacer"></span>${n.type==='generation'?'<select data-panel-field="batch" class="batch-choice" aria-label="Количество вариантов"><option value="1">1x</option><option value="2">2x</option><option value="4">4x</option></select>':''}<span class="demo-label" id="composer-provider">API</span><button id="composer-generate" class="pill solid">✦ Generate</button></div><details class="compiled-details"><summary>Итоговый промпт <span id="prompt-source-count"></span></summary><pre id="compiled-prompt"></pre></details><span class="composer-node-name"></span>`;
+  function renderComposer(){const host=$('#generation-composer');if(!host)return;const n=selected.size===1?nodes.get([...selected][0]):null;if(!n||n.type!=='generation'){host.hidden=true;composerNode=null;return;}host.hidden=false;if(composerNode!==n.id){composerNode=n.id;host.dataset.panelNode=n.id;host.innerHTML=`<div class="composer-top"><div class="composer-references"></div><button id="composer-expand" class="icon-button" aria-label="Развернуть панель" title="Развернуть">⤢</button></div><textarea id="composer-prompt" data-panel-field="${n.type==='text'?'instruction':'prompt'}" placeholder="Добавь референсы, опиши идею. Используй @image1 и @video1 для обращения к медиа." aria-label="Промпт" rows="3"></textarea><div id="composer-presets"></div><div class="composer-bottom"><label class="model-choice"><span>◇</span><select data-panel-field="model" aria-label="Модель">${n.type==='generation'?'<option value="dreamina-seedance-2-5-260628">Seedance 2.5</option>':'<option value="none">Text · модель не подключена</option>'}</select></label>${n.type==='generation'?`<select data-panel-field="taskMode" class="reference-mode" aria-label="Задача Seedance"><option value="auto">Omni · Авто</option><option value="reference">Новое видео</option><option value="edit">Редактировать видео</option><option value="extend">Продлить видео</option></select><details class="composer-settings"><summary id="composer-settings-label">Settings</summary><div class="settings-popover"><div class="settings-heading"><strong>Settings</strong><span class="settings-heading-actions"><button type="button" id="settings-auto" class="switch-button" title="Вернуть стандартные параметры">Сбросить</button><button type="button" id="settings-close" class="icon-button" aria-label="Закрыть настройки">×</button></span></div><label>Разрешение</label><div class="settings-segments" role="group" aria-label="Разрешение">${['480p','720p','1080p'].map(v=>`<button type="button" data-setting="resolution" data-value="${v}">${v}</button>`).join('')}</div><label>Длительность <span id="duration-label">Авто</span><input type="range" data-panel-field="duration" min="4" max="30" step="1" aria-label="Длительность видео"></label><div class="range-ends"><span>4s</span><span>30s</span></div><label>Формат</label><div class="settings-segments ratios" role="group" aria-label="Формат">${['21:9','16:9','4:3','1:1','3:4','9:16'].map(v=>`<button type="button" data-setting="ratio" data-value="${v}">${v}</button>`).join('')}</div><label class="audio-setting">Аудио<select data-panel-field="generateAudio" aria-label="Аудио"><option value="true">Со звуком</option><option value="false">Без звука</option></select></label></div></details>`:''}<span class="composer-spacer"></span>${n.type==='generation'?'<select data-panel-field="batch" class="batch-choice" aria-label="Количество вариантов"><option value="1">1x</option><option value="2">2x</option><option value="4">4x</option></select>':''}<span class="demo-label" id="composer-provider">API</span><button id="composer-higgsfield" class="pill" title="Референсы с лицами: отдельное подтверждение стоимости">Higgsfield</button><button id="composer-generate" class="pill solid">✦ Generate</button></div><details class="compiled-details"><summary>Итоговый промпт <span id="prompt-source-count"></span></summary><pre id="compiled-prompt"></pre></details><span class="composer-node-name"></span>`;
       for(const b of host.querySelectorAll('[data-setting]'))b.onclick=()=>{mutate('Изменены параметры генерации',()=>{n.fields[b.dataset.setting]=b.dataset.value;syncFields(n);});renderComposer();};
-      $('#composer-generate').onclick=()=>startGeneration(nodes.get(composerNode));$('#composer-expand').onclick=()=>{host.classList.toggle('expanded');positionComposer();$('#composer-expand').setAttribute('aria-label',host.classList.contains('expanded')?'Свернуть панель':'Развернуть панель');};$('#settings-close')?.addEventListener('click',()=>$('.composer-settings',host).open=false);$('#settings-auto')?.addEventListener('click',()=>{mutate('Изменены автоматические параметры',()=>{n.fields.ratio='16:9';n.fields.resolution='720p';n.fields.duration='8';n.fields.generateAudio='true';syncFields(n);});renderComposer();});
+      $('#composer-higgsfield').onclick=()=>requestHiggsfield(nodes.get(composerNode));$('#composer-generate').onclick=()=>startGeneration(nodes.get(composerNode));$('#composer-expand').onclick=()=>{host.classList.toggle('expanded');positionComposer();$('#composer-expand').setAttribute('aria-label',host.classList.contains('expanded')?'Свернуть панель':'Развернуть панель');};$('#settings-close')?.addEventListener('click',()=>$('.composer-settings',host).open=false);$('#settings-auto')?.addEventListener('click',()=>{mutate('Изменены автоматические параметры',()=>{n.fields.ratio='16:9';n.fields.resolution='720p';n.fields.duration='8';n.fields.generateAudio='true';syncFields(n);});renderComposer();});
     }
-    for(const el of host.querySelectorAll('[data-panel-field]'))if(el!==document.activeElement)el.value=el.type==='range'&&!n.fields.duration?'4':n.fields[el.dataset.panelField]??'';$('.composer-node-name',host).textContent=nodeName(n);if($('#composer-settings-label'))$('#composer-settings-label').textContent=`${n.fields.resolution||'Авто'} · ${n.fields.duration?n.fields.duration+'s':'Auto'} · ${n.fields.ratio||'Авто'}`;if($('#duration-label'))$('#duration-label').textContent=n.fields.duration?n.fields.duration+'s':'Авто';$('#settings-auto')?.setAttribute('aria-pressed',String(!n.fields.duration&&n.fields.resolution==='Авто'&&n.fields.ratio==='Авто'));const capabilities=Studio.activeVideoProvider()==='openrouter'?Studio.integrationVerified('openrouter')?.capabilities:null;for(const b of host.querySelectorAll('[data-setting]')){b.setAttribute('aria-pressed',String(n.fields[b.dataset.setting]===b.dataset.value));const supported=b.dataset.setting==='resolution'?capabilities?.supported_resolutions:capabilities?.supported_aspect_ratios;b.disabled=!!supported?.length&&!supported.includes(b.dataset.value);b.title=b.disabled?'Этот параметр пока недоступен у OpenRouter':'';}const hasVideo=[...incoming(n.id,'media').flatMap(src=>src.assets),...n.assets].some(id=>assets.get(id)?.kind==='video'),mode=n.fields.taskMode||'auto',byteplus=Studio.activeVideoProvider()!=='openrouter',autoSize=byteplus&&(mode==='edit'||mode==='extend'||(mode==='auto'&&hasVideo)),autoLength=byteplus&&(mode==='edit'||(mode==='auto'&&hasVideo));
+    for(const el of host.querySelectorAll('[data-panel-field]'))if(el!==document.activeElement)el.value=el.type==='range'&&!n.fields.duration?'4':n.fields[el.dataset.panelField]??'';$('.composer-node-name',host).textContent=nodeName(n);if($('#composer-settings-label'))$('#composer-settings-label').textContent=`${n.fields.resolution||'Авто'} · ${n.fields.duration?n.fields.duration+'s':'Auto'} · ${n.fields.ratio||'Авто'}`;if($('#duration-label'))$('#duration-label').textContent=n.fields.duration?n.fields.duration+'s':'Авто';$('#settings-auto')?.setAttribute('aria-pressed',String(!n.fields.duration&&n.fields.resolution==='Авто'&&n.fields.ratio==='Авто'));const capabilities=Studio.activeVideoProvider()==='openrouter'?Studio.integrationVerified('openrouter')?.capabilities:null;for(const b of host.querySelectorAll('[data-setting]')){b.setAttribute('aria-pressed',String(n.fields[b.dataset.setting]===b.dataset.value));const supported=b.dataset.setting==='resolution'?capabilities?.supported_resolutions:capabilities?.supported_aspect_ratios;b.disabled=!!supported?.length&&!supported.includes(b.dataset.value);b.title=b.disabled?'Этот параметр пока недоступен у OpenRouter':'';}$('#composer-higgsfield').hidden=![...incoming(n.id,'media').flatMap(src=>src.assets),...n.assets].length;
+    const hasVideo=[...incoming(n.id,'media').flatMap(src=>src.assets),...n.assets].some(id=>assets.get(id)?.kind==='video'),mode=n.fields.taskMode||'auto',byteplus=Studio.activeVideoProvider()!=='openrouter',autoSize=byteplus&&(mode==='edit'||mode==='extend'||(mode==='auto'&&hasVideo)),autoLength=byteplus&&(mode==='edit'||(mode==='auto'&&hasVideo));
     if(autoSize)$('#composer-settings-label').textContent=`${n.fields.resolution||'720p'} · ${autoLength?'Длина исходника':n.fields.duration+'s'} · Формат исходника`;
     const durationInput=host.querySelector('[data-panel-field="duration"]');if(durationInput)durationInput.disabled=autoLength;if(autoLength)$('#duration-label').textContent='Длина исходника (4–30s)';
     if(autoSize)for(const b of host.querySelectorAll('[data-setting="ratio"]')){b.disabled=true;b.title='Формат сохраняется из исходного видео';}

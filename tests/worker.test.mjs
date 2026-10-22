@@ -1,3 +1,4 @@
+import hfWorker from '../cloudflare-worker/higgsfield-gateway.js';
 import kvWorker from '../cloudflare-worker/kv-references.js';
 import {test,before,after} from 'node:test';
 import assert from 'node:assert/strict';
@@ -143,4 +144,19 @@ test('BytePlus Worker sends source-preserving edit settings rather than fixed ra
  const payload={prompt:'Edit video',duration:4,ratio:'9:16',resolution:'480p',reference_videos:['https://cdn.test/ref.mp4'],omni_reference_task_type:'edit'};
  const response=await worker.fetch(new Request('https://worker.test/byteplus/submit',{method:'POST',headers,body:JSON.stringify({payload})}),env);
  assert.equal(response.status,200);assert.equal(lastProviderBody.duration,-1);assert.equal(lastProviderBody.ratio,'adaptive');assert.equal(lastProviderBody.omni_reference_task_type,'edit');
+});
+
+test('Higgsfield server gates paid submission by consent and binds status access to its owner',async()=>{
+ const prior=globalThis.fetch;let calls=0,remoteStatus='completed';
+ globalThis.fetch=async(url,init)=>{if(String(url).startsWith('https://api.higgsfield.ai/')){calls++;if(init.method==='POST')return Response.json({request_id:'hf-123',status:'queued'});return Response.json({status:remoteStatus,video:{url:'https://cdn.test/result.mp4'}});}return prior(url,init);};
+ try{
+  const configured={...env,HF_CREDENTIALS:'fake-server-id:fake-server-secret'},headers={Authorization:'Bearer '+await token(),'Content-Type':'application/json'},payload={prompt:'Scene',duration:5,resolution:'720p',aspect_ratio:'9:16',reference_images:['https://cdn.test/face.jpg']};
+  const invoke=(path,body,h=headers,e=configured)=>hfWorker.fetch(new Request('https://hf.test/higgsfield/'+path,{method:'POST',headers:h,body:JSON.stringify(body)}),e);
+  assert.equal((await invoke('config',{},headers,env)).status,200);assert.equal(calls,0);
+  assert.equal((await invoke('submit',{payload})).status,409);assert.equal(calls,0);
+  const created=await invoke('submit',{payload,confirmed:true});assert.equal(created.status,200);const receipt=await created.json();assert.equal(calls,1);
+  const result=await invoke('status',{taskId:receipt.id,taskToken:receipt.taskToken});assert.equal((await result.json()).video.url,'https://cdn.test/result.mp4');
+  const before=calls;assert.equal((await invoke('status',{taskId:receipt.id,taskToken:receipt.taskToken},{...headers,Authorization:'Bearer '+await token('bob')})).status,403);assert.equal(calls,before);
+  assert.equal((await invoke('submit',{payload,confirmed:true},{...headers,Origin:'https://evil.test'})).status,403);assert.equal(calls,before);
+ }finally{globalThis.fetch=prior;}
 });

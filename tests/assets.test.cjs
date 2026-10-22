@@ -155,3 +155,12 @@ test('Direct BytePlus submission keeps edit duration -1 instead of clamping it t
  await s.submitGeneration('edit-one',{prompt:'Edit @Video1',duration:4,aspect_ratio:'9:16',resolution:'480p',reference_videos:['https://cdn.test/ref.mp4'],omni_reference_task_type:'edit'},'byteplus');
  assert.equal(sent.duration,-1);assert.equal(sent.ratio,'adaptive');assert.equal(sent.omni_reference_task_type,'edit');assert.equal(sent.content[1].type,'video_url');
 });
+
+test('Higgsfield never submits without cost consent and keeps the active BytePlus provider',async()=>{
+ const {s,c}=app('user');c.localStorage.setItem('magic.credentials.alice.apiKey','byteplus-test');s.setHiggsfieldGateway('https://hf.test');
+ c.__test.api.auth={currentUser:{getIdToken:async()=>'firebase-only'}};c.localStorage.setItem('magic.job.v3.alice.hf-test',JSON.stringify({id:'hf-test',uid:'alice',provider:'higgsfield',status:'queued'}));
+ let calls=0;c.fetch=async(url,o)=>{calls++;assert.equal(url,'https://hf.test/higgsfield/submit');assert.equal(o.headers.Authorization,'Bearer firebase-only');assert.equal(JSON.parse(o.body).confirmed,true);return Response.json({id:'hf-request',taskToken:'receipt'});};
+ await assert.rejects(s.submitGeneration('hf-test',{prompt:'Scene'},'higgsfield'),/Подтверди/);assert.equal(calls,0);
+ await s.submitGeneration('hf-test',{prompt:'Scene',higgsfieldConfirmed:true},'higgsfield');assert.equal(calls,1);assert.equal(s.activeVideoProvider(),'byteplus');
+ assert.equal(c.MagicDomain.estimateCost({provider:'higgsfield',seconds:5,resolution:'720p'}),null);
+});

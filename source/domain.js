@@ -24,7 +24,8 @@ window.MagicDomain = (() => {
     return result;
   }
   function setVideoPrices(prices){videoPrices=validatePrices(prices);return {...videoPrices};}
-  function estimateCost({seconds, resolution, videoReferenceCount = 0, pricingRates} = {}, rates = pricingRates || videoPrices) {
+  function estimateCost({provider, seconds, resolution, videoReferenceCount = 0, pricingRates} = {}, rates = pricingRates || videoPrices) {
+    if(provider==='higgsfield')return null;
     const duration = Number(seconds), price = rates[resolution];
     if (!Number.isFinite(duration) || duration < 4 || duration > 30 || !price || Number(videoReferenceCount) > 0) return null;
     return Math.round(price * 1000000 * duration) / 1000000;

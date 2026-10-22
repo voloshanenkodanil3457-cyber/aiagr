@@ -151,6 +151,9 @@
       $('#'+provider+'-remove').onclick=e=>run(e.currentTarget,async()=>{if(S.activeVideoProvider()===provider)S.setVideoProvider(null);S.notify('Провайдер отключён. Ключ сохранён для следующего подключения.');});
       $('#'+provider+'-delete').onclick=e=>{if(confirm('Удалить подключение '+MagicProviders.providerName(provider)+' и ключ из этого браузера?'))run(e.currentTarget,async()=>{await S.removeIntegration(provider);key.value='';});};
     }
+    $('#higgsfield-worker-url').value=S.higgsfieldGateway();
+    $('#higgsfield-save').onclick=()=>{try{S.setHiggsfieldGateway($('#higgsfield-worker-url').value);$('#higgsfield-state').textContent='URL сохранён. BytePlus остаётся основным провайдером.';}catch(e){$('#higgsfield-state').textContent=e.message;}};
+    $('#higgsfield-check').onclick=async e=>{e.currentTarget.disabled=true;try{const c=await S.higgsfieldRequest('config');$('#higgsfield-state').textContent=c.ready?'Worker подключён · серверный ключ установлен · генерация не запускалась':'Worker доступен, но HF_CREDENTIALS ещё не установлен.';}catch(err){$('#higgsfield-state').textContent=err.message;}finally{e.currentTarget.disabled=false;}};
     await renderProviders();
     window.addEventListener('storage',e=>{if(e.key?.startsWith('magic.credentials.'+user.uid+'.'))renderProviders().catch(e=>S.notify(e.message,'error'));});
   }

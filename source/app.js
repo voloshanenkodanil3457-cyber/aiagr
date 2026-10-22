@@ -197,6 +197,7 @@ window.Studio=(()=>{
   function byteplusBase(){return String(CFG.byteplusBaseUrl||'https://ark.ap-southeast.bytepluses.com/api/v3').replace(/\/$/,'');}
   function byteplusMode(){return apiGatewayBase()?'worker':'direct';}
   async function providerCredentials(provider){
+    if(provider==='higgsfield'){const workerUrl=higgsfieldGateway();return workerUrl?{workerUrl,mode:'worker',connected:true}:null;}
     if(provider==='byteplus'){
       const workerUrl=apiGatewayBase();
       if(workerUrl)return {workerUrl,connected:true,mode:'worker'};
@@ -290,6 +291,7 @@ window.Studio=(()=>{
     MagicProviders.validateCapabilities({},model);write(credentialKey('openrouter.capabilities'),{model,scope,expiresAt:Date.now()+3600000});return model;
   }
   async function prepareVideoRequest(provider,payload){
+    if(provider==='higgsfield')return MagicProviders.buildHiggsfieldRequest(payload);
     if(provider!=='openrouter')return MagicProviders.byteplusTask(payload);
     const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи OpenRouter в My settings.');
     const body=MagicProviders.buildOpenRouterRequest(payload);return MagicProviders.validateCapabilities(body,await openRouterCapabilities(credentials));
@@ -386,7 +388,23 @@ window.Studio=(()=>{
     await MagicLocal.put(cache.user.uid,assetId,{meta,cloudSaved:false});return meta;
   }
   const temporaryVideoUploads=new Map();
+  const higgsfieldGateway=()=>String(localStorage.getItem(credentialKey('higgsfield.gateway'))||CFG.higgsfieldGatewayUrl||'').replace(/\/$/,'');
+  function setHiggsfieldGateway(value){const base=String(value||'').trim().replace(/\/$/,'');if(base){const u=new URL(base);if(u.protocol!=='https:'||u.username||u.password||u.search||u.hash)throw Error('Нужен HTTPS URL Worker без параметров.');}localStorage.setItem(credentialKey('higgsfield.gateway'),base);return base;}
+  async function higgsfieldRequest(path,body={},base=higgsfieldGateway()){
+    if(!base)throw Error('Подключи Higgsfield Worker в My settings. Ключ устанавливается только на сервере.');
+    return requestApi(base+'/higgsfield/'+path,{method:'POST',headers:{Authorization:'Bearer '+await api.auth.currentUser.getIdToken(),'Content-Type':'application/json'},body:JSON.stringify(body)},'Higgsfield');
+  }
+
   async function ensureRemoteAsset(item,{provider=activeVideoProvider()}={}){
+    if(provider==='higgsfield'&&item.kind==='image'){
+      if(/^https:\/\//.test(item.url||''))return {...item,referenceUrl:item.url};
+      const stored=await MagicLocal.get(cache.user.uid,item.id),file=stored?.file;
+      if(!file||file.size>=30*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type))throw Error('Для Higgsfield добавь JPG, PNG или WebP меньше 30 МБ.');
+      const target=await higgsfieldRequest('upload-url',{content_type:file.type});
+      const response=await fetch(target.upload_url,{method:'PUT',headers:target.upload_headers,body:file,credentials:'omit'});
+      if(!response.ok)throw Error('Не удалось загрузить референс в Higgsfield.');
+      return {...item,referenceUrl:target.public_url};
+    }
     if(item.portraitGroupId&&provider!=='openrouter')return MagicPortraits.ensure(item);
     // Only the API request carries image bytes. The graph and Firestore keep metadata.
     if(/^https:\/\//.test(item.url||''))return {...item,referenceUrl:item.url};
@@ -444,7 +462,7 @@ window.Studio=(()=>{
   async function createVideoRecord(data){
     assertFirebase();await loadVideoPricing();const me=current();
     const row={id:uid(),uid:me.uid,user:me.name,spaceId:data.spaceId||null,spaceName:data.spaceName||'',sourceNodeId:data.sourceNodeId||null,outputNodeId:data.outputNodeId||null,
-      prompt:data.prompt||'',provider:data.provider||'byteplus',model:videoModelFor(data.provider,data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
+      prompt:data.prompt||'',provider:data.provider||'byteplus',model:data.provider==='higgsfield'?'bytedance/seedance-2.5':videoModelFor(data.provider,data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
       transport:data.transport||'direct',gatewayUrl:data.gatewayUrl||null,pricingRates:MagicDomain.videoPrices,
       seconds:Math.max(4,Math.min(30,Number(data.seconds)||8)),referenceCount:Math.max(0,Math.min(15,Number(data.referenceCount)||0)),videoReferenceCount:Math.max(0,Math.min(15,Number(data.videoReferenceCount)||0)),hasRef:Boolean(data.hasRef),refMode:'reference',generateAudio:data.generateAudio!==false,
       status:'queued',pct:0,cost:null,error:null,requestId:null,videoUrl:null,remoteUrl:null,storagePath:null,createdAt:now(),updatedAt:now(),cloudSaved:false};
@@ -594,10 +612,11 @@ window.Studio=(()=>{
     const preferred=['video_url','videoUrl','url','output_url','output'];for(const k of preferred)if(k in value){const u=extractMediaUrl(value[k]);if(u)return u;}
     for(const k of ['video','videos','content','data','result','results','outputs'])if(k in value){const u=extractMediaUrl(value[k]);if(u)return u;}return null;
   }
-  function statusName(raw){const s=String(raw||'').toUpperCase();if(['COMPLETED','SUCCEEDED','SUCCESS'].includes(s))return'completed';if(['CANCELLED','CANCELED'].includes(s))return'cancelled';if(['FAILED','ERROR','EXPIRED'].includes(s))return'failed';if(['QUEUED','PENDING'].includes(s))return'queued';return'running';}
+  function statusName(raw){const s=String(raw||'').toUpperCase();if(['COMPLETED','SUCCEEDED','SUCCESS'].includes(s))return'completed';if(['CANCELLED','CANCELED'].includes(s))return'cancelled';if(['FAILED','ERROR','EXPIRED','NSFW'].includes(s))return'failed';if(['QUEUED','PENDING'].includes(s))return'queued';return'running';}
   async function submitGeneration(videoId,payload,provider=activeVideoProvider()){
-    if(provider!==activeVideoProvider())throw Object.assign(new Error('Активный провайдер изменился. Запусти генерацию заново с текущим подключением.'),{httpStatus:400});
+    if(provider!=='higgsfield'&&provider!==activeVideoProvider())throw Object.assign(new Error('Активный провайдер изменился. Запусти генерацию заново с текущим подключением.'),{httpStatus:400});
     const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи API в My settings → Integrations.');
+    if(provider==='higgsfield'){if(payload.higgsfieldConfirmed!==true)throw Object.assign(Error('Подтверди повышенную стоимость Higgsfield.'),{httpStatus:409});const data=await higgsfieldRequest('submit',{payload,confirmed:true});return updateVideo(videoId,{requestId:data.id,taskToken:data.taskToken,transport:'worker',gatewayUrl:credentials.workerUrl,status:'queued',pct:0});}
     if(provider==='openrouter'){
       const request=await prepareVideoRequest(provider,payload),data=await openRouterRequest('submit',{body:{payload:request},credentials});
       if(!data.id)throw new Error('OpenRouter не вернул ID задачи. Проверь историю перед новым запуском.');
@@ -619,7 +638,7 @@ window.Studio=(()=>{
     if(!remote)throw new Error('API завершил задачу, но URL видео пока не найден.');
     const videoUrl=remote,storagePath=null,archiveWarning=null;
     const providerTime=Number(result?.updated_at||result?.finished_at);
-    const providerUrlExpiresAt=record.provider==='openrouter'?null:(providerTime>0?(providerTime<1e12?providerTime*1000:providerTime):now())+24*60*60*1000;
+    const providerUrlExpiresAt=['openrouter','higgsfield'].includes(record.provider)?null:(providerTime>0?(providerTime<1e12?providerTime*1000:providerTime):now())+24*60*60*1000;
     const metrics=result?.metrics||result?.usage||result?.data?.metrics||{},rawCost=result?.cost??metrics.cost??record.cost;
     const actualDuration=Number(result?.duration??result?.content?.duration??metrics.duration);
     const patch={status:'completed',pct:100,remoteUrl:remote,videoUrl,storagePath,providerUrlExpiresAt,
@@ -627,7 +646,7 @@ window.Studio=(()=>{
     if(actualDuration>=4&&actualDuration<=30)patch.seconds=actualDuration;
     if(['480p','720p','1080p'].includes(result?.resolution))patch.resolution=result.resolution;
     patch.costSource=patch.cost!=null?'api':null;
-    if(patch.cost==null){patch.cost=MagicDomain.estimateCost({...record,...patch});if(patch.cost!=null){patch.costSource='tariff';patch.pricingVersion=MagicDomain.pricingVersion;}}
+    if(patch.cost==null&&record.provider!=='higgsfield'){patch.cost=MagicDomain.estimateCost({...record,...patch});if(patch.cost!=null){patch.costSource='tariff';patch.pricingVersion=MagicDomain.pricingVersion;}}
     return updateVideo(record.id,patch);
   }
   const playbackCache=new Map();
@@ -706,7 +725,8 @@ window.Studio=(()=>{
     if(MagicDomain.terminal(record.status)||!record.requestId)return record;
     const router=record.provider==='openrouter';
     let data;
-    if(router){const credentials=record.transport==='worker'?{mode:'worker',workerUrl:record.gatewayUrl}:await providerCredentials('openrouter');if(!credentials)throw new Error('Настрой OpenRouter для продолжения задачи.');data=await openRouterRequest('status',{credentials,body:{taskId:record.requestId,taskToken:record.taskToken}});}
+    if(record.provider==='higgsfield')data=await higgsfieldRequest('status',{taskId:record.requestId,taskToken:record.taskToken},record.gatewayUrl);
+    else if(router){const credentials=record.transport==='worker'?{mode:'worker',workerUrl:record.gatewayUrl}:await providerCredentials('openrouter');if(!credentials)throw new Error('Настрой OpenRouter для продолжения задачи.');data=await openRouterRequest('status',{credentials,body:{taskId:record.requestId,taskToken:record.taskToken}});}
     else{if(!await providerCredentials(record.provider||'byteplus'))throw new Error('Настрой BytePlus для продолжения задачи.');data=await (await proxy('/byteplus/status',{method:'POST',body:{taskId:record.requestId,taskToken:record.taskToken||null}})).json();}
     const status=statusName(data.status||data.state);
     if(['failed','cancelled'].includes(status)){
@@ -782,7 +802,7 @@ window.Studio=(()=>{
 
   return {ready,requireUser,current,isAdmin,signIn,signUp,logout,updateProfile,uploadProfilePhoto,listUsers,createUser,updateUserRole,uid,read,write,notify,download,element:el,timestamp,
     listFolders,listPresets,canEdit,saveFolder,deleteFolder,savePreset,deletePreset,loadTemplates,ensureTemplates,
-    portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,integrationVerified,activeVideoProvider,setVideoProvider,videoModelFor,prepareVideoRequest,providerKey,providerCredentials,apiGatewayBase,openRouterGateway,
+    higgsfieldGateway,setHiggsfieldGateway,higgsfieldRequest,portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,integrationVerified,activeVideoProvider,setVideoProvider,videoModelFor,prepareVideoRequest,providerKey,providerCredentials,apiGatewayBase,openRouterGateway,
     listSpaces,createSpace,getSpace,renameSpace,duplicateSpace,deleteSpace,saveSpaceState,queueSpaceState,flushSpaceState,flushPendingWork,
     uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,permanentlyDeleteVideo,submitGeneration,refreshGeneration,watchGeneration,resolveVideoSource,downloadVideo,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
     loadVideoPricing,saveVideoPricing,getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
