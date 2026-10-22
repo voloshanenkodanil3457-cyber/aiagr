@@ -15,7 +15,7 @@ test('one text-only inference, no video provider, and duplicate requests are rat
 });
 test('quota errors and invented media aliases return errors instead of replacing original text',async()=>{
  await assert.rejects(()=>improvePrompt(body,{AI:{run:async()=>{throw Error('quota');}}},'quota'),/квота/);
- await assert.rejects(()=>improvePrompt(body,{AI:{run:async()=>({response:'@image2 dances'})}},'alias'),/несуществующий/);
+ await assert.rejects(()=>improvePrompt(body,{AI:{run:async()=>({response:'@image2 dances'})}},'alias'),/выдуманные/);
  await assert.rejects(()=>improvePrompt(body,{},'missing'),/не подключено/);
 });
 
@@ -25,4 +25,12 @@ test('Improve button replaces only prompt, records undo and never starts a video
  vm.runInContext(code.slice(code.indexOf('  const improvingPrompts='),code.indexOf('  function renderComposer('))+'this.improve=improveNodePrompt;',context);
  await context.improve(source);assert.match(source.fields.prompt,/плавно/);assert.equal(undo,1);assert.equal(button.disabled,false);
  source.fields.prompt='Мой текст';context.Studio.higgsfieldRequest=()=>new Promise(r=>resolve=r);const pending=context.improve(source);source.fields.prompt='Новая правка';resolve({text:'Не затирать правку'});await pending;assert.equal(source.fields.prompt,'Новая правка');assert.equal(undo,1);
+});
+
+test('no-media prompts explicitly forbid reference examples and repair hallucinated aliases once',async()=>{
+ const input={...body,prompt:'сделай как птичка летит вверх ногами'};const messages=promptMessages(input);assert.match(messages[1].content,/NO MEDIA IS ATTACHED/);let calls=0;
+ const result=await improvePrompt(input,{AI:{run:async(model,options)=>{calls++;if(calls===1)return {response:'@image1 показывает птицу.'};assert.match(options.messages.at(-1).content,/ZERO attached/);return {response:'Птичка летит вверх ногами, спиной к земле. Камера следует сбоку, удерживая её в центре кадра.'};}}},'bird-repair');assert.equal(calls,2);assert.match(result.text,/Птичка/);assert.ok(!result.text.includes('@'));
+});
+test('existing aliases remain allowed and do not trigger a repair request',async()=>{
+ let calls=0;const result=await improvePrompt({...body,prompt:'@image1 танцует',references:[{kind:'image',name:'photo.png'}]},{AI:{run:async()=>{calls++;return {response:'@image1 танцует под дождём, камера плавно приближается.'};}}},'existing');assert.equal(calls,1);assert.match(result.text,/@image1/);
 });
