@@ -160,3 +160,8 @@ test('Higgsfield server gates paid submission by consent and binds status access
   assert.equal((await invoke('submit',{payload,confirmed:true},{...headers,Origin:'https://evil.test'})).status,403);assert.equal(calls,before);
  }finally{globalThis.fetch=prior;}
 });
+
+test('Higgsfield estimate uses exact model input and never sends a generation request',async()=>{
+ const prior=globalThis.fetch;let calls=0;globalThis.fetch=async(url,init)=>{if(String(url).startsWith('https://api.higgsfield.ai/')){calls++;assert.equal(String(url),'https://api.higgsfield.ai/estimate/bytedance/seedance-2.0/image-to-video');assert.equal(JSON.parse(init.body).image_url,'https://cdn.test/image.jpg');return Response.json({usd:'0.8123',credits:'13.0'});}return prior(url,init);};
+ try{const response=await hfWorker.fetch(new Request('https://hf.test/higgsfield/estimate',{method:'POST',headers:{Authorization:'Bearer '+await token(),'Content-Type':'application/json'},body:JSON.stringify({payload:{model:'bytedance/seedance-2.0',prompt:'Scene',duration:5,resolution:'720p',aspect_ratio:'9:16',reference_images:['https://cdn.test/image.jpg']}})}),{...env,HF_CREDENTIALS:'fake-id:fake-secret'});assert.equal(response.status,200);const quote=await response.json();assert.equal(quote.usd,.8123);assert.equal(quote.source,'api_estimate');assert.equal(calls,1);}finally{globalThis.fetch=prior;}
+});

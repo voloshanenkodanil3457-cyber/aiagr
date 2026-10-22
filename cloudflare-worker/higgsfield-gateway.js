@@ -4,6 +4,7 @@ import P from '../source/providers.js';
 const BASE='https://api.higgsfield.ai';
 const fail=(message,status=400)=>{throw Object.assign(new Error(message),{status});};
 const signing=env=>({...env,TASK_TOKEN_SECRET:env.HF_CREDENTIALS});
+/** @param {string} path @param {any} env @param {{method?:string,body?:any}} [options] */
 async function upstream(path,env,{method='GET',body}={}){
  const response=await fetch(BASE+path,{method,headers:{Authorization:'Key '+env.HF_CREDENTIALS,'Content-Type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});
  let data;try{data=await response.json();}catch{data={};}
@@ -31,6 +32,7 @@ export default {async fetch(request,env){
    for(const key of ['upload_url','public_url'])if(!/^https:\/\//.test(result[key]||''))fail('Higgsfield не вернул URL загрузки.',502);
    return json({upload_url:result.upload_url,public_url:result.public_url,upload_headers:result.upload_headers||{}});
   }
+  if(url.pathname==='/higgsfield/estimate'){const spec=P.buildHiggsfieldRequest(body.payload);const quote=await upstream('/estimate/'+spec.endpoint,env,{method:'POST',body:spec.input});const usd=Number(quote.usd);if(quote.usd==null||!Number.isFinite(usd)||usd<0)fail('Higgsfield не вернул стоимость запроса.',502);return json({usd,credits:quote.credits??null,source:'api_estimate',model:spec.endpoint});}
   if(url.pathname==='/higgsfield/submit'){
    if(body.confirmed!==true)fail('Нужно подтверждение повышенной стоимости.',409);
    const spec=P.buildHiggsfieldRequest(body.payload),data=await upstream('/'+spec.endpoint,env,{method:'POST',body:spec.input});

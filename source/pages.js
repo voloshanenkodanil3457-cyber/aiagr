@@ -88,7 +88,7 @@
         if(v.provider!=='openrouter'){const video=E('video');video.src=v.videoUrl;video.muted=true;video.playsInline=true;video.preload='metadata';trigger.append(video);}else trigger.append(E('span','READY','asset-placeholder completed'));
         trigger.append(E('span','▷','asset-preview-play'));media.append(trigger);
       }else media.append(E('div',statusLabel(v.status),'asset-placeholder '+String(v.status||'')));
-      const cost=MagicDomain.videoCost(v);if(cost!=null)media.append(E('span',MagicDomain.money(cost)+(v.cost==null||v.costSource==='tariff'?' ≈':''),'asset-cost'));
+      const cost=MagicDomain.videoCost(v);if(cost!=null)media.append(E('span',MagicDomain.money(cost)+(v.cost==null||['tariff','api_estimate'].includes(v.costSource)?' ≈':''),'asset-cost'));
       if(v.seconds>0)media.append(E('span',v.seconds+'s','asset-duration'));
       const body=E('div',undefined,'asset-body');body.append(E('p',(v.prompt||'Без промпта').slice(0,180)),E('small',`${v.model||'model'} · ${v.resolution||''} ${v.ratio||''}`));
       if(v.cloudSaved===false&&MagicDomain.terminal(v.status))body.append(E('small','Сохранено только на этом компьютере. '+(v.syncError||'Ожидает отправки в базу.'),'asset-warning'));
@@ -193,7 +193,7 @@
     for(const control of [duration,resolution,input,...priceInputs])control.oninput=calculate;calculate();
     function renderRank(target,rows,field){
       target.replaceChildren();for(const [index,row] of rows.entries()){
-        const li=E('li',undefined,'rank-row'),name=E('div');name.append(E('strong',row.nickname||'User'),E('small',field==='cost'?`${row.completed} готовых видео · расчётных: ${row.estimatedCostCount} · без тарифа: ${row.unknownCost}`:'Ошибок генерации'));
+        const li=E('li',undefined,'rank-row'),name=E('div');name.append(E('strong',row.nickname||'User'),E('small',field==='cost'?`${row.completed} готовых видео · оценок: ${row.estimatedCostCount} · без цены: ${row.unknownCost}`:'Ошибок генерации'));
         li.append(E('span',String(index+1),'rank-position'),name,E('b',field==='cost'?(row.unknownCost===row.completed&&row.completed&&row.cost===0?'—':MagicDomain.money(row.cost)):String(row.failed)));target.append(li);
       }
       if(!rows.length)target.append(E('li','Пока нет результатов.','empty-card'));
@@ -204,6 +204,8 @@
       const rows=[...groups].map(([uid,items])=>({uid,nickname:names.get(uid)||items[0].user||'User',...MagicDomain.totals(items)})),stats=MagicDomain.totals(videos);
       $('#cost-scope').textContent=S.isAdmin()?'Стоимость сохранённых генераций всей команды':'Стоимость твоих сохранённых генераций';
       $('#cost-total').textContent=MagicDomain.money(stats.cost);$('#cost-completed').textContent=stats.completed;$('#cost-unknown').textContent=stats.unknownCost;
+      const breakdown=$('#cost-provider-breakdown');if(breakdown){breakdown.replaceChildren();for(const provider of ['byteplus','higgsfield','openrouter']){const items=videos.filter(v=>(v.provider||'byteplus')===provider),part=MagicDomain.totals(items);if(!items.length)continue;const row=E('div',undefined,'team-row'),info=E('div');info.append(E('strong',MagicProviders.providerName(provider)),E('small',`${part.completed} готовых · оценок: ${part.estimatedCostCount} · без цены: ${part.unknownCost}`));row.append(info,E('b',part.completed&&part.unknownCost===part.completed?'—':MagicDomain.money(part.cost)+(part.estimatedCostCount?' ≈':'')));breakdown.append(row);}}
+      const details=$('#cost-video-details');if(details){details.replaceChildren();for(const v of videos.filter(v=>v.status==='completed').sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))){const row=E('div',undefined,'team-row'),info=E('div'),cost=MagicDomain.videoCost(v);info.append(E('strong',(names.get(v.uid)||v.user||'User')+' · '+MagicProviders.providerName(v.provider||'byteplus')),E('small',`${v.model||'Seedance'} · ${v.seconds}s · ${v.resolution} · ${cost==null?'цена не сохранена':v.costSource==='api_estimate'?'оценка API':v.costSource==='api'?'стоимость API':'расчёт по тарифу'}`));row.append(info,E('b',cost==null?'—':MagicDomain.money(cost)+(v.costSource==='api_estimate'?' ≈':'')));details.append(row);}}
       renderRank($('#cost-ranking'),rows.filter(r=>r.completed||r.cost>0).sort((a,b)=>b.cost-a.cost),'cost');renderRank($('#error-ranking'),rows.filter(r=>r.failed).sort((a,b)=>b.failed-a.failed),'failed');
     }
     $('#cost-refresh').onclick=()=>ranking().catch(error=>S.notify(error.message,'error'));
