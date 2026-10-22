@@ -135,3 +135,5 @@
 .settings-segments button[aria-pressed=true]{border-color:#178df5;background:#102b41;color:#cfeaff}
 .range-ends{display:flex;justify-content:space-between;color:#777780;font-size:8px}
 @media(max-width:900px){.node[data-type=generation]{width:330px!important}.generator-settings-grid{grid-template-columns:1fr}.generation-composer{width:calc(100vw - var(--sidebar-w) - 28px)}}
+
+.composer-reference .remove-ref{opacity:0;pointer-events:none;z-index:3}.composer-reference:hover .remove-ref,.composer-reference:focus-within .remove-ref{opacity:1;pointer-events:auto}@media(hover:none){.composer-reference .remove-ref{opacity:1;pointer-events:auto}}
