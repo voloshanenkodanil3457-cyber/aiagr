@@ -142,3 +142,5 @@
 .selection-box{border-style:dashed}.selection-bounds{background:rgba(25,154,255,.035);border-style:dashed}
 .selection-actions{position:fixed;z-index:90;display:flex;gap:3px;padding:5px;background:#1b1b20ed;border:1px solid #414149;border-radius:10px;box-shadow:0 6px 22px #0006}
 .selection-actions button{width:32px;height:30px;border-radius:5px;font-size:19px}.selection-actions button:hover{background:#199aff30;color:#63baff}
+
+#snap-guides{position:absolute;inset:0;pointer-events:none;z-index:2147483001}.snap-guide{position:absolute;background:#ff4d91;box-shadow:0 0 3px #ff4d9166;pointer-events:none}
