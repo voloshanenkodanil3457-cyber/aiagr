@@ -293,14 +293,17 @@ window.MagicDomain = (() => {
     if(!prompt||prompt.length>32000)fail('Добавь промпт до 32000 символов.');
     if(!Array.isArray(images)||!Array.isArray(videos)||images.length+videos.length>15)fail('Максимум 15 референсов.');
     if([...images,...videos].some(u=>typeof u!=='string'||!source(u,'video')))fail('Higgsfield нужны публичные HTTPS-референсы.');
-    const duration=Number(p.duration),ratio=p.aspect_ratio||p.ratio;
+    const duration=Number(p.duration),ratio=p.aspect_ratio||p.ratio,mode=p.taskMode||p.omni_reference_task_type||'auto',editing=model.endsWith('2.5')&&videos.length>0&&['auto','edit'].includes(mode);
+    if(mode==='edit'&&!videos.length)fail('Для редактирования Higgsfield добавь исходное видео.');
+    if(mode==='extend')fail('Продление через Higgsfield пока не подключено. Выбери новое видео или редактирование.');
     if(!Number.isInteger(duration)||duration<4||duration>maxDuration)fail('Для выбранной модели Higgsfield длина: 4–'+maxDuration+' секунд.');
     if(!['16:9','4:3','1:1','3:4','9:16','21:9'].includes(ratio))fail('Для Higgsfield выбери явный формат видео.');
     if(!['480p','720p','1080p'].includes(p.resolution))fail('Выбери разрешение Higgsfield.');
     const input={prompt,duration,resolution:p.resolution,output_format:'mp4',generate_audio:p.generate_audio!==false};
     if(model.endsWith('2.0'))delete input.output_format;
     let endpoint=model+'/text-to-video';
-    if(videos.length||images.length>1){endpoint=model+'/reference-to-video';input.image_urls=images;input.video_urls=videos;input.aspect_ratio=ratio;}
+    if(editing){endpoint=model+'/video-edit';input.video_url=videos[0];if(images.length)input.image_urls=images;if(videos.length>1)input.video_urls=videos.slice(1);delete input.duration;}
+    else if(videos.length||images.length>1){endpoint=model+'/reference-to-video';input.image_urls=images;input.video_urls=videos;input.aspect_ratio=ratio;}
     else if(images.length){endpoint=model+'/image-to-video';input.image_url=images[0];}
     else input.aspect_ratio=ratio;
     return {endpoint,input};
