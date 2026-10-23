@@ -137,3 +137,8 @@
 @media(max-width:900px){.node[data-type=generation]{width:330px!important}.generator-settings-grid{grid-template-columns:1fr}.generation-composer{width:calc(100vw - var(--sidebar-w) - 28px)}}
 
 .composer-reference .remove-ref{opacity:0;pointer-events:none;z-index:3}.composer-reference:hover .remove-ref,.composer-reference:focus-within .remove-ref{opacity:1;pointer-events:auto}@media(hover:none){.composer-reference .remove-ref{opacity:1;pointer-events:auto}}
+
+.selection-box,.selection-bounds{position:absolute;pointer-events:none;border:1px solid #199aff;background:rgba(25,154,255,.12);z-index:2147483000;box-sizing:border-box}
+.selection-box{border-style:dashed}.selection-bounds{background:rgba(25,154,255,.035);border-style:dashed}
+.selection-actions{position:fixed;z-index:90;display:flex;gap:3px;padding:5px;background:#1b1b20ed;border:1px solid #414149;border-radius:10px;box-shadow:0 6px 22px #0006}
+.selection-actions button{width:32px;height:30px;border-radius:5px;font-size:19px}.selection-actions button:hover{background:#199aff30;color:#63baff}
