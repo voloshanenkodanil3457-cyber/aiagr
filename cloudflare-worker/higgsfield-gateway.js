@@ -44,7 +44,9 @@ export default {async fetch(request,env){
    await verifyTaskToken(body.taskToken,uid,id,signing(env));
    const data=await upstream('/requests/'+encodeURIComponent(id)+'/status',env);
    const video=data.video?.url;if(video&&!/^https:\/\//.test(video))fail('Некорректный URL результата.',502);
-   return json({status:data.status,video:video?{url:video}:null,error:['failed','nsfw','canceled','cancelled'].includes(data.status)?'Higgsfield: задача отклонена, отменена или завершилась ошибкой.':null});
+   const failed=['failed','nsfw','canceled','cancelled'].includes(data.status),raw=typeof data.error==='string'?data.error:data.error?.message;
+   const detail=typeof raw==='string'?raw.split(env.HF_CREDENTIALS).join('[redacted]').replace(/https?:\/\/\S+/g,'[URL]').slice(0,2000):'';
+   return json({status:data.status,requestId:id,video:video?{url:video}:null,error:failed?(detail||({failed:'Ошибка обработки. Higgsfield не сообщил подробности.',nsfw:'Запрос отклонён модерацией Higgsfield.',canceled:'Запрос отменён.',cancelled:'Запрос отменён.'}[data.status])):null});
   }
   return json({error:'Not found'},404);
  }catch(e){return json({error:e.message},e.status||500);}

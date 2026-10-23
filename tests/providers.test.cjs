@@ -37,7 +37,8 @@ test('Higgsfield routing requires HTTPS inputs and face fallback is limited to e
  const p={prompt:'Scene',duration:5,resolution:'720p',aspect_ratio:'16:9'};
  assert.ok(P.buildHiggsfieldRequest(p).endpoint.endsWith('text-to-video'));
  const image=P.buildHiggsfieldRequest({...p,reference_images:['https://cdn.test/a.jpg']});assert.ok(image.endpoint.endsWith('image-to-video'));assert.equal(image.input.image_url,'https://cdn.test/a.jpg');
- const video=P.buildHiggsfieldRequest({...p,reference_videos:['https://cdn.test/a.mp4']});assert.ok(video.endpoint.endsWith('reference-to-video'));assert.deepEqual(video.input.video_urls,['https://cdn.test/a.mp4']);
+ const video=P.buildHiggsfieldRequest({...p,taskMode:'reference',reference_videos:['https://cdn.test/a.mp4']});assert.ok(video.endpoint.endsWith('reference-to-video'));assert.deepEqual(video.input.video_urls,['https://cdn.test/a.mp4']);
+ const edit=P.buildHiggsfieldRequest({...p,reference_videos:['https://cdn.test/a.mp4'],reference_images:['https://cdn.test/a.jpg']});assert.ok(edit.endpoint.endsWith('/video-edit'));assert.equal(edit.input.video_url,'https://cdn.test/a.mp4');assert.equal('duration' in edit.input,false);assert.equal('aspect_ratio' in edit.input,false);assert.deepEqual(edit.input.image_urls,['https://cdn.test/a.jpg']);
  for(const url of ['asset://abc','blob:video','data:image/png;base64,YWJj'])assert.throws(()=>P.buildHiggsfieldRequest({...p,reference_images:[url]}));
  assert.throws(()=>P.buildHiggsfieldRequest({...p,duration:-1}));
 });
