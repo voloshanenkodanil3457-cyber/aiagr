@@ -166,6 +166,17 @@ test('Higgsfield never submits without cost consent and keeps the active BytePlu
  assert.equal(c.MagicDomain.estimateCost({provider:'higgsfield',seconds:5,resolution:'720p'}),null);
 });
 
+test('Higgsfield missing or unavailable estimate does not block an explicitly confirmed generation',async()=>{
+ for(const estimate of [()=>Response.json({error:'No price'},{status:502}),()=>Response.json({credits:'10'}),()=>{throw new TypeError('Failed to fetch');}]){
+  const {s,c}=app('user');s.setHiggsfieldGateway('https://hf.test');c.__test.api.auth={currentUser:{getIdToken:async()=>'firebase-only'}};
+  c.localStorage.setItem('magic.job.v3.alice.hf-no-price',JSON.stringify({id:'hf-no-price',uid:'alice',provider:'higgsfield',status:'queued'}));
+  let submits=0;c.fetch=async url=>{if(url.endsWith('/estimate'))return estimate();submits++;return Response.json({id:'hf-request',taskToken:'receipt'});};
+  await assert.rejects(s.submitGeneration('hf-no-price',{prompt:'Scene'},'higgsfield'),/Подтверди/);assert.equal(submits,0);
+  await s.submitGeneration('hf-no-price',{prompt:'Scene',higgsfieldConfirmed:true},'higgsfield');assert.equal(submits,1);
+  const row=await s.getVideo('hf-no-price');assert.equal(row.estimatedCost,null);assert.equal(row.pricingStatus,'unavailable');assert.equal(row.requestId,'hf-request');
+ }
+});
+
 test('Higgsfield completed quote contributes to cost totals as an estimate, failed quotes do not',async()=>{
  const {s,c}=app('user');const D=c.MagicDomain;
  const rows=[{provider:'byteplus',status:'completed',cost:1,costSource:'api'},{provider:'higgsfield',status:'completed',cost:2.3456,costSource:'api_estimate'},{provider:'higgsfield',status:'failed',estimatedCost:9},{provider:'higgsfield',status:'completed',cost:null}];

@@ -1020,7 +1020,18 @@ window.Studio=(()=>{
   async function submitGeneration(videoId,payload,provider=activeVideoProvider()){
     if(provider!=='higgsfield'&&provider!==activeVideoProvider())throw Object.assign(new Error('Активный провайдер изменился. Запусти генерацию заново с текущим подключением.'),{httpStatus:400});
     const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи API в My settings → Integrations.');
-    if(provider==='higgsfield'){if(payload.higgsfieldConfirmed!==true)throw Object.assign(Error('Подтверди повышенную стоимость Higgsfield.'),{httpStatus:409});const quote=await higgsfieldRequest('estimate',{payload});if(quote.usd==null||!Number.isFinite(Number(quote.usd))||Number(quote.usd)<0)throw Error('Не получена стоимость Higgsfield. Генерация не отправлена.');await updateVideo(videoId,{estimatedCost:Number(quote.usd),estimateSource:'api_estimate',estimatedAt:now(),estimatedCredits:quote.credits??null});const data=await higgsfieldRequest('submit',{payload,confirmed:true});return updateVideo(videoId,{requestId:data.id,taskToken:data.taskToken,transport:'worker',gatewayUrl:credentials.workerUrl,status:'queued',pct:0});}
+    if(provider==='higgsfield'){
+      if(payload.higgsfieldConfirmed!==true)throw Object.assign(Error('Подтверди повышенную стоимость Higgsfield.'),{httpStatus:409});
+      // Pricing is optional accounting metadata, never proof that a generation was submitted.
+      let quote=null;
+      try{quote=await higgsfieldRequest('estimate',{payload});}catch(error){
+        if([400,401,403,409,422].includes(error.httpStatus))throw error;
+      }
+      const priced=quote?.usd!=null&&Number.isFinite(Number(quote.usd))&&Number(quote.usd)>=0;
+      await updateVideo(videoId,{estimatedCost:priced?Number(quote.usd):null,estimateSource:priced?'api_estimate':null,estimatedAt:now(),estimatedCredits:priced?(quote.credits??null):null,pricingStatus:priced?'estimated':'unavailable'});
+      const data=await higgsfieldRequest('submit',{payload,confirmed:true});
+      return updateVideo(videoId,{requestId:data.id,taskToken:data.taskToken,transport:'worker',gatewayUrl:credentials.workerUrl,status:'queued',pct:0});
+    }
     if(provider==='openrouter'){
       const request=await prepareVideoRequest(provider,payload),data=await openRouterRequest('submit',{body:{payload:request},credentials});
       if(!data.id)throw new Error('OpenRouter не вернул ID задачи. Проверь историю перед новым запуском.');
