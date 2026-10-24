@@ -39,6 +39,25 @@ test('Assets queries all results for superuser and only owned results for user',
   assert.equal((await user.s.listVideos()).length,0);
   assert.deepEqual(JSON.parse(JSON.stringify(user.c.__qa.get('metrics',{}).queries[0].constraints)),[{field:'uid',op:'==',value:'alice'}]);
 });
+
+test('Simple Mode is one stable private Space per user, cannot be renamed/deleted/duplicated and persists its draft',async()=>{
+ const a=app('user','alice');let spaces=await a.s.listSpaces();assert.equal(spaces.filter(x=>x.system==='simple').length,1);assert.equal(spaces[0].id,'simple_alice');
+ await Promise.all([a.s.ensureSimpleSpace(),a.s.ensureSimpleSpace()]);spaces=await a.s.listSpaces();assert.equal(spaces.filter(x=>x.id==='simple_alice').length,1);
+ for(const action of ['deleteSpace','duplicateSpace','renameSpace'])await assert.rejects(a.s[action]('simple_alice','Other'),/Simple Mode/);
+ await a.s.saveSpaceState('simple_alice',{savedAt:1,state:{nodes:[],edges:[],simpleDraft:{prompt:'private idea',ratio:'9:16',resolution:'480p'}},assets:[]});
+ assert.equal(a.docs()['spaces/simple_alice'].canvasState.state.simpleDraft.prompt,'private idea');
+ const b=app('user','bob');await b.s.ensureSimpleSpace();assert.equal(b.s.simpleSpaceId(),'simple_bob');assert.equal((await b.s.listSpaces()).some(x=>x.id==='simple_alice'),false);
+ await assert.rejects(b.s.getSpace('first'),/владельцу/);
+});
+
+test('Simple Mode explicitly routes text-only BytePlus without changing the global provider',async()=>{
+ const {s,c}=app('user');c.localStorage.setItem('magic.credentials.alice.seedanceProvider','openrouter');let calls=0;
+ c.fetch=async(url,init)=>{calls++;assert.match(String(url),/contents\/generations\/tasks$/);const body=JSON.parse(init.body);assert.equal(body.content.length,1);assert.equal('simpleMode' in body,false);return Response.json({id:'byte-simple'});};
+ const row=await s.createVideoRecord({spaceId:s.simpleSpaceId(),provider:'byteplus',seconds:5,resolution:'480p'}),payload={simpleMode:true,prompt:'Bird flying',duration:5,resolution:'480p',ratio:'9:16',reference_images:[],reference_videos:[]};
+ await assert.rejects(s.submitGeneration(row.id,{...payload,reference_images:['https://cdn.test/a.jpg']},'byteplus'),/только по тексту/);assert.equal(calls,0);
+ const submitted=await s.submitGeneration(row.id,payload,'byteplus');assert.equal(submitted.requestId,'byte-simple');assert.equal(calls,1);assert.equal(s.activeVideoProvider(),'openrouter');
+ const other=await s.createVideoRecord({spaceId:'ordinary',provider:'byteplus'});await assert.rejects(s.submitGeneration(other.id,payload,'byteplus'),/Активный провайдер/);assert.equal(calls,1);
+});
 test('superuser removes another user result, keeps lifetime score and only a minimal replay marker',async()=>{
   const a=app();const score=a.docs()['leaderboard/bob'];await a.s.permanentlyDeleteVideo('bob-video');
   assert.equal(a.docs()['videos/bob-video'],undefined);

@@ -23,11 +23,11 @@ export default {async fetch(request,env){
   const member=await fetch(`https://firestore.googleapis.com/v1/projects/${project}/databases/(default)/documents/users/${encodeURIComponent(uid)}`,{headers:{Authorization:request.headers.get('Authorization')}});
   if(!member.ok||!['user','superuser'].includes((await member.json()).fields?.role?.stringValue))fail('Нужен профиль команды.',403);
   if(['/higgsfield/improve-prompt','/higgsfield/titles'].includes(url.pathname)){const raw=await request.text();if(raw.length>20000)fail('Слишком длинный запрос.');let input;try{input=JSON.parse(raw);}catch{fail('Неверный запрос.');}return json(await (url.pathname.endsWith('/titles')?generationTitles:improvePrompt)(input,env,uid));}
-  if(url.pathname==='/higgsfield/config')return json({ready:!!env.HF_CREDENTIALS,model:'Seedance 2.5',models:['bytedance/seedance-2.5','bytedance/seedance-2.0'],paid:true});
+  if(url.pathname==='/higgsfield/config')return json({ready:!!env.HF_CREDENTIALS,model:'Seedance 2.5',models:['bytedance/seedance-2.5','bytedance/seedance-2.0','kling-video/v4.0'],paid:true});
   if(!env.HF_CREDENTIALS)fail('Добавь HF_CREDENTIALS в Secrets этого Worker. Значение не должно быть в браузере.',503);
   let body;try{body=await request.json();}catch{fail('Неверный JSON.');}
   if(url.pathname==='/higgsfield/upload-url'){
-   if(!['image/jpeg','image/png','image/webp'].includes(body.content_type))fail('Для Higgsfield выбери JPG, PNG или WebP.');
+   if(!['image/jpeg','image/png','image/webp','audio/mpeg','audio/wav','audio/x-wav','audio/mp4','audio/ogg'].includes(body.content_type))fail('Для Higgsfield выбери JPG, PNG, WebP или MP3/WAV/M4A/OGG.');
    const result=await upstream('/files/generate-upload-url',env,{method:'POST',body:{content_type:body.content_type}});
    for(const key of ['upload_url','public_url'])if(!/^https:\/\//.test(result[key]||''))fail('Higgsfield не вернул URL загрузки.',502);
    return json({upload_url:result.upload_url,public_url:result.public_url,upload_headers:result.upload_headers||{}});
@@ -37,7 +37,7 @@ export default {async fetch(request,env){
    if(body.confirmed!==true)fail('Нужно подтверждение повышенной стоимости.',409);
    const spec=P.buildHiggsfieldRequest(body.payload),data=await upstream('/'+spec.endpoint,env,{method:'POST',body:spec.input});
    if(typeof data.request_id!=='string'||!/^[a-zA-Z0-9_-]{1,180}$/.test(data.request_id))fail('Запуск не подтверждён: проверь Higgsfield Requests перед повторением.',502);
-   return json({id:data.request_id,status:data.status,taskToken:await issueTaskToken(uid,data.request_id,signing(env))});
+   return json({id:data.request_id,status:data.status,model:spec.endpoint,taskToken:await issueTaskToken(uid,data.request_id,signing(env))});
   }
   if(url.pathname==='/higgsfield/status'){
    const id=String(body.taskId||'');if(!/^[a-zA-Z0-9_-]{1,180}$/.test(id))fail('Неверный ID задачи.');

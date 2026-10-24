@@ -42,3 +42,14 @@ test('Higgsfield routing requires HTTPS inputs and face fallback is limited to e
  for(const url of ['asset://abc','blob:video','data:image/png;base64,YWJj'])assert.throws(()=>P.buildHiggsfieldRequest({...p,reference_images:[url]}));
  assert.throws(()=>P.buildHiggsfieldRequest({...p,duration:-1}));
 });
+
+test('Simple Mode honors Seedance bitrate/aspect ratio, omits unsupported keys and routes Kling separately',()=>{
+ const p={prompt:'A scene',duration:5,resolution:'480p',aspect_ratio:'9:16',bitrate_mode:'standard',forceReference:true,reference_images:['https://cdn.test/a.jpg']};
+ const seed=P.buildHiggsfieldRequest(p);assert.equal(seed.endpoint,'bytedance/seedance-2.5/reference-to-video');assert.equal(seed.input.aspect_ratio,'9:16');assert.equal(seed.input.bitrate_mode,'standard');assert.equal('video_urls' in seed.input,false);assert.equal('output_format' in seed.input,false);
+ const one=P.buildHiggsfieldRequest({...p,forceReference:false});assert.equal('output_format' in one.input,false);
+ const audio=P.buildHiggsfieldRequest({...p,reference_audio:['https://cdn.test/a.mp3']});assert.deepEqual(audio.input.audio_urls,['https://cdn.test/a.mp3']);
+ const old=P.buildHiggsfieldRequest({...p,model:'bytedance/seedance-2.0'});assert.equal('bitrate_mode' in old.input,false);
+ const k={...p,model:'kling-video/v4.0',resolution:'720p',generate_audio:false};const kling=P.buildHiggsfieldRequest(k);assert.equal(kling.endpoint,'kling-video/v4.0/reference-to-video');assert.equal('bitrate_mode' in kling.input,false);assert.equal('generate_audio' in kling.input,false);assert.equal(kling.input.aspect_ratio,'9:16');
+ assert.equal(P.buildHiggsfieldRequest({...k,reference_images:[]}).endpoint,'kling-video/v4.0/text-to-video');
+ assert.throws(()=>P.buildHiggsfieldRequest({...k,resolution:'480p'}));assert.throws(()=>P.buildHiggsfieldRequest({...k,reference_audio:['https://cdn.test/a.mp3']}));assert.throws(()=>P.buildHiggsfieldRequest({...k,reference_images:['blob:local']}));
+});

@@ -85,6 +85,14 @@ dialog.studio-dialog{width:min(530px,calc(100vw - 30px));border:1px solid var(--
 
 .billing-video{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:16px 0;border-bottom:1px solid var(--border,#333);min-width:0}.billing-video small{display:block;overflow-wrap:anywhere}.billing-video>div{min-width:0}.billing-editor{grid-column:1/-1}.billing-editor form{display:grid;gap:12px;margin-top:12px;max-width:640px}.billing-editor label{display:grid;gap:6px}.billing-editor input{width:100%;min-width:0;padding:10px;border-radius:8px;background:var(--surface,#222);color:inherit;border:1px solid var(--border,#444)}#cost-total{overflow-wrap:anywhere;font-size:clamp(16px,2vw,28px)}
 
+/* Personal Simple Mode */
+.sm-title{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:24px}.sm-title h1{margin:0 0 5px}.sm-title p{margin:4px 0;color:var(--muted)}.sm-private{font-size:12px;color:var(--muted);border:1px solid var(--border);border-radius:30px;padding:8px 12px}.sm-workspace{display:grid;grid-template-columns:340px minmax(0,1fr);gap:24px;align-items:start}.sm-controls{padding:14px;background:var(--panel);border:1px solid var(--border);border-radius:18px;display:grid;gap:12px;min-width:0}.sm-mode-heading{display:flex;gap:10px;align-items:center;padding:5px 2px 13px;border-bottom:1px solid var(--border)}.sm-mode-icon{font-size:26px;color:#159dff}.sm-mode-heading strong,.sm-mode-heading small{display:block}.sm-mode-heading small{margin-top:4px;color:var(--muted);font-size:11px}.sm-block{background:var(--panel-2);border-radius:12px;padding:12px;min-width:0}.sm-section-title{display:flex;justify-content:space-between;font-size:12px;margin-bottom:10px}.sm-section-title span{color:var(--muted)}.sm-reference-drop{border:1px dashed var(--border);border-radius:10px;min-height:140px}.sm-reference-drop.dragging{border-color:#159dff;background:#159dff15}.sm-upload{cursor:pointer;text-align:center;padding:18px 8px;display:block}.sm-upload #sm-ref-empty{display:grid;gap:8px}.sm-upload b{font-size:23px;color:var(--muted)}.sm-upload strong{font-size:13px}.sm-upload small{font-size:11px;color:var(--muted)}.sm-add-label{display:block;font-size:12px;color:#159dff;margin-top:12px}.sm-reference-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:6px}.sm-reference-list:empty{padding:0}.sm-reference{position:relative;min-width:0;height:88px;border-radius:8px;overflow:hidden;background:var(--bg)}.sm-reference img,.sm-reference video{width:100%;height:100%;object-fit:cover}.sm-reference audio{width:100%;height:50px}.sm-ref-alias{position:absolute;left:4px;bottom:4px;background:#080808c0;color:white;border-radius:4px;padding:2px 4px;font-size:9px;pointer-events:none}.sm-ref-remove{position:absolute;right:3px;top:3px;width:23px;height:23px;background:#111c;color:white;border:1px solid #666;border-radius:50%;cursor:pointer;opacity:0}.sm-reference:hover .sm-ref-remove,.sm-reference:focus-within .sm-ref-remove{opacity:1}.sm-url{margin-top:10px;font-size:11px;color:var(--muted)}.sm-url input{width:100%;margin:10px 0;padding:8px;background:var(--bg);color:inherit;border:1px solid var(--border);border-radius:8px}.sm-url small{display:block;margin-top:8px}.sm-prompt-block label{font-size:12px;font-weight:650}.sm-prompt-block textarea{display:block;width:100%;min-height:150px;padding:12px 0;background:transparent;color:var(--text);border:0;resize:vertical;font:inherit;font-size:13px;line-height:1.5}.sm-prompt-block textarea:focus{outline:0}.sm-prompt-block:focus-within{box-shadow:0 0 0 1px #159dff}.sm-prompt-tools{display:flex;flex-wrap:wrap;gap:6px}.sm-prompt-tools .pill{font-size:11px;padding:6px 8px;min-width:0}.sm-model-label{display:grid;gap:6px;font-size:11px;color:var(--muted);padding:10px 12px;background:var(--panel-2);border-radius:10px}.sm-model-label select{width:100%;background:transparent;border:0;color:var(--text);font-size:12px;font-weight:600;min-width:0}.sm-model-label option{background:var(--panel);color:var(--text)}.sm-settings{display:grid;grid-template-columns:1fr 1fr;gap:8px}.sm-setting{position:relative;background:var(--panel-2);border-radius:10px;min-width:0}.sm-setting summary{list-style:none;cursor:pointer;padding:10px 12px;display:grid;grid-template-columns:1fr auto;gap:5px}.sm-setting summary::-webkit-details-marker{display:none}.sm-setting summary small{color:var(--muted);grid-column:1;font-size:11px}.sm-setting summary strong{grid-column:1;font-size:13px}.sm-setting summary span{grid-column:2;grid-row:1/3;align-self:center;color:var(--muted)}.sm-setting-popover{position:absolute;z-index:20;top:calc(100% + 6px);left:0;width:272px;max-width:calc(100vw - 112px);padding:16px;background:var(--panel-3);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 40px #0008}.sm-setting:nth-child(even) .sm-setting-popover{left:auto;right:0}.sm-setting-popover label{display:block;color:var(--muted);font-size:12px;margin-bottom:12px}.sm-setting-popover input,.sm-setting-popover select{width:100%;accent-color:#159dff}.sm-setting-popover select{padding:10px;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:8px}.sm-model-help,.sm-cost,.sm-status{margin:0;font-size:11px;color:var(--muted);line-height:1.5;overflow-wrap:anywhere}.sm-generate{min-height:44px;font-size:14px;font-weight:700;border-radius:10px;width:100%}.sm-cost{text-align:center}.sm-status:empty{display:none}.sm-stage{min-width:0;border:1px solid var(--border);border-radius:18px;padding:24px;min-height:700px;background:var(--bg-soft)}.sm-history-header{display:flex;justify-content:space-between;gap:12px;align-items:center}.sm-history-header h2{margin:4px 0;font-size:18px}.sm-history-header h2 span{color:var(--muted);font-size:14px;margin-left:7px}.sm-welcome{text-align:center;padding:70px 12px 30px}.sm-welcome-mark{display:inline-grid;place-items:center;width:76px;height:76px;border-radius:23px;background:linear-gradient(135deg,#159dff26,#8774ff17);border:1px solid #159dff40;font-size:42px;color:#159dff;margin-bottom:28px}.sm-welcome h2{font-size:clamp(26px,3vw,46px);line-height:1.12;letter-spacing:-1.6px;margin:14px 0}.sm-welcome>p:not(.eyebrow){font-size:13px;color:var(--muted);line-height:1.7}.sm-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:44px 0}.sm-steps article{padding:18px 8px;border-top:1px solid var(--border);display:grid;gap:12px;text-align:left}.sm-steps b{font-size:21px;font-weight:500;color:#159dff}.sm-steps strong{font-size:13px}.sm-steps small{font-size:11px;color:var(--muted);line-height:1.5}.sm-results{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));gap:16px;margin-top:22px}.sm-result{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;min-width:0;display:grid;gap:10px;align-content:start}.sm-result-heading{display:flex;justify-content:space-between;gap:8px;font-size:12px}.sm-result-heading span{font-size:11px;color:var(--muted)}.sm-result video{width:100%;max-height:380px;background:#000;border-radius:8px}.sm-result-pending{min-height:180px;display:grid;place-items:center;text-align:center;color:var(--muted);font-size:12px;background:var(--bg);border-radius:8px}.sm-result-prompt{font-size:12px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin:0}.sm-result small{font-size:10px;overflow-wrap:anywhere}.error-text{color:#ff6577!important}.sm-reference [hidden],.sm-controls [hidden],.sm-stage [hidden]{display:none!important}
+@media(max-width:1150px){.sm-workspace{grid-template-columns:310px minmax(0,1fr);gap:16px}.sm-stage{padding:18px}.sm-steps{gap:8px}}
+@media(max-width:880px){.sm-workspace{grid-template-columns:1fr}.sm-controls{max-width:600px;width:100%;margin:auto}.sm-stage{min-height:400px}.sm-welcome{padding-top:30px}.sm-title{align-items:start}.sm-title>.sm-private{font-size:10px}.sm-ref-remove{opacity:1}}
+
+.sm-controls{position:sticky;top:70px;max-height:calc(100vh - 86px);overflow-y:auto;scrollbar-width:thin;gap:10px}.sm-mode-heading{padding-bottom:9px}.sm-block{padding:10px}.sm-reference-drop{min-height:102px}.sm-upload{padding:10px 6px}.sm-upload #sm-ref-empty{gap:6px}.sm-upload small{font-size:10px}.sm-prompt-block textarea{height:120px;min-height:100px}.sm-prompt-tools .pill{border:1px solid var(--border);border-radius:7px;background:var(--panel-3);color:var(--text);cursor:pointer;font-weight:600}.sm-prompt-tools .pill:hover{border-color:#159dff}.sm-submit{position:sticky;bottom:-14px;background:var(--panel);padding:10px 0 14px;display:grid;gap:7px;box-shadow:0 -10px 15px var(--panel);z-index:5}.sm-url .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+@media(max-width:880px){.sm-controls{position:relative;top:auto;max-height:none;overflow:visible}.sm-submit{position:static;box-shadow:none;padding-bottom:0}}
+
 /* Glass blue/violet cursor set based on the supplied visual reference. */
 @media (pointer: fine) {
 :root {
@@ -180,7 +188,7 @@ button:disabled, input:disabled, select:disabled, textarea:disabled, [aria-disab
 @media(max-width:540px){.camera-grid{grid-template-columns:1fr;}.camera-library-header{padding:18px;}.camera-library-heading h1{font-size:25px;}.camera-filter{padding:8px;}.media-preview-shell{padding:10px;}.media-preview-info{grid-template-columns:1fr;gap:3px;}.media-preview-info dd{margin-bottom:10px;}.media-preview-actions .ui-button{font-size:11px;}.provider-selection strong{margin-left:0;}.integration-model-row{display:block;}.integration-model-row code{display:block;margin-top:6px;}.integration-help{margin-left:0;}}
 </style></head><body data-page="placeholder" data-module="Flows"><aside class="app-sidebar">
       <a class="brand" href="index.html"><span class="brand-logo"></span><span class="brand-copy"><strong>Magic</strong><small>AI Ad Creatives</small></span></a>
-      <section class="nav-group"><span class="nav-label">CREATE</span><nav class="app-nav"><a href="index.html"><span class="nav-icon">▦</span><span>Dashboard</span></a><a href="spaces.html"><span class="nav-icon">⌘</span><span>Canvas</span></a><a href="flows.html" aria-current="page"><span class="nav-icon">✣</span><span>Flows</span></a><a href="assets.html"><span class="nav-icon">▧</span><span>Assets</span></a><a href="editor.html"><span class="nav-icon">✂</span><span>Editor</span></a><a href="captions.html"><span class="nav-icon">▣</span><span>Captions</span></a></nav></section><section class="nav-group"><span class="nav-label">ORGANIZE</span><nav class="app-nav"><a href="projects.html"><span class="nav-icon">□</span><span>Projects</span></a><a href="presets.html"><span class="nav-icon">▤</span><span>Templates</span></a><a href="modifiers.html"><span class="nav-icon">☷</span><span>Camera movement</span></a></nav></section><section class="nav-group"><span class="nav-label">RESULTS</span><nav class="app-nav"><a href="cost.html"><span class="nav-icon">$</span><span>Cost</span></a></nav></section><section class="nav-group"><span class="nav-label">ACCOUNT</span><nav class="app-nav"><a href="integrations.html"><span class="nav-icon">⚙</span><span>My settings</span></a><a href="users.html" data-superuser-only hidden><span class="nav-icon">♙</span><span>Users</span></a></nav></section>
+      <section class="nav-group"><span class="nav-label">CREATE</span><nav class="app-nav"><a href="index.html"><span class="nav-icon">▦</span><span>Dashboard</span></a><a href="spaces.html"><span class="nav-icon">⌘</span><span>Canvas</span></a><a href="sm-video.html"><span class="nav-icon">▷</span><span>SM video</span></a><a href="flows.html" aria-current="page"><span class="nav-icon">✣</span><span>Flows</span></a><a href="assets.html"><span class="nav-icon">▧</span><span>Assets</span></a><a href="editor.html"><span class="nav-icon">✂</span><span>Editor</span></a><a href="captions.html"><span class="nav-icon">▣</span><span>Captions</span></a></nav></section><section class="nav-group"><span class="nav-label">ORGANIZE</span><nav class="app-nav"><a href="projects.html"><span class="nav-icon">□</span><span>Projects</span></a><a href="presets.html"><span class="nav-icon">▤</span><span>Templates</span></a><a href="modifiers.html"><span class="nav-icon">☷</span><span>Camera movement</span></a></nav></section><section class="nav-group"><span class="nav-label">RESULTS</span><nav class="app-nav"><a href="cost.html"><span class="nav-icon">$</span><span>Cost</span></a></nav></section><section class="nav-group"><span class="nav-label">ACCOUNT</span><nav class="app-nav"><a href="integrations.html"><span class="nav-icon">⚙</span><span>My settings</span></a><a href="users.html" data-superuser-only hidden><span class="nav-icon">♙</span><span>Users</span></a></nav></section>
       <div class="sidebar-user"><small>USER</small><span data-user-email>—</span></div>
     </aside><header class="app-topbar"><span></span><span class="topbar-spacer"></span><div class="topbar-actions"><button class="theme-button" data-theme-toggle title="Сменить тему">★ <span data-theme-state>Dark</span></button><button id="shell-avatar" class="avatar-button" data-user-avatar aria-label="Профиль">M</button></div></header><div id="drawer-backdrop" class="drawer-backdrop"></div>
     <aside id="profile-drawer" class="profile-drawer" aria-label="Профиль">
@@ -313,27 +321,46 @@ window.MagicDomain = (() => {
     return kind==='image'&&/^data:image\/(jpeg|png|webp|bmp|tiff|gif|heic|heif);base64,[A-Za-z0-9+/]+={0,2}$/.test(url);
   }
   function isFaceRejection(error){return /may contain (?:a )?real person|PrivacyInformation[.:_-]*RealPerson|real.person.{0,70}(?:not supported|not allowed|prohibit)|(?:face|portrait).{0,40}(?:verification required|authorization required)/i.test(String(error||''));}
-  function higgsfieldModel(value){const model=value||'bytedance/seedance-2.5';if(!['bytedance/seedance-2.5','bytedance/seedance-2.0'].includes(model))fail('Неизвестная модель Higgsfield.');return model;}
+  function higgsfieldModel(value){const model=value||'bytedance/seedance-2.5';if(!['bytedance/seedance-2.5','bytedance/seedance-2.0','kling-video/v4.0'].includes(model))fail('Неизвестная модель Higgsfield.');return model;}
   function buildHiggsfieldRequest(p={}){
-    const model=higgsfieldModel(p.model),maxDuration=model.endsWith('2.0')?15:30;
-    const images=p.reference_images||[],videos=p.reference_videos||[],prompt=String(p.prompt||'').trim();
+    const model=higgsfieldModel(p.model);if(model==='kling-video/v4.0')return buildKlingRequest(p);
+    const maxDuration=model.endsWith('2.0')?15:30;
+    const images=p.reference_images||[],videos=p.reference_videos||[],audio=p.reference_audio||[],prompt=String(p.prompt||'').trim();
     if(!prompt||prompt.length>32000)fail('Добавь промпт до 32000 символов.');
-    if(!Array.isArray(images)||!Array.isArray(videos)||images.length+videos.length>15)fail('Максимум 15 референсов.');
-    if([...images,...videos].some(u=>typeof u!=='string'||!source(u,'video')))fail('Higgsfield нужны публичные HTTPS-референсы.');
+    if(!Array.isArray(images)||!Array.isArray(videos)||!Array.isArray(audio)||images.length+videos.length+audio.length>15)fail('Максимум 15 референсов.');
+    if([...images,...videos,...audio].some(u=>typeof u!=='string'||!source(u,'video')))fail('Higgsfield нужны публичные HTTPS-референсы.');
     const duration=Number(p.duration),ratio=p.aspect_ratio||p.ratio,mode=p.taskMode||p.omni_reference_task_type||'auto',editing=model.endsWith('2.5')&&videos.length>0&&['auto','edit'].includes(mode);
     if(mode==='edit'&&!videos.length)fail('Для редактирования Higgsfield добавь исходное видео.');
     if(mode==='extend')fail('Продление через Higgsfield пока не подключено. Выбери новое видео или редактирование.');
     if(!Number.isInteger(duration)||duration<4||duration>maxDuration)fail('Для выбранной модели Higgsfield длина: 4–'+maxDuration+' секунд.');
     if(!['16:9','4:3','1:1','3:4','9:16','21:9'].includes(ratio))fail('Для Higgsfield выбери явный формат видео.');
     if(!['480p','720p','1080p'].includes(p.resolution))fail('Выбери разрешение Higgsfield.');
-    const input={prompt,duration,resolution:p.resolution,output_format:'mp4',generate_audio:p.generate_audio!==false};
+    if(model.endsWith('2.0')&&(images.length>9||videos.length>3||audio.length>3))fail('Seedance 2.0: до 9 изображений, 3 видео и 3 аудио.');
+    if(audio.length&&!images.length&&!videos.length&&model.endsWith('2.0'))fail('Для Seedance 2.0 к аудио нужен фото- или видеореференс.');
+    const input={prompt,duration,resolution:p.resolution,generate_audio:p.generate_audio!==false};
+    if(model.endsWith('2.5')){if(p.bitrate_mode!==undefined&&!['standard','high'].includes(p.bitrate_mode))fail('Выбери High или Standard.');if(p.bitrate_mode)input.bitrate_mode=p.bitrate_mode;}
+    if(audio.length)input.audio_urls=audio;
     if(model.endsWith('2.0'))delete input.output_format;
     let endpoint=model+'/text-to-video';
     if(editing){endpoint=model+'/video-edit';input.video_url=videos[0];if(images.length)input.image_urls=images;if(videos.length>1)input.video_urls=videos.slice(1);delete input.duration;}
-    else if(videos.length||images.length>1){endpoint=model+'/reference-to-video';input.image_urls=images;input.video_urls=videos;input.aspect_ratio=ratio;}
+    else if(videos.length||images.length>1||audio.length||p.forceReference&&images.length){endpoint=model+'/reference-to-video';if(images.length)input.image_urls=images;if(videos.length)input.video_urls=videos;input.aspect_ratio=ratio;}
     else if(images.length){endpoint=model+'/image-to-video';input.image_url=images[0];}
-    else input.aspect_ratio=ratio;
+    else {input.aspect_ratio=ratio;if(model.endsWith('2.5'))input.output_format='mp4';}
     return {endpoint,input};
+  }
+  function buildKlingRequest(p={}){
+    const prompt=String(p.prompt||'').trim(),images=p.reference_images||[],videos=p.reference_videos||[],audio=p.reference_audio||[];
+    if(!prompt||prompt.length>32000)fail('Добавь промпт до 32000 символов.');
+    if(!Array.isArray(images)||!Array.isArray(videos)||!Array.isArray(audio)||images.length>10||videos.length>5||audio.length)fail('Kling 4.0: до 10 изображений и 5 видео; аудиореференсы не поддерживаются.');
+    if([...images,...videos].some(url=>!source(url,'video')))fail('Kling нужны публичные HTTPS-референсы.');
+    const duration=Number(p.duration),ratio=p.aspect_ratio||p.ratio;
+    if(!Number.isInteger(duration)||duration<3||duration>30)fail('Kling 4.0: длительность 3–30 секунд.');
+    if(!['720p','1080p'].includes(p.resolution))fail('Kling 4.0: выбери 720p или 1080p.');
+    if(!['21:9','16:9','9:16','1:1'].includes(ratio))fail('Kling 4.0: выбери 21:9, 16:9, 9:16 или 1:1.');
+    if(['edit','extend'].includes(p.taskMode))fail('В Simple Mode Kling создаёт новое видео по референсам.');
+    const input={prompt,duration,resolution:p.resolution,aspect_ratio:ratio};
+    if(images.length)input.image_urls=images;if(videos.length)input.video_urls=videos;
+    return {endpoint:'kling-video/v4.0/'+(images.length||videos.length?'reference-to-video':'text-to-video'),input};
   }
   function byteplusTask(p={}){
     const mode=p.omni_reference_task_type||'auto',videos=p.reference_videos||[],hasVideo=Array.isArray(videos)&&videos.length>0;
@@ -737,10 +764,18 @@ window.Studio=(()=>{
   function rememberVideo(row){write(jobsPrefix()+row.id,row);return row;}
   function own(row){if(!row||row.ownerUid!==cache.user.uid)throw new Error('Этот Space доступен только его владельцу.');return row;}
   async function ownedSpace(id){return ownerCache.get(id)||own(await getSpace(id));}
+  const simpleSpaceId=()=> 'simple_'+cache.user.uid;
+  const isSimpleSpace=id=>id===simpleSpaceId();
+  function simpleSpace(){return {id:simpleSpaceId(),ownerUid:cache.user.uid,name:'Simple Mode',system:'simple',nodeCount:0,edgeCount:0,createdAt:0,updatedAt:0,canvasState:null};}
+  async function ensureSimpleSpace(){
+    assertFirebase();const row=simpleSpace(),ref=api.fsM.doc(api.db,'spaces',row.id);let result=row;
+    await api.fsM.runTransaction(api.db,async tx=>{const snap=await tx.get(ref);if(snap.exists())result=own({...snap.data(),id:snap.id,name:'Simple Mode',system:'simple'});else{const {id,...data}=row;tx.set(ref,{...data,createdAt:now(),updatedAt:now()});}});
+    ownerCache.set(result.id,result);return result;
+  }
   async function listSpaces(){
     assertFirebase();const {collection,getDocs,query,where}=api.fsM;
     const snap=await getDocs(query(collection(api.db,'spaces'),where('ownerUid','==',cache.user.uid)));
-    return snap.docs.map(d=>{const s={...d.data(),id:d.id};ownerCache.set(s.id,s);return s;}).sort((a,b)=>timestamp(b.updatedAt)-timestamp(a.updatedAt));
+    const rows=snap.docs.map(d=>{const s={...d.data(),id:d.id};ownerCache.set(s.id,s);return s;});const builtIn=rows.find(s=>isSimpleSpace(s.id));if(builtIn){builtIn.name='Simple Mode';builtIn.system='simple';}else rows.unshift(simpleSpace());return rows.sort((a,b)=>Number(isSimpleSpace(b.id))-Number(isSimpleSpace(a.id))||timestamp(b.updatedAt)-timestamp(a.updatedAt));
   }
   async function createSpace(name='Untitled space'){
     assertFirebase();const ref=api.fsM.doc(api.fsM.collection(api.db,'spaces'));
@@ -751,14 +786,16 @@ window.Studio=(()=>{
     assertFirebase();const snap=await api.fsM.getDoc(api.fsM.doc(api.db,'spaces',id));
     if(!snap.exists())return null;const row=own({...snap.data(),id:snap.id});ownerCache.set(id,row);return row;
   }
-  async function renameSpace(id,name){await ownedSpace(id);name=String(name||'').trim().slice(0,80);if(!name)throw new Error('Укажи название.');await api.fsM.updateDoc(api.fsM.doc(api.db,'spaces',id),{name,updatedAt:now()});ownerCache.get(id).name=name;}
+  async function renameSpace(id,name){if(isSimpleSpace(id))throw new Error('Simple Mode нельзя переименовать.');await ownedSpace(id);name=String(name||'').trim().slice(0,80);if(!name)throw new Error('Укажи название.');await api.fsM.updateDoc(api.fsM.doc(api.db,'spaces',id),{name,updatedAt:now()});ownerCache.get(id).name=name;}
   async function duplicateSpace(id){
+    if(isSimpleSpace(id))throw new Error('Simple Mode уже есть у каждого пользователя.');
     const source=await ownedSpace(id),local=read(sessionKey(id),null);
     const copy=await createSpace((source.name||'Space')+' copy');
     const state=local&&local.savedAt>(source.canvasState?.savedAt||0)?local:source.canvasState;
     if(state)await saveSpaceState(copy.id,state);return copy;
   }
   async function deleteSpace(id){
+    if(isSimpleSpace(id))throw new Error('Simple Mode — постоянное личное пространство.');
     await ownedSpace(id);await api.fsM.deleteDoc(api.fsM.doc(api.db,'spaces',id));
     ownerCache.delete(id);localStorage.removeItem(sessionKey(id));localStorage.removeItem(pendingKey(id));
   }
@@ -772,9 +809,9 @@ window.Studio=(()=>{
     write(sessionKey(id),payload);write(pendingKey(id),{savedAt:payload.savedAt});
   }
   async function storeLocalAsset(file,spaceId,assetId=uid()){
-    if(!file.type.startsWith('image/')&&!file.type.startsWith('video/'))throw new Error('Поддерживаются изображения и видео.');
+    if(!file.type.startsWith('image/')&&!file.type.startsWith('video/')&&!file.type.startsWith('audio/'))throw new Error('Поддерживаются изображения, видео и аудио.');
     if(file.size>250*1024*1024)throw new Error('Файл больше 250 МБ.');
-    const meta={id:assetId,uid:cache.user.uid,spaceId,name:file.name,kind:file.type.startsWith('video/')?'video':'image',mediaType:file.type,size:file.size,createdAt:now(),updatedAt:now(),url:null,storagePath:null};
+    const meta={id:assetId,uid:cache.user.uid,spaceId,name:file.name,kind:file.type.startsWith('video/')?'video':file.type.startsWith('audio/')?'audio':'image',mediaType:file.type,size:file.size,createdAt:now(),updatedAt:now(),url:null,storagePath:null};
     await MagicLocal.put(cache.user.uid,assetId,{file,meta,cloudSaved:false});return {...meta,url:URL.createObjectURL(file),local:true};
   }
   async function hydrateLocalAssets(items){
@@ -788,7 +825,7 @@ window.Studio=(()=>{
   async function storeReferenceUrl(url,spaceId,assetId=uid()){
     const parsed=new URL(url);if(parsed.protocol!=='https:')throw new Error('Нужна публичная HTTPS-ссылка на медиа.');
     const name=decodeURIComponent(parsed.pathname.split('/').pop())||'Reference';
-    const kind=/\.(mp4|mov|webm|m4v|avi)$/i.test(parsed.pathname)?'video':'image';
+    const kind=/\.(mp4|mov|webm|m4v|avi)$/i.test(parsed.pathname)?'video':/\.(mp3|wav|m4a|ogg)$/i.test(parsed.pathname)?'audio':'image';
     const meta={id:assetId,uid:cache.user.uid,spaceId,name,kind,size:0,url:parsed.href,storagePath:null,createdAt:now(),updatedAt:now()};
     await MagicLocal.put(cache.user.uid,assetId,{meta,cloudSaved:false});return meta;
   }
@@ -801,10 +838,10 @@ window.Studio=(()=>{
   }
 
   async function ensureRemoteAsset(item,{provider=activeVideoProvider()}={}){
-    if(provider==='higgsfield'&&item.kind==='image'){
+    if(provider==='higgsfield'&&['image','audio'].includes(item.kind)){
       if(/^https:\/\//.test(item.url||''))return {...item,referenceUrl:item.url};
       const stored=await MagicLocal.get(cache.user.uid,item.id),file=stored?.file;
-      if(!file||file.size>=30*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type))throw Error('Для Higgsfield добавь JPG, PNG или WebP меньше 30 МБ.');
+      if(!file||file.size>=30*1024*1024||!['image/jpeg','image/png','image/webp','audio/mpeg','audio/wav','audio/x-wav','audio/mp4','audio/ogg'].includes(file.type))throw Error('Для Higgsfield добавь JPG, PNG, WebP или аудио MP3/WAV/M4A/OGG меньше 30 МБ.');
       const target=await higgsfieldRequest('upload-url',{content_type:file.type});
       const response=await fetch(target.upload_url,{method:'PUT',headers:target.upload_headers,body:file,credentials:'omit'});
       if(!response.ok)throw Error('Не удалось загрузить референс в Higgsfield.');
@@ -869,7 +906,7 @@ window.Studio=(()=>{
     const row={id:uid(),uid:me.uid,user:me.name,spaceId:data.spaceId||null,spaceName:data.spaceName||'',sourceNodeId:data.sourceNodeId||null,outputNodeId:data.outputNodeId||null,
       prompt:data.prompt||'',provider:data.provider||'byteplus',model:videoModelFor(data.provider,data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
       transport:data.transport||'direct',gatewayUrl:data.gatewayUrl||null,pricingRates:MagicDomain.videoPrices,
-      taskMode:data.taskMode||null,inputVideoSeconds:Number(data.inputVideoSeconds)>0?Number(data.inputVideoSeconds):null,sourceSeconds:Number(data.sourceSeconds)>0?Number(data.sourceSeconds):null,
+      bitrateMode:data.bitrateMode||null,taskMode:data.taskMode||null,inputVideoSeconds:Number(data.inputVideoSeconds)>0?Number(data.inputVideoSeconds):null,sourceSeconds:Number(data.sourceSeconds)>0?Number(data.sourceSeconds):null,
       seconds:Math.max(4,Math.min(30,Number(data.seconds)||8)),referenceCount:Math.max(0,Math.min(15,Number(data.referenceCount)||0)),videoReferenceCount:Math.max(0,Math.min(15,Number(data.videoReferenceCount)||0)),hasRef:Boolean(data.hasRef),refMode:'reference',generateAudio:data.generateAudio!==false,
       status:'queued',pct:0,cost:null,error:null,requestId:null,videoUrl:null,remoteUrl:null,storagePath:null,createdAt:now(),updatedAt:now(),cloudSaved:false};
     return rememberVideo(row);
@@ -1042,7 +1079,11 @@ window.Studio=(()=>{
   }
   function statusName(raw){const s=String(raw||'').toUpperCase();if(['COMPLETED','SUCCEEDED','SUCCESS'].includes(s))return'completed';if(['CANCELLED','CANCELED'].includes(s))return'cancelled';if(['FAILED','ERROR','EXPIRED','NSFW'].includes(s))return'failed';if(['QUEUED','PENDING'].includes(s))return'queued';return'running';}
   async function submitGeneration(videoId,payload,provider=activeVideoProvider()){
-    if(provider!=='higgsfield'&&provider!==activeVideoProvider())throw Object.assign(new Error('Активный провайдер изменился. Запусти генерацию заново с текущим подключением.'),{httpStatus:400});
+    if(provider!=='higgsfield'&&provider!==activeVideoProvider()){
+      const row=payload.simpleMode===true&&provider==='byteplus'?await getVideo(videoId):null;
+      if(!row||row.uid!==cache.user.uid||row.spaceId!==simpleSpaceId()||row.provider!=='byteplus')throw Object.assign(new Error('Активный провайдер изменился. Запусти генерацию заново с текущим подключением.'),{httpStatus:400});
+    }
+    if(payload.simpleMode===true&&provider==='byteplus'&&[payload.reference_images,payload.reference_videos,payload.reference_audio].some(items=>items?.length))throw Object.assign(new Error('BytePlus Simple Mode работает только по тексту.'),{httpStatus:400});
     const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи API в My settings → Integrations.');
     if(provider==='higgsfield'){
       if(payload.higgsfieldConfirmed!==true)throw Object.assign(Error('Подтверди повышенную стоимость Higgsfield.'),{httpStatus:409});
@@ -1054,7 +1095,7 @@ window.Studio=(()=>{
       const priced=quote?.usd!=null&&Number.isFinite(Number(quote.usd))&&Number(quote.usd)>=0;
       await updateVideo(videoId,{estimatedCost:priced?Number(quote.usd):null,estimateSource:priced?'api_estimate':null,estimatedAt:now(),estimatedCredits:priced?(quote.credits??null):null,pricingStatus:priced?'estimated':'unavailable'});
       const data=await higgsfieldRequest('submit',{payload,confirmed:true});
-      return updateVideo(videoId,{requestId:data.id,taskToken:data.taskToken,transport:'worker',gatewayUrl:credentials.workerUrl,status:'queued',pct:0});
+      return updateVideo(videoId,{requestId:data.id,taskToken:data.taskToken,transport:'worker',gatewayUrl:credentials.workerUrl,modelEndpoint:data.model||quote?.model||null,status:'queued',pct:0});
     }
     if(provider==='openrouter'){
       const request=await prepareVideoRequest(provider,payload),data=await openRouterRequest('submit',{body:{payload:request},credentials});
@@ -1242,7 +1283,7 @@ window.Studio=(()=>{
   return {ready,requireUser,current,isAdmin,signIn,signUp,logout,updateProfile,uploadProfilePhoto,listUsers,createUser,updateUserRole,uid,read,write,notify,download,element:el,timestamp,
     listFolders,listPresets,canEdit,saveFolder,deleteFolder,savePreset,deletePreset,loadTemplates,ensureTemplates,
     higgsfieldGateway,setHiggsfieldGateway,higgsfieldRequest,portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,integrationVerified,activeVideoProvider,setVideoProvider,videoModelFor,prepareVideoRequest,providerKey,providerCredentials,apiGatewayBase,openRouterGateway,
-    listSpaces,createSpace,getSpace,renameSpace,duplicateSpace,deleteSpace,saveSpaceState,queueSpaceState,flushSpaceState,flushPendingWork,
+    simpleSpaceId,isSimpleSpace,ensureSimpleSpace,listSpaces,createSpace,getSpace,renameSpace,duplicateSpace,deleteSpace,saveSpaceState,queueSpaceState,flushSpaceState,flushPendingWork,
     uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,permanentlyDeleteVideo,submitGeneration,refreshGeneration,watchGeneration,resolveVideoSource,downloadVideo,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
     saveBillingCorrection,loadVideoPricing,saveVideoPricing,getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
 })();
@@ -1442,9 +1483,119 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
 
 'use strict';
 (async()=>{
+  if(document.body.dataset.page!=='simple')return;
+  const S=Studio,$=q=>document.querySelector(q),E=S.element;
+  await S.ready();if(!await S.requireUser())return;
+  const space=await S.ensureSimpleSpace(),me=S.current(),key='magic.simple.'+me.uid;
+  const defaults={model:'bytedance/seedance-2.5',prompt:'',duration:5,ratio:'9:16',resolution:'480p',audio:true,bitrate:'high'};
+  let draft={...defaults},refs=[],busy=false,uploading=0,timer,saveChain=Promise.resolve(),lastImprovement=null;
+  const tracking=new Map(),rows=new Map(),controllers=new Map();
+  let local=null;try{local=JSON.parse(localStorage.getItem(key)||'null');}catch{}
+  const remote=space.canvasState;const saved=local&&(local.savedAt||0)>(remote?.savedAt||0)?local:remote;
+  if(saved?.state?.simpleDraft){draft={...defaults,...saved.state.simpleDraft};refs=await S.hydrateLocalAssets(saved.assets||[]);}
+  const model=$('#sm-model'),prompt=$('#sm-prompt'),duration=$('#sm-duration'),ratio=$('#sm-ratio'),resolution=$('#sm-resolution'),bitrate=$('#sm-bitrate'),audio=$('#sm-audio');
+  const isByte=()=>draft.model==='byteplus',isKling=()=>draft.model==='kling-video/v4.0';
+  const name=()=>isByte()?'BytePlus · Seedance 2.5':isKling()?'Higgsfield · Kling 4.0':draft.model.endsWith('2.0')?'Higgsfield · Seedance 2.0':'Higgsfield · Seedance 2.5';
+  const note=(text,error=false)=>{const n=$('#sm-status');n.textContent=text;n.classList.toggle('error-text',error);};
+  function payload(){return {version:1,savedAt:Date.now(),state:{nodes:refs.map(a=>({id:'ref-'+a.id,type:'media',assets:[a.id]})),edges:[],simpleDraft:{...draft}},assets:refs.map(a=>({...a,url:a.url?.startsWith('blob:')?null:a.url}))};}
+  function save(){
+    const value=payload();try{localStorage.setItem(key,JSON.stringify(value));}catch{note('Не удалось сохранить черновик на устройстве.',true);}
+    $('#sm-save-state').textContent='Сохраняем…';clearTimeout(timer);
+    timer=setTimeout(()=>{saveChain=saveChain.catch(()=>{}).then(()=>S.saveSpaceState(space.id,value)).then(()=>$('#sm-save-state').textContent='Личный Space · сохранено').catch(()=>$('#sm-save-state').textContent='Сохранено на устройстве · облако недоступно');},700);
+  }
+  function options(field,values){const old=field.value;field.replaceChildren(...values.map(value=>{const o=E('option',value);o.value=value;return o;}));field.value=values.includes(old)?old:values[0];}
+  function normalize(){
+    if(!['bytedance/seedance-2.5','bytedance/seedance-2.0','kling-video/v4.0','byteplus'].includes(draft.model))draft.model=defaults.model;
+    const kling=isKling(),max=draft.model.endsWith('2.0')?15:30;draft.duration=Math.max(4,Math.min(max,Math.round(Number(draft.duration)||5)));
+    if(kling&&!['720p','1080p'].includes(draft.resolution))draft.resolution='720p';
+    if(!['480p','720p','1080p'].includes(draft.resolution))draft.resolution='480p';
+    if(!(kling?['21:9','16:9','9:16','1:1']:['21:9','16:9','4:3','1:1','3:4','9:16']).includes(draft.ratio))draft.ratio='9:16';
+    if(!['high','standard'].includes(draft.bitrate))draft.bitrate='high';
+    draft.prompt=String(draft.prompt||'').slice(0,32000);
+  }
+  function update(){
+    normalize();model.value=draft.model;prompt.value=draft.prompt;duration.max=draft.model.endsWith('2.0')?'15':'30';duration.value=draft.duration;
+    options(ratio,isKling()?['21:9','16:9','9:16','1:1']:['21:9','16:9','4:3','1:1','3:4','9:16']);ratio.value=draft.ratio;
+    options(resolution,isKling()?['720p','1080p']:['480p','720p','1080p']);resolution.value=draft.resolution;bitrate.value=draft.bitrate;
+    $('#sm-duration-value').textContent=draft.duration+' сек.';$('#sm-duration-max').textContent=duration.max+'s';$('#sm-ratio-value').textContent=draft.ratio;$('#sm-resolution-value').textContent=draft.resolution;$('#sm-bitrate-value').textContent=draft.bitrate==='high'?'High':'Standard';
+    audio.textContent=draft.audio?'♪ Звук включён':'♪ Без звука';audio.setAttribute('aria-pressed',String(draft.audio));audio.hidden=isKling();prompt.placeholder=isKling()?'Опиши сцену, движение и камеру. Референсы: @image_1, @video_1…':'Опиши сцену, движение и камеру. Референсы: @image1, @video1…';
+    $('#sm-reference-section').hidden=isByte();$('#sm-bitrate-setting').hidden=draft.model!=='bytedance/seedance-2.5';
+    $('#sm-provider-label').textContent=name();$('#sm-model-help').textContent=isByte()?'Генерация только по тексту. Референсы из других моделей не отправляются.':isKling()?'Kling 4.0 · фото и видеореференсы · 720p/1080p. Звук и битрейт задаёт модель.':'Фото, видео и аудио · новый ролик по референсам с выбранной длиной и форматом.';
+    $('#sm-files').accept=isKling()?'image/jpeg,image/png,image/webp,video/mp4,video/quicktime':'image/jpeg,image/png,image/webp,video/mp4,video/quicktime,audio/mpeg,audio/wav,audio/x-wav,audio/mp4,audio/ogg';
+    $('#sm-generate').disabled=busy||uploading>0;$('#sm-generate').textContent=busy?'Подготовка…':uploading?'Загрузка референсов…':'✦ Generate video';
+    const active=isByte()?[]:refs,vid=active.filter(a=>a.kind==='video'),known=vid.every(a=>Number(a.duration)>0);
+    const cost=MagicDomain.estimateCost({provider:isByte()?'byteplus':'higgsfield',model:draft.model,seconds:draft.duration,resolution:draft.resolution,ratio:draft.ratio,videoReferenceCount:vid.length,inputVideoSeconds:known?vid.reduce((sum,a)=>sum+Number(a.duration),0):null});
+    $('#sm-cost').textContent=cost==null?'Цена уточняется API перед запуском':MagicDomain.money(cost)+' ≈ · предварительная оценка, без скидки';
+    renderRefs();
+  }
+  function renderRefs(){
+    const box=$('#sm-reference-list');box.replaceChildren();const counts={};
+    for(const item of refs){const kind=item.kind||'image',alias=(isKling()?'@'+kind+'_':'@'+kind)+(counts[kind]=(counts[kind]||0)+1),card=E('article',undefined,'sm-reference');
+      if(item.url){const media=E(kind==='image'?'img':kind==='audio'?'audio':'video');media.src=item.url;if(kind==='image')media.alt=item.name;else{media.controls=true;media.preload='metadata';}card.append(media);}else card.append(E('span','Добавь файл повторно','muted'));
+      const label=E('span',alias,'sm-ref-alias');label.title=item.name;card.append(label);const remove=E('button','×','sm-ref-remove');remove.type='button';remove.title='Удалить '+item.name;remove.setAttribute('aria-label','Удалить '+alias);remove.disabled=busy;remove.onclick=()=>{refs=refs.filter(a=>a.id!==item.id);update();save();};card.append(remove);box.append(card);
+    }
+    $('#sm-ref-empty').hidden=refs.length>0;$('#sm-ref-count').textContent=refs.length+'/15';
+  }
+  async function addFiles(files){
+    if(busy||isByte())return;uploading++;update();
+    try{for(const file of files){if(refs.length>=15)throw Error('Максимум 15 референсов.');if(isKling()&&file.type.startsWith('audio/'))throw Error('Kling 4.0 не принимает аудиореференсы.');
+      let item=await S.storeLocalAsset(file,space.id);if(item.kind==='video'){item.duration=await new Promise(resolve=>{const video=document.createElement('video'),timeout=setTimeout(()=>{video.removeAttribute('src');resolve(null);},8000);video.preload='metadata';video.onloadedmetadata=()=>{clearTimeout(timeout);resolve(Number.isFinite(video.duration)?video.duration:null);};video.onerror=()=>{clearTimeout(timeout);resolve(null);};video.src=item.url;});}
+      const remote=await S.ensureRemoteAsset(item,{provider:'higgsfield'});refs.push({...item,url:remote.referenceUrl,referenceUrl:remote.referenceUrl});save();}
+      note('Референсы добавлены. Их можно удалить крестиком.');
+    }catch(error){note(error.message,true);}finally{uploading--;$('#sm-files').value='';update();}
+  }
+  $('#sm-files').onchange=e=>addFiles([...e.target.files]);const drop=$('#sm-reference-drop');drop.ondragover=e=>{e.preventDefault();drop.classList.add('dragging');};drop.ondragleave=()=>drop.classList.remove('dragging');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('dragging');addFiles([...e.dataTransfer.files]);};
+  $('#sm-add-url').onclick=async e=>{e.preventDefault();if(busy||isByte())return;try{if(refs.length>=15)throw Error('Максимум 15 референсов.');const item=await S.storeReferenceUrl($('#sm-ref-url').value.trim(),space.id);refs.push(item);$('#sm-ref-url').value='';update();save();}catch(error){note(error.message,true);}};
+  model.onchange=()=>{draft.model=model.value;update();save();};prompt.oninput=()=>{draft.prompt=prompt.value;save();};
+  duration.oninput=()=>{draft.duration=Number(duration.value);update();save();};duration.onchange=()=>duration.closest('details').open=false;ratio.onchange=()=>{draft.ratio=ratio.value;update();save();ratio.closest('details').open=false;};resolution.onchange=()=>{draft.resolution=resolution.value;update();save();resolution.closest('details').open=false;};bitrate.onchange=()=>{draft.bitrate=bitrate.value;update();save();bitrate.closest('details').open=false;};audio.onclick=()=>{draft.audio=!draft.audio;update();save();};
+  document.querySelectorAll('.sm-setting').forEach(panel=>panel.addEventListener('toggle',()=>{if(panel.open)document.querySelectorAll('.sm-setting').forEach(other=>{if(other!==panel)other.open=false;});}));
+  $('#sm-improve').onclick=async()=>{const original=prompt.value;if(!original.trim()){note('Добавь идею для промпта.',true);return;}const button=$('#sm-improve');button.disabled=true;button.textContent='Улучшаю…';
+    try{const selected=draft.model,kling=isKling(),result=await S.higgsfieldRequest('improve-prompt',{prompt:kling?original.replace(/@(image|video)_(\d+)/g,'@$1$2'):original,references:(isByte()?[]:refs).map(a=>({kind:a.kind,name:a.name})),options:{model:selected,duration:draft.duration,resolution:draft.resolution,ratio:draft.ratio,audio:draft.audio}});if(prompt.value!==original||draft.model!==selected)throw Error('Промпт или модель изменились во время улучшения. Твой текст сохранён; нажми улучшение ещё раз.');if(typeof result.text!=='string'||!result.text.trim())throw Error('ИИ не вернул промпт.');const text=kling?result.text.replace(/@(image|video)(\d+)/g,'@$1_$2'):result.text;lastImprovement={original,improved:text};draft.prompt=text;update();save();$('#sm-undo-improve').hidden=false;note('Промпт улучшен. Генерация не запускалась.');}
+    catch(error){note(error.message,true);}finally{button.disabled=false;button.textContent='✦ Улучшить промпт';}
+  };
+  $('#sm-undo-improve').onclick=()=>{if(lastImprovement&&prompt.value===lastImprovement.improved){draft.prompt=lastImprovement.original;update();save();}$('#sm-undo-improve').hidden=true;};
+  function renderHistory(){
+    const host=$('#sm-results');host.replaceChildren();const sorted=[...rows.values()].sort((a,b)=>S.timestamp(b.createdAt)-S.timestamp(a.createdAt));$('#sm-history-count').textContent=String(sorted.length);$('#sm-welcome').hidden=sorted.length>0;
+    for(const row of sorted){const card=E('article',undefined,'sm-result'),head=E('div',undefined,'sm-result-heading');head.append(E('strong',row.model?.includes('kling')?'Kling 4.0':row.model?.includes('2.0')?'Seedance 2.0':'Seedance 2.5'),E('span',MagicDomain.costLabel(row)));card.append(head);
+      if(row.status==='completed'&&(row.videoUrl||row.remoteUrl)){const video=E('video');video.src=row.videoUrl||row.remoteUrl;video.controls=true;video.playsInline=true;video.preload='metadata';card.append(video);const download=E('button','↓ Скачать видео','ui-button');download.onclick=()=>S.downloadVideo(row).catch(e=>note(e.message,true));card.append(download);}
+      else {card.append(E('div',row.status==='submission_unknown'?'Запуск не подтверждён · проверь Requests':row.status==='failed'?'Ошибка генерации':row.status==='cancelled'?'Отменено':'Генерация · '+(row.pct||0)+'%','sm-result-pending'));}
+      card.append(E('p',row.prompt||'Без промпта','sm-result-prompt'),E('small',(row.provider==='higgsfield'?'Higgsfield':'BytePlus')+' · '+row.seconds+' сек. · '+row.resolution+' · '+row.ratio,'muted'));
+      if(row.error||row.trackingWarning)card.append(E('p',row.error||row.trackingWarning,'error-text'));
+      if(row.requestId)card.append(E('small','Request ID: '+row.requestId,'muted'));
+      if(!MagicDomain.terminal(row.status)&&row.requestId&&!tracking.has(row.id)){const resume=E('button','Обновить статус','ui-button');resume.onclick=()=>track(row);card.append(resume);}
+      host.append(card);
+    }
+  }
+  function track(record){if(tracking.has(record.id)||!record.requestId)return;const controller=new AbortController();controllers.set(record.id,controller);tracking.set(record.id,true);
+    S.watchGeneration(record,item=>{rows.set(item.id,item);renderHistory();},{signal:controller.signal}).then(item=>{rows.set(item.id,item);}).catch(error=>{rows.set(record.id,{...rows.get(record.id),trackingWarning:error.message});}).finally(()=>{tracking.delete(record.id);controllers.delete(record.id);renderHistory();});
+  }
+  async function history(){const videos=await S.listVideos();rows.clear();for(const row of [...videos,...S.pendingVideos(space.id)])if(row.uid===me.uid&&row.spaceId===space.id)rows.set(row.id,row);renderHistory();for(const row of rows.values())if(!MagicDomain.terminal(row.status)&&row.requestId)track(row);}
+  $('#sm-refresh').onclick=()=>history().catch(e=>note(e.message,true));
+  function confirmPaid(snapshot){return new Promise(resolve=>{const dialog=$('#sm-confirm'),label=$('#sm-confirm-description');label.textContent=name()+' · '+snapshot.duration+' сек. · '+snapshot.resolution+' · '+snapshot.ratio+'. Новая платная генерация через Higgsfield. Цена может быть выше BytePlus; модерация референсов действует. '+$('#sm-cost').textContent;dialog.returnValue='';dialog.onclose=()=>resolve(dialog.returnValue==='confirm');dialog.showModal();});}
+  function lock(value){busy=value;for(const control of document.querySelectorAll('#sm-form input,#sm-form select,#sm-form textarea,#sm-form button'))control.disabled=value;update();}
+  $('#sm-form').onsubmit=async event=>{
+    event.preventDefault();if(busy||uploading)return;draft.prompt=prompt.value.trim();if(!draft.prompt){note('Опиши видео в промпте.',true);return;}
+    const snapshot={...draft},provider=isByte()?'byteplus':'higgsfield',active=provider==='byteplus'?[]:refs.map(a=>({...a}));lock(true);let record=null;
+    try{
+      if(provider==='higgsfield'&&!await confirmPaid(snapshot))return;
+      const credentials=await S.providerCredentials(provider);if(!credentials)throw Error('Подключи '+provider+' в My settings.');
+      if(provider==='higgsfield'){const config=await S.higgsfieldRequest('config');if(!config.ready)throw Error('Higgsfield не подключён.');if(!config.models?.includes(snapshot.model))throw Error('Обнови Higgsfield Worker для выбранной модели.');}
+      const prepared=[];for(const item of active){if(!item.url)throw Error('Добавь повторно недоступный референс '+item.name);prepared.push(await S.ensureRemoteAsset(item,{provider}));}
+      const videos=prepared.filter(a=>a.kind==='video'),known=videos.every(a=>Number(a.duration)>0),options={model:provider==='byteplus'?MagicDomain.defaultVideoModel:snapshot.model,prompt:provider==='higgsfield'&&snapshot.model==='kling-video/v4.0'?snapshot.prompt.replace(/@(image|video)(\d+)/g,'@$1_$2'):snapshot.prompt,duration:snapshot.duration,resolution:snapshot.resolution,aspect_ratio:snapshot.ratio,generate_audio:snapshot.audio,taskMode:'reference',omni_reference_task_type:'reference',forceReference:true,reference_images:prepared.filter(a=>a.kind==='image').map(a=>a.referenceUrl),reference_videos:videos.map(a=>a.referenceUrl),reference_audio:prepared.filter(a=>a.kind==='audio').map(a=>a.referenceUrl),...(snapshot.model==='bytedance/seedance-2.5'?{bitrate_mode:snapshot.bitrate}:{})};
+      options.simpleMode=true;if(provider==='higgsfield'){MagicProviders.buildHiggsfieldRequest(options);options.higgsfieldConfirmed=true;}else await S.prepareVideoRequest(provider,options);
+      record=await S.createVideoRecord({spaceId:space.id,spaceName:'Simple Mode',provider,model:options.model,prompt:options.prompt,seconds:snapshot.duration,resolution:snapshot.resolution,ratio:snapshot.ratio,generateAudio:snapshot.audio,bitrateMode:options.bitrate_mode,taskMode:'reference',referenceCount:prepared.length,videoReferenceCount:videos.length,inputVideoSeconds:known?videos.reduce((sum,a)=>sum+Number(a.duration),0):null,hasRef:prepared.length>0,transport:credentials.mode,gatewayUrl:credentials.workerUrl||null});
+      rows.set(record.id,{...record,status:'submitting'});renderHistory();const submitted=await S.submitGeneration(record.id,options,provider);rows.set(submitted.id,submitted);renderHistory();track(submitted);note('Запрос отправлен. Результат появится здесь и в Assets; стоимость входит в общий Cost.');save();
+    }catch(error){if(record){const failed=await S.updateVideo(record.id,{status:error.httpStatus>=400&&error.httpStatus<500?'failed':'submission_unknown',error:error.message});rows.set(record.id,failed);renderHistory();}note(error.message,true);}finally{lock(false);}
+  };
+  window.addEventListener('pagehide',()=>{clearTimeout(timer);for(const controller of controllers.values())controller.abort();S.queueSpaceState(space.id,payload());});
+  update();await history();
+})().catch(error=>Studio.notify(error.message||String(error),'error'));
+
+'use strict';
+(async()=>{
   const S=Studio,$=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)],E=S.element,page=document.body.dataset.page;
   await S.ready();
-  const allowed=['index.html','spaces.html','nodes.html','assets.html','presets.html','integrations.html','projects.html','flows.html','modifiers.html','winners.html','cost.html','captions.html','editor.html','users.html'];
+  const allowed=['index.html','spaces.html','sm-video.html','nodes.html','assets.html','presets.html','integrations.html','projects.html','flows.html','modifiers.html','winners.html','cost.html','captions.html','editor.html','users.html'];
   const next=()=>{const raw=new URLSearchParams(location.search).get('next')||'index.html';return allowed.includes(raw.split('?')[0])?raw:'index.html';};
   const friendlyAuth=e=>({
     'auth/invalid-credential':'Неверный email или пароль.','auth/invalid-email':'Некорректный email.','auth/email-already-in-use':'Этот email уже зарегистрирован.','auth/weak-password':'Пароль слишком слабый. Минимум 6 символов.','auth/too-many-requests':'Слишком много попыток. Попробуй позже.'
@@ -1485,7 +1636,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     $('#generation-chart').replaceChildren(...days.map((d,i)=>{const col=E('div',undefined,'chart-col'),bar=E('button',undefined,'chart-bar');bar.type='button';bar.style.height=`${Math.max(5,counts[i]/max*160)}px`;bar.setAttribute('aria-label',d.toLocaleDateString('ru-RU')+': '+counts[i]+' генераций');bar.setAttribute('aria-describedby',tooltip.id);bar.onmouseenter=bar.onfocus=()=>showDay(i,bar);bar.onmouseleave=bar.onblur=()=>tooltip.hidden=true;bar.onclick=()=>showDay(i,bar);col.append(bar,E('small',d.toLocaleDateString('ru-RU',{weekday:'short'})));return col;}));
     const recent=$('#dashboard-recent');recent.replaceChildren();const pending=[],titleElements=new Map();
     for(const v of videos.slice(0,6)){
-      const row=E('a',undefined,'recent-row');row.href=v.uid===user.uid&&v.spaceId?`nodes.html?space=${encodeURIComponent(v.spaceId)}`:'assets.html';
+      const row=E('a',undefined,'recent-row');row.href=v.uid===user.uid&&v.spaceId?(S.isSimpleSpace(v.spaceId)?'sm-video.html':`nodes.html?space=${encodeURIComponent(v.spaceId)}`):'assets.html';
       const info=E('div',undefined,'recent-info'),key='magic.ai-title.'+user.uid+'.'+v.id+'.'+String(v.prompt||'').split('').reduce((h,c)=>(Math.imul(h,31)+c.charCodeAt(0))|0,0);let cached=null;try{cached=JSON.parse(localStorage.getItem(key)||'null');}catch{}
       const title=E('strong',cached?.title||'Название готовится');title.title=v.prompt||'Без промпта';info.append(title,E('small',`${nicknames.get(v.uid)||v.user||'User'} · ${fmtDate(v.createdAt)}`));
       const meta=E('div',undefined,'recent-meta'),cost=MagicDomain.videoCost(v);meta.append(E('b',MagicDomain.costLabel(v)),E('span',statusLabel(v.status),'status-pill '+String(v.status||'')));row.append(info,meta);recent.append(row);
@@ -1511,9 +1662,9 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
       list.replaceChildren();
       const rows=all.filter(s=>s.ownerUid===user.uid);
       for(const s of rows){
-        const row=E('article',undefined,'space-row');const main=E('a',undefined,'space-main');main.href=`nodes.html?space=${encodeURIComponent(s.id)}`;main.append(E('strong',s.name||'Untitled'),E('small',`${s.nodeCount||0} nodes · обновлено ${fmtDate(s.updatedAt)}`));
+        const row=E('article',undefined,'space-row');const main=E('a',undefined,'space-main');main.href=S.isSimpleSpace(s.id)?'sm-video.html':`nodes.html?space=${encodeURIComponent(s.id)}`;main.append(E('strong',s.name||'Untitled'),E('small',S.isSimpleSpace(s.id)?'Личная генерация · постоянное пространство':`${s.nodeCount||0} nodes · обновлено ${fmtDate(s.updatedAt)}`));
         const actions=E('div',undefined,'space-actions');const open=E('a','↗');open.title='Открыть';open.href=main.href;actions.append(open);
-        if(s.ownerUid===user.uid){
+        if(s.ownerUid===user.uid&&!S.isSimpleSpace(s.id)){
           const rename=E('button','✎');rename.title='Переименовать';rename.onclick=async()=>{const name=prompt('Название Space',s.name||'');if(!name)return;try{await S.renameSpace(s.id,name);await reload();}catch(err){S.notify(friendlyDbError(err),'error');}};
           const dup=E('button','⧉');dup.title='Дублировать';dup.onclick=async()=>{try{const copy=await S.duplicateSpace(s.id);location.href=`nodes.html?space=${encodeURIComponent(copy.id)}`;}catch(err){S.notify(friendlyDbError(err),'error');}};
           const del=E('button','⌫');del.title='Удалить Space';del.onclick=async()=>{if(!confirm(`Удалить Space «${s.name}»? Сгенерированные видео останутся в Assets.`))return;try{await S.deleteSpace(s.id);await reload();}catch(err){S.notify(friendlyDbError(err),'error');}};

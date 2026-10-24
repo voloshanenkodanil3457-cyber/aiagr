@@ -5,6 +5,7 @@
   Studio.bindShell(); await Studio.mountProfileDrawer();
   const pageUrl=new URL(location.href), SPACE_ID=pageUrl.searchParams.get('space');
   if(!SPACE_ID){location.replace('spaces.html');return;}
+  if(Studio.isSimpleSpace(SPACE_ID)){location.replace('sm-video.html');return;}
   const SPACE=await Studio.getSpace(SPACE_ID);
   if(!SPACE){Studio.notify('Space не найден или нет доступа.','error');location.replace('spaces.html');return;}
   const $=(s,r=document)=>r.querySelector(s), svgNS='http://www.w3.org/2000/svg';
