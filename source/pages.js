@@ -2,7 +2,7 @@
 (async()=>{
   const S=Studio,$=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)],E=S.element,page=document.body.dataset.page;
   await S.ready();
-  const allowed=['index.html','spaces.html','nodes.html','assets.html','presets.html','integrations.html','projects.html','flows.html','modifiers.html','winners.html','cost.html','captions.html','editor.html','users.html'];
+  const allowed=['index.html','spaces.html','sm-video.html','nodes.html','assets.html','presets.html','integrations.html','projects.html','flows.html','modifiers.html','winners.html','cost.html','captions.html','editor.html','users.html'];
   const next=()=>{const raw=new URLSearchParams(location.search).get('next')||'index.html';return allowed.includes(raw.split('?')[0])?raw:'index.html';};
   const friendlyAuth=e=>({
     'auth/invalid-credential':'Неверный email или пароль.','auth/invalid-email':'Некорректный email.','auth/email-already-in-use':'Этот email уже зарегистрирован.','auth/weak-password':'Пароль слишком слабый. Минимум 6 символов.','auth/too-many-requests':'Слишком много попыток. Попробуй позже.'
@@ -43,7 +43,7 @@
     $('#generation-chart').replaceChildren(...days.map((d,i)=>{const col=E('div',undefined,'chart-col'),bar=E('button',undefined,'chart-bar');bar.type='button';bar.style.height=`${Math.max(5,counts[i]/max*160)}px`;bar.setAttribute('aria-label',d.toLocaleDateString('ru-RU')+': '+counts[i]+' генераций');bar.setAttribute('aria-describedby',tooltip.id);bar.onmouseenter=bar.onfocus=()=>showDay(i,bar);bar.onmouseleave=bar.onblur=()=>tooltip.hidden=true;bar.onclick=()=>showDay(i,bar);col.append(bar,E('small',d.toLocaleDateString('ru-RU',{weekday:'short'})));return col;}));
     const recent=$('#dashboard-recent');recent.replaceChildren();const pending=[],titleElements=new Map();
     for(const v of videos.slice(0,6)){
-      const row=E('a',undefined,'recent-row');row.href=v.uid===user.uid&&v.spaceId?`nodes.html?space=${encodeURIComponent(v.spaceId)}`:'assets.html';
+      const row=E('a',undefined,'recent-row');row.href=v.uid===user.uid&&v.spaceId?(S.isSimpleSpace(v.spaceId)?'sm-video.html':`nodes.html?space=${encodeURIComponent(v.spaceId)}`):'assets.html';
       const info=E('div',undefined,'recent-info'),key='magic.ai-title.'+user.uid+'.'+v.id+'.'+String(v.prompt||'').split('').reduce((h,c)=>(Math.imul(h,31)+c.charCodeAt(0))|0,0);let cached=null;try{cached=JSON.parse(localStorage.getItem(key)||'null');}catch{}
       const title=E('strong',cached?.title||'Название готовится');title.title=v.prompt||'Без промпта';info.append(title,E('small',`${nicknames.get(v.uid)||v.user||'User'} · ${fmtDate(v.createdAt)}`));
       const meta=E('div',undefined,'recent-meta'),cost=MagicDomain.videoCost(v);meta.append(E('b',MagicDomain.costLabel(v)),E('span',statusLabel(v.status),'status-pill '+String(v.status||'')));row.append(info,meta);recent.append(row);
@@ -69,9 +69,9 @@
       list.replaceChildren();
       const rows=all.filter(s=>s.ownerUid===user.uid);
       for(const s of rows){
-        const row=E('article',undefined,'space-row');const main=E('a',undefined,'space-main');main.href=`nodes.html?space=${encodeURIComponent(s.id)}`;main.append(E('strong',s.name||'Untitled'),E('small',`${s.nodeCount||0} nodes · обновлено ${fmtDate(s.updatedAt)}`));
+        const row=E('article',undefined,'space-row');const main=E('a',undefined,'space-main');main.href=S.isSimpleSpace(s.id)?'sm-video.html':`nodes.html?space=${encodeURIComponent(s.id)}`;main.append(E('strong',s.name||'Untitled'),E('small',S.isSimpleSpace(s.id)?'Личная генерация · постоянное пространство':`${s.nodeCount||0} nodes · обновлено ${fmtDate(s.updatedAt)}`));
         const actions=E('div',undefined,'space-actions');const open=E('a','↗');open.title='Открыть';open.href=main.href;actions.append(open);
-        if(s.ownerUid===user.uid){
+        if(s.ownerUid===user.uid&&!S.isSimpleSpace(s.id)){
           const rename=E('button','✎');rename.title='Переименовать';rename.onclick=async()=>{const name=prompt('Название Space',s.name||'');if(!name)return;try{await S.renameSpace(s.id,name);await reload();}catch(err){S.notify(friendlyDbError(err),'error');}};
           const dup=E('button','⧉');dup.title='Дублировать';dup.onclick=async()=>{try{const copy=await S.duplicateSpace(s.id);location.href=`nodes.html?space=${encodeURIComponent(copy.id)}`;}catch(err){S.notify(friendlyDbError(err),'error');}};
           const del=E('button','⌫');del.title='Удалить Space';del.onclick=async()=>{if(!confirm(`Удалить Space «${s.name}»? Сгенерированные видео останутся в Assets.`))return;try{await S.deleteSpace(s.id);await reload();}catch(err){S.notify(friendlyDbError(err),'error');}};

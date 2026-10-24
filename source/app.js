@@ -332,10 +332,18 @@ window.Studio=(()=>{
   function rememberVideo(row){write(jobsPrefix()+row.id,row);return row;}
   function own(row){if(!row||row.ownerUid!==cache.user.uid)throw new Error('Этот Space доступен только его владельцу.');return row;}
   async function ownedSpace(id){return ownerCache.get(id)||own(await getSpace(id));}
+  const simpleSpaceId=()=> 'simple_'+cache.user.uid;
+  const isSimpleSpace=id=>id===simpleSpaceId();
+  function simpleSpace(){return {id:simpleSpaceId(),ownerUid:cache.user.uid,name:'Simple Mode',system:'simple',nodeCount:0,edgeCount:0,createdAt:0,updatedAt:0,canvasState:null};}
+  async function ensureSimpleSpace(){
+    assertFirebase();const row=simpleSpace(),ref=api.fsM.doc(api.db,'spaces',row.id);let result=row;
+    await api.fsM.runTransaction(api.db,async tx=>{const snap=await tx.get(ref);if(snap.exists())result=own({...snap.data(),id:snap.id,name:'Simple Mode',system:'simple'});else{const {id,...data}=row;tx.set(ref,{...data,createdAt:now(),updatedAt:now()});}});
+    ownerCache.set(result.id,result);return result;
+  }
   async function listSpaces(){
     assertFirebase();const {collection,getDocs,query,where}=api.fsM;
     const snap=await getDocs(query(collection(api.db,'spaces'),where('ownerUid','==',cache.user.uid)));
-    return snap.docs.map(d=>{const s={...d.data(),id:d.id};ownerCache.set(s.id,s);return s;}).sort((a,b)=>timestamp(b.updatedAt)-timestamp(a.updatedAt));
+    const rows=snap.docs.map(d=>{const s={...d.data(),id:d.id};ownerCache.set(s.id,s);return s;});const builtIn=rows.find(s=>isSimpleSpace(s.id));if(builtIn){builtIn.name='Simple Mode';builtIn.system='simple';}else rows.unshift(simpleSpace());return rows.sort((a,b)=>Number(isSimpleSpace(b.id))-Number(isSimpleSpace(a.id))||timestamp(b.updatedAt)-timestamp(a.updatedAt));
   }
   async function createSpace(name='Untitled space'){
     assertFirebase();const ref=api.fsM.doc(api.fsM.collection(api.db,'spaces'));
@@ -346,14 +354,16 @@ window.Studio=(()=>{
     assertFirebase();const snap=await api.fsM.getDoc(api.fsM.doc(api.db,'spaces',id));
     if(!snap.exists())return null;const row=own({...snap.data(),id:snap.id});ownerCache.set(id,row);return row;
   }
-  async function renameSpace(id,name){await ownedSpace(id);name=String(name||'').trim().slice(0,80);if(!name)throw new Error('Укажи название.');await api.fsM.updateDoc(api.fsM.doc(api.db,'spaces',id),{name,updatedAt:now()});ownerCache.get(id).name=name;}
+  async function renameSpace(id,name){if(isSimpleSpace(id))throw new Error('Simple Mode нельзя переименовать.');await ownedSpace(id);name=String(name||'').trim().slice(0,80);if(!name)throw new Error('Укажи название.');await api.fsM.updateDoc(api.fsM.doc(api.db,'spaces',id),{name,updatedAt:now()});ownerCache.get(id).name=name;}
   async function duplicateSpace(id){
+    if(isSimpleSpace(id))throw new Error('Simple Mode уже есть у каждого пользователя.');
     const source=await ownedSpace(id),local=read(sessionKey(id),null);
     const copy=await createSpace((source.name||'Space')+' copy');
     const state=local&&local.savedAt>(source.canvasState?.savedAt||0)?local:source.canvasState;
     if(state)await saveSpaceState(copy.id,state);return copy;
   }
   async function deleteSpace(id){
+    if(isSimpleSpace(id))throw new Error('Simple Mode — постоянное личное пространство.');
     await ownedSpace(id);await api.fsM.deleteDoc(api.fsM.doc(api.db,'spaces',id));
     ownerCache.delete(id);localStorage.removeItem(sessionKey(id));localStorage.removeItem(pendingKey(id));
   }
@@ -367,9 +377,9 @@ window.Studio=(()=>{
     write(sessionKey(id),payload);write(pendingKey(id),{savedAt:payload.savedAt});
   }
   async function storeLocalAsset(file,spaceId,assetId=uid()){
-    if(!file.type.startsWith('image/')&&!file.type.startsWith('video/'))throw new Error('Поддерживаются изображения и видео.');
+    if(!file.type.startsWith('image/')&&!file.type.startsWith('video/')&&!file.type.startsWith('audio/'))throw new Error('Поддерживаются изображения, видео и аудио.');
     if(file.size>250*1024*1024)throw new Error('Файл больше 250 МБ.');
-    const meta={id:assetId,uid:cache.user.uid,spaceId,name:file.name,kind:file.type.startsWith('video/')?'video':'image',mediaType:file.type,size:file.size,createdAt:now(),updatedAt:now(),url:null,storagePath:null};
+    const meta={id:assetId,uid:cache.user.uid,spaceId,name:file.name,kind:file.type.startsWith('video/')?'video':file.type.startsWith('audio/')?'audio':'image',mediaType:file.type,size:file.size,createdAt:now(),updatedAt:now(),url:null,storagePath:null};
     await MagicLocal.put(cache.user.uid,assetId,{file,meta,cloudSaved:false});return {...meta,url:URL.createObjectURL(file),local:true};
   }
   async function hydrateLocalAssets(items){
@@ -383,7 +393,7 @@ window.Studio=(()=>{
   async function storeReferenceUrl(url,spaceId,assetId=uid()){
     const parsed=new URL(url);if(parsed.protocol!=='https:')throw new Error('Нужна публичная HTTPS-ссылка на медиа.');
     const name=decodeURIComponent(parsed.pathname.split('/').pop())||'Reference';
-    const kind=/\.(mp4|mov|webm|m4v|avi)$/i.test(parsed.pathname)?'video':'image';
+    const kind=/\.(mp4|mov|webm|m4v|avi)$/i.test(parsed.pathname)?'video':/\.(mp3|wav|m4a|ogg)$/i.test(parsed.pathname)?'audio':'image';
     const meta={id:assetId,uid:cache.user.uid,spaceId,name,kind,size:0,url:parsed.href,storagePath:null,createdAt:now(),updatedAt:now()};
     await MagicLocal.put(cache.user.uid,assetId,{meta,cloudSaved:false});return meta;
   }
@@ -396,10 +406,10 @@ window.Studio=(()=>{
   }
 
   async function ensureRemoteAsset(item,{provider=activeVideoProvider()}={}){
-    if(provider==='higgsfield'&&item.kind==='image'){
+    if(provider==='higgsfield'&&['image','audio'].includes(item.kind)){
       if(/^https:\/\//.test(item.url||''))return {...item,referenceUrl:item.url};
       const stored=await MagicLocal.get(cache.user.uid,item.id),file=stored?.file;
-      if(!file||file.size>=30*1024*1024||!['image/jpeg','image/png','image/webp'].includes(file.type))throw Error('Для Higgsfield добавь JPG, PNG или WebP меньше 30 МБ.');
+      if(!file||file.size>=30*1024*1024||!['image/jpeg','image/png','image/webp','audio/mpeg','audio/wav','audio/x-wav','audio/mp4','audio/ogg'].includes(file.type))throw Error('Для Higgsfield добавь JPG, PNG, WebP или аудио MP3/WAV/M4A/OGG меньше 30 МБ.');
       const target=await higgsfieldRequest('upload-url',{content_type:file.type});
       const response=await fetch(target.upload_url,{method:'PUT',headers:target.upload_headers,body:file,credentials:'omit'});
       if(!response.ok)throw Error('Не удалось загрузить референс в Higgsfield.');
@@ -464,7 +474,7 @@ window.Studio=(()=>{
     const row={id:uid(),uid:me.uid,user:me.name,spaceId:data.spaceId||null,spaceName:data.spaceName||'',sourceNodeId:data.sourceNodeId||null,outputNodeId:data.outputNodeId||null,
       prompt:data.prompt||'',provider:data.provider||'byteplus',model:videoModelFor(data.provider,data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
       transport:data.transport||'direct',gatewayUrl:data.gatewayUrl||null,pricingRates:MagicDomain.videoPrices,
-      taskMode:data.taskMode||null,inputVideoSeconds:Number(data.inputVideoSeconds)>0?Number(data.inputVideoSeconds):null,sourceSeconds:Number(data.sourceSeconds)>0?Number(data.sourceSeconds):null,
+      bitrateMode:data.bitrateMode||null,taskMode:data.taskMode||null,inputVideoSeconds:Number(data.inputVideoSeconds)>0?Number(data.inputVideoSeconds):null,sourceSeconds:Number(data.sourceSeconds)>0?Number(data.sourceSeconds):null,
       seconds:Math.max(4,Math.min(30,Number(data.seconds)||8)),referenceCount:Math.max(0,Math.min(15,Number(data.referenceCount)||0)),videoReferenceCount:Math.max(0,Math.min(15,Number(data.videoReferenceCount)||0)),hasRef:Boolean(data.hasRef),refMode:'reference',generateAudio:data.generateAudio!==false,
       status:'queued',pct:0,cost:null,error:null,requestId:null,videoUrl:null,remoteUrl:null,storagePath:null,createdAt:now(),updatedAt:now(),cloudSaved:false};
     return rememberVideo(row);
@@ -637,7 +647,11 @@ window.Studio=(()=>{
   }
   function statusName(raw){const s=String(raw||'').toUpperCase();if(['COMPLETED','SUCCEEDED','SUCCESS'].includes(s))return'completed';if(['CANCELLED','CANCELED'].includes(s))return'cancelled';if(['FAILED','ERROR','EXPIRED','NSFW'].includes(s))return'failed';if(['QUEUED','PENDING'].includes(s))return'queued';return'running';}
   async function submitGeneration(videoId,payload,provider=activeVideoProvider()){
-    if(provider!=='higgsfield'&&provider!==activeVideoProvider())throw Object.assign(new Error('Активный провайдер изменился. Запусти генерацию заново с текущим подключением.'),{httpStatus:400});
+    if(provider!=='higgsfield'&&provider!==activeVideoProvider()){
+      const row=payload.simpleMode===true&&provider==='byteplus'?await getVideo(videoId):null;
+      if(!row||row.uid!==cache.user.uid||row.spaceId!==simpleSpaceId()||row.provider!=='byteplus')throw Object.assign(new Error('Активный провайдер изменился. Запусти генерацию заново с текущим подключением.'),{httpStatus:400});
+    }
+    if(payload.simpleMode===true&&provider==='byteplus'&&[payload.reference_images,payload.reference_videos,payload.reference_audio].some(items=>items?.length))throw Object.assign(new Error('BytePlus Simple Mode работает только по тексту.'),{httpStatus:400});
     const credentials=await providerCredentials(provider);if(!credentials)throw new Error('Подключи API в My settings → Integrations.');
     if(provider==='higgsfield'){
       if(payload.higgsfieldConfirmed!==true)throw Object.assign(Error('Подтверди повышенную стоимость Higgsfield.'),{httpStatus:409});
@@ -649,7 +663,7 @@ window.Studio=(()=>{
       const priced=quote?.usd!=null&&Number.isFinite(Number(quote.usd))&&Number(quote.usd)>=0;
       await updateVideo(videoId,{estimatedCost:priced?Number(quote.usd):null,estimateSource:priced?'api_estimate':null,estimatedAt:now(),estimatedCredits:priced?(quote.credits??null):null,pricingStatus:priced?'estimated':'unavailable'});
       const data=await higgsfieldRequest('submit',{payload,confirmed:true});
-      return updateVideo(videoId,{requestId:data.id,taskToken:data.taskToken,transport:'worker',gatewayUrl:credentials.workerUrl,status:'queued',pct:0});
+      return updateVideo(videoId,{requestId:data.id,taskToken:data.taskToken,transport:'worker',gatewayUrl:credentials.workerUrl,modelEndpoint:data.model||quote?.model||null,status:'queued',pct:0});
     }
     if(provider==='openrouter'){
       const request=await prepareVideoRequest(provider,payload),data=await openRouterRequest('submit',{body:{payload:request},credentials});
@@ -837,7 +851,7 @@ window.Studio=(()=>{
   return {ready,requireUser,current,isAdmin,signIn,signUp,logout,updateProfile,uploadProfilePhoto,listUsers,createUser,updateUserRole,uid,read,write,notify,download,element:el,timestamp,
     listFolders,listPresets,canEdit,saveFolder,deleteFolder,savePreset,deletePreset,loadTemplates,ensureTemplates,
     higgsfieldGateway,setHiggsfieldGateway,higgsfieldRequest,portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,integrationVerified,activeVideoProvider,setVideoProvider,videoModelFor,prepareVideoRequest,providerKey,providerCredentials,apiGatewayBase,openRouterGateway,
-    listSpaces,createSpace,getSpace,renameSpace,duplicateSpace,deleteSpace,saveSpaceState,queueSpaceState,flushSpaceState,flushPendingWork,
+    simpleSpaceId,isSimpleSpace,ensureSimpleSpace,listSpaces,createSpace,getSpace,renameSpace,duplicateSpace,deleteSpace,saveSpaceState,queueSpaceState,flushSpaceState,flushPendingWork,
     uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,permanentlyDeleteVideo,submitGeneration,refreshGeneration,watchGeneration,resolveVideoSource,downloadVideo,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
     saveBillingCorrection,loadVideoPricing,saveVideoPricing,getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
 })();

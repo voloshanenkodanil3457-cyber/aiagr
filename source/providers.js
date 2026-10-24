@@ -8,27 +8,46 @@
     return kind==='image'&&/^data:image\/(jpeg|png|webp|bmp|tiff|gif|heic|heif);base64,[A-Za-z0-9+/]+={0,2}$/.test(url);
   }
   function isFaceRejection(error){return /may contain (?:a )?real person|PrivacyInformation[.:_-]*RealPerson|real.person.{0,70}(?:not supported|not allowed|prohibit)|(?:face|portrait).{0,40}(?:verification required|authorization required)/i.test(String(error||''));}
-  function higgsfieldModel(value){const model=value||'bytedance/seedance-2.5';if(!['bytedance/seedance-2.5','bytedance/seedance-2.0'].includes(model))fail('Неизвестная модель Higgsfield.');return model;}
+  function higgsfieldModel(value){const model=value||'bytedance/seedance-2.5';if(!['bytedance/seedance-2.5','bytedance/seedance-2.0','kling-video/v4.0'].includes(model))fail('Неизвестная модель Higgsfield.');return model;}
   function buildHiggsfieldRequest(p={}){
-    const model=higgsfieldModel(p.model),maxDuration=model.endsWith('2.0')?15:30;
-    const images=p.reference_images||[],videos=p.reference_videos||[],prompt=String(p.prompt||'').trim();
+    const model=higgsfieldModel(p.model);if(model==='kling-video/v4.0')return buildKlingRequest(p);
+    const maxDuration=model.endsWith('2.0')?15:30;
+    const images=p.reference_images||[],videos=p.reference_videos||[],audio=p.reference_audio||[],prompt=String(p.prompt||'').trim();
     if(!prompt||prompt.length>32000)fail('Добавь промпт до 32000 символов.');
-    if(!Array.isArray(images)||!Array.isArray(videos)||images.length+videos.length>15)fail('Максимум 15 референсов.');
-    if([...images,...videos].some(u=>typeof u!=='string'||!source(u,'video')))fail('Higgsfield нужны публичные HTTPS-референсы.');
+    if(!Array.isArray(images)||!Array.isArray(videos)||!Array.isArray(audio)||images.length+videos.length+audio.length>15)fail('Максимум 15 референсов.');
+    if([...images,...videos,...audio].some(u=>typeof u!=='string'||!source(u,'video')))fail('Higgsfield нужны публичные HTTPS-референсы.');
     const duration=Number(p.duration),ratio=p.aspect_ratio||p.ratio,mode=p.taskMode||p.omni_reference_task_type||'auto',editing=model.endsWith('2.5')&&videos.length>0&&['auto','edit'].includes(mode);
     if(mode==='edit'&&!videos.length)fail('Для редактирования Higgsfield добавь исходное видео.');
     if(mode==='extend')fail('Продление через Higgsfield пока не подключено. Выбери новое видео или редактирование.');
     if(!Number.isInteger(duration)||duration<4||duration>maxDuration)fail('Для выбранной модели Higgsfield длина: 4–'+maxDuration+' секунд.');
     if(!['16:9','4:3','1:1','3:4','9:16','21:9'].includes(ratio))fail('Для Higgsfield выбери явный формат видео.');
     if(!['480p','720p','1080p'].includes(p.resolution))fail('Выбери разрешение Higgsfield.');
-    const input={prompt,duration,resolution:p.resolution,output_format:'mp4',generate_audio:p.generate_audio!==false};
+    if(model.endsWith('2.0')&&(images.length>9||videos.length>3||audio.length>3))fail('Seedance 2.0: до 9 изображений, 3 видео и 3 аудио.');
+    if(audio.length&&!images.length&&!videos.length&&model.endsWith('2.0'))fail('Для Seedance 2.0 к аудио нужен фото- или видеореференс.');
+    const input={prompt,duration,resolution:p.resolution,generate_audio:p.generate_audio!==false};
+    if(model.endsWith('2.5')){if(p.bitrate_mode!==undefined&&!['standard','high'].includes(p.bitrate_mode))fail('Выбери High или Standard.');if(p.bitrate_mode)input.bitrate_mode=p.bitrate_mode;}
+    if(audio.length)input.audio_urls=audio;
     if(model.endsWith('2.0'))delete input.output_format;
     let endpoint=model+'/text-to-video';
     if(editing){endpoint=model+'/video-edit';input.video_url=videos[0];if(images.length)input.image_urls=images;if(videos.length>1)input.video_urls=videos.slice(1);delete input.duration;}
-    else if(videos.length||images.length>1){endpoint=model+'/reference-to-video';input.image_urls=images;input.video_urls=videos;input.aspect_ratio=ratio;}
+    else if(videos.length||images.length>1||audio.length||p.forceReference&&images.length){endpoint=model+'/reference-to-video';if(images.length)input.image_urls=images;if(videos.length)input.video_urls=videos;input.aspect_ratio=ratio;}
     else if(images.length){endpoint=model+'/image-to-video';input.image_url=images[0];}
-    else input.aspect_ratio=ratio;
+    else {input.aspect_ratio=ratio;if(model.endsWith('2.5'))input.output_format='mp4';}
     return {endpoint,input};
+  }
+  function buildKlingRequest(p={}){
+    const prompt=String(p.prompt||'').trim(),images=p.reference_images||[],videos=p.reference_videos||[],audio=p.reference_audio||[];
+    if(!prompt||prompt.length>32000)fail('Добавь промпт до 32000 символов.');
+    if(!Array.isArray(images)||!Array.isArray(videos)||!Array.isArray(audio)||images.length>10||videos.length>5||audio.length)fail('Kling 4.0: до 10 изображений и 5 видео; аудиореференсы не поддерживаются.');
+    if([...images,...videos].some(url=>!source(url,'video')))fail('Kling нужны публичные HTTPS-референсы.');
+    const duration=Number(p.duration),ratio=p.aspect_ratio||p.ratio;
+    if(!Number.isInteger(duration)||duration<3||duration>30)fail('Kling 4.0: длительность 3–30 секунд.');
+    if(!['720p','1080p'].includes(p.resolution))fail('Kling 4.0: выбери 720p или 1080p.');
+    if(!['21:9','16:9','9:16','1:1'].includes(ratio))fail('Kling 4.0: выбери 21:9, 16:9, 9:16 или 1:1.');
+    if(['edit','extend'].includes(p.taskMode))fail('В Simple Mode Kling создаёт новое видео по референсам.');
+    const input={prompt,duration,resolution:p.resolution,aspect_ratio:ratio};
+    if(images.length)input.image_urls=images;if(videos.length)input.video_urls=videos;
+    return {endpoint:'kling-video/v4.0/'+(images.length||videos.length?'reference-to-video':'text-to-video'),input};
   }
   function byteplusTask(p={}){
     const mode=p.omni_reference_task_type||'auto',videos=p.reference_videos||[],hasVideo=Array.isArray(videos)&&videos.length>0;
