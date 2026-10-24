@@ -541,7 +541,12 @@ window.Studio=(()=>{
       catch(error){rememberVideo({...row,cloudSaved:false,syncError:error.code==='permission-denied'?'Firebase запрещает сохранение. Обновите Firestore rules.':error.message});}
     }
     for(const row of Object.values(localVideos()))if(row.uid===cache.user.uid&&!row.cloudSaved)byId.set(row.id,row);
-    return [...byId.values()].sort((a,b)=>timestamp(b.createdAt)-timestamp(a.createdAt));
+    const rows=[...byId.values()].sort((a,b)=>timestamp(b.createdAt)-timestamp(a.createdAt));
+    if(isAdmin()){
+      try{const billing=await api.fsM.getDoc(api.fsM.doc(api.db,'config','videoBilling'));const entries=billing.exists()?billing.data().entries||{}:{};for(const row of rows){const item=entries[row.id];if(item&&item.uid===row.uid&&item.requestId===row.requestId)row.billingCorrection=item;}}
+      catch(error){for(const row of rows)row.billingUnavailable=true;notify('Сверка Billing недоступна. Показаны только сохранённые цены и оценки.','error');}
+    }
+    return rows;
   }
   function pendingVideos(spaceId){return Object.values(localVideos()).filter(v=>v.uid===cache.user.uid&&(!spaceId||v.spaceId===spaceId)&&!MagicDomain.terminal(v.status));}
   async function deleteVideo(id){
@@ -566,6 +571,23 @@ window.Studio=(()=>{
     localStorage.removeItem(jobsPrefix()+id);
   }
   async function listLeaderboard(){const snap=await api.fsM.getDocs(api.fsM.collection(api.db,'leaderboard'));return snap.docs.map(d=>({...d.data(),uid:d.id}));}
+  async function saveBillingCorrection(id,{amount,reference,expectedRevision=0,requestId}={}){
+    assertFirebase();if(!isAdmin())throw new Error('Сверку Billing сохраняет только суперадмин.');
+    if(typeof id!=='string'||!/^[a-zA-Z0-9_-]{1,180}$/.test(id)||!requestId)throw new Error('Нужен ID сохранённой генерации и запроса Higgsfield.');
+    if(amount===null||amount===undefined||String(amount).trim()===''||!Number.isFinite(Number(amount))||Number(amount)<0||Number(amount)>100000)throw new Error('Укажи списание в USD от 0 до 100000.');
+    const clean=Math.round(Number(amount)*1000000)/1000000,note=String(reference||'').trim();
+    if(note.length<3||note.length>240)throw new Error('Укажи номер операции или описание записи Billing (3–240 символов).');
+    const ledger=api.fsM.doc(api.db,'config','videoBilling'),videoRef=api.fsM.doc(api.db,'videos',id);
+    return api.fsM.runTransaction(api.db,async tx=>{
+      const [video,snap]=await Promise.all([tx.get(videoRef),tx.get(ledger)]);
+      if(!video.exists()||video.data().status!=='completed'||video.data().provider!=='higgsfield'||video.data().requestId!==requestId)throw new Error('Видео или ID запроса изменились. Обнови расходы.');
+      const entries=snap.exists()?snap.data().entries||{}:{},previous=entries[id];
+      if((previous?.revision||0)!==expectedRevision)throw new Error('Сумму уже изменили. Обнови расходы и подтверди новое значение.');
+      const row={amount:clean,reference:note,requestId,uid:video.data().uid,updatedBy:cache.user.uid,updatedAt:now(),revision:expectedRevision+1,history:previous?[...(previous.history||[]),{amount:previous.amount,reference:previous.reference,updatedBy:previous.updatedBy,updatedAt:previous.updatedAt,revision:previous.revision}].slice(-20):[]};
+      const next={...entries,[id]:row};if(new Blob([JSON.stringify(next)]).size>750000)throw new Error('Журнал Billing заполнен. Нужен перенос истории перед сохранением.');
+      tx.set(ledger,{entries:next,updatedBy:cache.user.uid,updatedAt:now()});return row;
+    });
+  }
   async function loadVideoPricing(){
     try{const snap=await api.fsM.getDoc(api.fsM.doc(api.db,'config','videoPricing'));if(snap.exists())MagicDomain.setVideoPrices(snap.data().rates);else MagicDomain.setVideoPrices(MagicDomain.defaultVideoPrices);}
     catch(error){MagicDomain.setVideoPrices(MagicDomain.defaultVideoPrices);console.warn('Pricing defaults used',error);}
@@ -817,5 +839,5 @@ window.Studio=(()=>{
     higgsfieldGateway,setHiggsfieldGateway,higgsfieldRequest,portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,integrationVerified,activeVideoProvider,setVideoProvider,videoModelFor,prepareVideoRequest,providerKey,providerCredentials,apiGatewayBase,openRouterGateway,
     listSpaces,createSpace,getSpace,renameSpace,duplicateSpace,deleteSpace,saveSpaceState,queueSpaceState,flushSpaceState,flushPendingWork,
     uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,permanentlyDeleteVideo,submitGeneration,refreshGeneration,watchGeneration,resolveVideoSource,downloadVideo,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
-    loadVideoPricing,saveVideoPricing,getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
+    saveBillingCorrection,loadVideoPricing,saveVideoPricing,getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
 })();

@@ -1,5 +1,15 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import vm from 'node:vm';import {generationTitles} from '../cloudflare-worker/prompt-improver.js';
 const c=vm.createContext({window:{}});vm.runInContext(fs.readFileSync('source/domain.js','utf8'),c);const D=c.window.MagicDomain;
+test('incomplete Higgsfield totals distinguish estimates, unknowns and request-bound Billing confirmations',()=>{
+ const image={id:'a',uid:'bob',provider:'higgsfield',requestId:'image-task',status:'completed',cost:.8224,costSource:'higgsfield_tariff'},video={id:'b',uid:'bob',provider:'higgsfield',requestId:'video-task',status:'completed'};
+ let stats=D.totals([image,video]);assert.equal(stats.estimatedCost,.8224);assert.equal(stats.confirmedCost,0);assert.equal(stats.unknownCost,1);assert.match(D.totalCostLabel(stats),/неполный итог/);
+ assert.equal(D.costInfo({...image,costSource:'api'}).kind,'estimated');
+ const corrected=(row,amount)=>({...row,billingCorrection:{uid:row.uid,requestId:row.requestId,amount}});
+ stats=D.totals([corrected(image,.7),corrected(video,1.54)]);assert.equal(stats.cost,2.24);assert.equal(stats.confirmedCost,2.24);assert.equal(stats.estimatedCost,0);assert.equal(stats.unknownCost,0);assert.equal(D.totalCostLabel(stats),'$2.24');
+ assert.equal(D.videoCost({...image,billingCorrection:{uid:'other',requestId:image.requestId,amount:99}}),.8224);
+ assert.equal(D.videoCost({...image,billingCorrection:{uid:image.uid,requestId:'other',amount:99}}),.8224);
+ assert.equal(D.videoCost(corrected(video,0)),0);
+});
 test('Higgsfield uses documented tokens, model rates, input duration and explicit account discount',()=>{
  assert.equal(D.higgsfieldCost({model:'bytedance/seedance-2.5',seconds:5,resolution:'720p'}),2.3112);
  assert.equal(D.higgsfieldCost({model:'bytedance/seedance-2.0',seconds:5,resolution:'720p'}),1.512);

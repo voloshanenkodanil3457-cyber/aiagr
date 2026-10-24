@@ -14,7 +14,7 @@ test('XP follows the requested formula, including corrected examples',()=>{
 });
 test('unknown costs are not treated as reported zeroes; failed jobs earn no XP',()=>{
   const s=D.totals([{status:'completed',seconds:4,resolution:'480p',referenceCount:1,cost:0},{status:'completed',seconds:4,resolution:'480p',referenceCount:1,cost:.25},{status:'failed',cost:null},{status:'running',cost:null}]);
-  assert.deepEqual(s,{total:4,completed:2,failed:1,running:1,cost:.25,unknownCost:0,xp:20,estimatedCostCount:0});
+  assert.deepEqual(s,{total:4,completed:2,failed:1,running:1,cost:.25,unknownCost:0,xp:20,estimatedCostCount:0,estimatedCost:0,confirmedCost:.25,confirmedCostCount:2});
 });
 test('USD uses the exact per-second rates at 4, 5, 15 and 30 seconds',()=>{
   for(const resolution of ['480p','720p','1080p'])for(const seconds of [4,5,15,30])assert.equal(D.estimateCost({seconds,resolution}),Math.round(D.defaultVideoPrices[resolution]*seconds*1000000)/1000000);

@@ -39,11 +39,22 @@ window.MagicDomain = (() => {
     if (!Number.isFinite(duration) || duration < 4 || duration > 30 || !price || Number(videoReferenceCount) > 0) return null;
     return Math.round(price * 1000000 * duration) / 1000000;
   }
-  function videoCost(video) {
-    if (video.cost != null && Number.isFinite(Number(video.cost)) && Number(video.cost) >= 0) return Number(video.cost);
-    if(video.status==='completed'&&video.estimateSource==='api_estimate'&&video.estimatedCost!=null&&Number.isFinite(Number(video.estimatedCost))&&Number(video.estimatedCost)>=0)return Number(video.estimatedCost);
-    return video.status === 'completed' ? estimateCost(video, video.pricingRates || defaultVideoPrices) : null;
+  const validCost = value => value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value)) && Number(value)>=0;
+  function costInfo(video){
+    const correction=video.billingCorrection;
+    if(correction&&correction.requestId===video.requestId&&correction.uid===video.uid&&validCost(correction.amount))return {amount:Number(correction.amount),kind:'confirmed',source:'manual_billing'};
+    if(validCost(video.cost)){
+      // Legacy Higgsfield `cost` can be a quote. Never present it as a debit.
+      const estimated=['tariff','higgsfield_tariff','api_estimate'].includes(video.costSource)||video.provider==='higgsfield'&&video.costSource!=='billing_api';
+      return {amount:Number(video.cost),kind:estimated?'estimated':'confirmed',source:video.costSource||'api'};
+    }
+    if(video.status==='completed'&&video.estimateSource==='api_estimate'&&validCost(video.estimatedCost))return {amount:Number(video.estimatedCost),kind:'estimated',source:'api_estimate'};
+    const amount=video.status==='completed'?estimateCost(video,video.pricingRates||defaultVideoPrices):null;
+    return {amount,kind:amount==null?'unknown':'estimated',source:amount==null?null:'tariff'};
   }
+  function videoCost(video){return costInfo(video).amount;}
+  function costLabel(video){const info=costInfo(video);return info.amount==null?'Стоимость неизвестна':money(info.amount)+(info.kind==='estimated'?' ≈':'');}
+  function totalCostLabel(stats){return (stats.unknownCost&&stats.cost===0?'—':money(stats.cost)+(stats.estimatedCostCount?' ≈':''))+(stats.unknownCost?' · неполный итог':'');}
   const money = (value, precision=4) => '$' + Number(value || 0).toFixed(precision).replace(/(\.\d{2,}?)0+$/, '$1');
   function xp({ seconds = 4, resolution = '480p', referenceCount = 1 } = {}) {
     const duration = Math.max(4, Math.min(30, Number(seconds) || 4));
@@ -57,17 +68,17 @@ window.MagicDomain = (() => {
       if (v.status === 'completed') { out.completed++; out.xp += xp(v); }
       if (v.status === 'failed') out.failed++;
       if (!terminal(v.status)) out.running++;
-      const cost = videoCost(v);
+      const info=costInfo(v),cost=info.amount;
       if (cost != null) {
         out.cost = Math.round((out.cost + cost) * 1000000) / 1000000;
-        if (v.cost == null || ['tariff','higgsfield_tariff','api_estimate'].includes(v.costSource)) out.estimatedCostCount++;
+        if(info.kind==='estimated'){out.estimatedCostCount++;out.estimatedCost=Math.round((out.estimatedCost+cost)*1000000)/1000000;}else{out.confirmedCostCount++;out.confirmedCost=Math.round((out.confirmedCost+cost)*1000000)/1000000;}
       } else if (v.status === 'completed') out.unknownCost++;
       return out;
-    }, { total: 0, completed: 0, failed: 0, running: 0, cost: 0, unknownCost: 0, xp: 0, estimatedCostCount: 0 });
+    }, { total: 0, completed: 0, failed: 0, running: 0, cost: 0, unknownCost: 0, xp: 0, estimatedCostCount: 0, estimatedCost:0, confirmedCost:0, confirmedCostCount:0 });
   }
   function compatible(type, direction) {
     if (direction === 'in') return { generation: ['media', 'preset'], text: ['preset'], output: ['generation'] }[type] || [];
     return { generation: ['output'], media: ['generation'], camera: ['generation'], preset: ['generation', 'text'], text: ['generation'] }[type] || [];
   }
-  return { higgsfieldCost,xp, totals, terminal, compatible, resolutions, defaultVideoModel, normalizeBytePlusModel, get videoPrices(){return {...videoPrices};}, defaultVideoPrices, pricingVersion, estimateCost, videoCost, money, validatePrices, setVideoPrices };
+  return { costInfo,costLabel,totalCostLabel,higgsfieldCost,xp, totals, terminal, compatible, resolutions, defaultVideoModel, normalizeBytePlusModel, get videoPrices(){return {...videoPrices};}, defaultVideoPrices, pricingVersion, estimateCost, videoCost, money, validatePrices, setVideoPrices };
 })();
