@@ -24,14 +24,24 @@ window.MagicDomain = (() => {
     return result;
   }
   function setVideoPrices(prices){videoPrices=validatePrices(prices);return {...videoPrices};}
-  function estimateCost({provider, seconds, resolution, videoReferenceCount = 0, pricingRates} = {}, rates = pricingRates || videoPrices) {
-    if(provider==='higgsfield')return null;
+  function higgsfieldCost({model,seconds,resolution,ratio='16:9',videoReferenceCount=0,inputVideoSeconds,discount=0,sourceSeconds,taskMode}={}){
+    const version=/seedance-2\.0(?:\/|$)/.test(model||'')?'2.0':/seedance-2\.5(?:\/|$)/.test(model||'')?'2.5':null;
+    const dims={'480p':{'16:9':[854,480],'4:3':[752,560],'1:1':[640,640],'21:9':[992,432]},'720p':{'16:9':[1280,720],'4:3':[1112,834],'1:1':[960,960],'21:9':[1470,630]},'1080p':{'16:9':[1920,1080],'4:3':[1664,1248],'1:1':[1440,1440],'21:9':[2206,946]}};
+    const aspect=ratio==='9:16'?'16:9':ratio==='3:4'?'4:3':ratio,dimensions=version==='2.0'&&resolution==='480p'&&aspect==='16:9'?[864,496]:dims[resolution]?.[aspect],hasVideo=Number(videoReferenceCount)>0;
+    const input=hasVideo?Number(inputVideoSeconds):0,duration=taskMode==='edit'?Number(sourceSeconds):Number(seconds),off=Number(discount);
+    if(!version||!dimensions||!Number.isFinite(duration)||duration<4||duration>(version==='2.0'?15:30)||!Number.isFinite(off)||off<0||off>100||hasVideo&&(inputVideoSeconds==null||!Number.isFinite(input)||input<=0||input>(version==='2.0'?15:30)))return null;
+    const tokens=Math.ceil(dimensions[0]*dimensions[1]*24*(duration+input)/1024),rate=version==='2.0'?.014:resolution==='1080p'?.0234:.0214;
+    return Math.round(tokens/1000*rate*(hasVideo?.6:1)*(1-off/100)*1000000)/1000000;
+  }
+  function estimateCost({provider, seconds, resolution, videoReferenceCount = 0, pricingRates,...rest} = {}, rates = pricingRates || videoPrices) {
+    if(provider==='higgsfield')return higgsfieldCost({...rest,seconds,resolution,videoReferenceCount});
     const duration = Number(seconds), price = rates[resolution];
     if (!Number.isFinite(duration) || duration < 4 || duration > 30 || !price || Number(videoReferenceCount) > 0) return null;
     return Math.round(price * 1000000 * duration) / 1000000;
   }
   function videoCost(video) {
     if (video.cost != null && Number.isFinite(Number(video.cost)) && Number(video.cost) >= 0) return Number(video.cost);
+    if(video.status==='completed'&&video.estimateSource==='api_estimate'&&video.estimatedCost!=null&&Number.isFinite(Number(video.estimatedCost))&&Number(video.estimatedCost)>=0)return Number(video.estimatedCost);
     return video.status === 'completed' ? estimateCost(video, video.pricingRates || defaultVideoPrices) : null;
   }
   const money = (value, precision=4) => '$' + Number(value || 0).toFixed(precision).replace(/(\.\d{2,}?)0+$/, '$1');
@@ -50,7 +60,7 @@ window.MagicDomain = (() => {
       const cost = videoCost(v);
       if (cost != null) {
         out.cost = Math.round((out.cost + cost) * 1000000) / 1000000;
-        if (v.cost == null || ['tariff','api_estimate'].includes(v.costSource)) out.estimatedCostCount++;
+        if (v.cost == null || ['tariff','higgsfield_tariff','api_estimate'].includes(v.costSource)) out.estimatedCostCount++;
       } else if (v.status === 'completed') out.unknownCost++;
       return out;
     }, { total: 0, completed: 0, failed: 0, running: 0, cost: 0, unknownCost: 0, xp: 0, estimatedCostCount: 0 });
@@ -59,5 +69,5 @@ window.MagicDomain = (() => {
     if (direction === 'in') return { generation: ['media', 'preset'], text: ['preset'], output: ['generation'] }[type] || [];
     return { generation: ['output'], media: ['generation'], camera: ['generation'], preset: ['generation', 'text'], text: ['generation'] }[type] || [];
   }
-  return { xp, totals, terminal, compatible, resolutions, defaultVideoModel, normalizeBytePlusModel, get videoPrices(){return {...videoPrices};}, defaultVideoPrices, pricingVersion, estimateCost, videoCost, money, validatePrices, setVideoPrices };
+  return { higgsfieldCost,xp, totals, terminal, compatible, resolutions, defaultVideoModel, normalizeBytePlusModel, get videoPrices(){return {...videoPrices};}, defaultVideoPrices, pricingVersion, estimateCost, videoCost, money, validatePrices, setVideoPrices };
 })();
