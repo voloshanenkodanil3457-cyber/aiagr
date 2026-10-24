@@ -241,6 +241,12 @@ dialog.studio-dialog{width:min(530px,calc(100vw - 30px));border:1px solid var(--
 .sm-controls{position:sticky;top:70px;max-height:calc(100vh - 86px);overflow-y:auto;scrollbar-width:thin;gap:10px}.sm-mode-heading{padding-bottom:9px}.sm-block{padding:10px}.sm-reference-drop{min-height:102px}.sm-upload{padding:10px 6px}.sm-upload #sm-ref-empty{gap:6px}.sm-upload small{font-size:10px}.sm-prompt-block textarea{height:120px;min-height:100px}.sm-prompt-tools .pill{border:1px solid var(--border);border-radius:7px;background:var(--panel-3);color:var(--text);cursor:pointer;font-weight:600}.sm-prompt-tools .pill:hover{border-color:#159dff}.sm-submit{position:sticky;bottom:-14px;background:var(--panel);padding:10px 0 14px;display:grid;gap:7px;box-shadow:0 -10px 15px var(--panel);z-index:5}.sm-url .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 @media(max-width:880px){.sm-controls{position:relative;top:auto;max-height:none;overflow:visible}.sm-submit{position:static;box-shadow:none;padding-bottom:0}}
 
+.sm-choices{display:grid;gap:4px}.sm-choice{display:flex;width:100%;text-align:left;background:transparent;color:var(--text);border:0;border-radius:8px;padding:10px 12px;cursor:pointer;font:inherit;font-size:13px}.sm-choice:hover,.sm-choice[aria-pressed="true"]{background:var(--panel);color:#159dff}.sm-choice[aria-pressed="true"]:after{content:'✓';margin-left:auto}.sm-setting-popover input[type="number"]{width:100%;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);margin-bottom:14px}.sm-setting-popover .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.sm-setting-popover{top:auto;bottom:calc(100% + 6px);max-height:280px;overflow:auto}
+
+/* Textareas remain native editors; the mirror paints media aliases only. */
+textarea.ref-prompt-input{position:relative;color:transparent!important;-webkit-text-fill-color:transparent;caret-color:var(--text,#eee)!important}textarea.ref-prompt-input::placeholder{-webkit-text-fill-color:#686872;color:#686872}textarea.ref-prompt-input::selection{background:#176eb780;color:transparent}.ref-prompt-mirror{position:absolute;z-index:2;pointer-events:none;box-sizing:border-box;white-space:pre-wrap;overflow-wrap:break-word;overflow:hidden;border-style:solid;border-color:transparent;color:var(--text,#eee);background:transparent;border-radius:inherit}.ref-prompt-token{color:#249fff;text-decoration:underline;text-decoration-color:#249fff70;text-underline-offset:3px;background:#159dff12;border-radius:3px}.ref-prompt-token.missing{color:#e9a85b;text-decoration-style:dashed;background:transparent}.ref-prompt-preview{position:fixed;z-index:100000;width:240px;max-width:calc(100vw - 16px);padding:10px;border:1px solid #159dff70;border-radius:12px;background:var(--panel,#1b1b1e);color:var(--text,#eee);box-shadow:0 12px 40px #0009;display:grid;gap:8px;pointer-events:auto}.ref-prompt-preview[hidden]{display:none!important}.ref-prompt-preview strong{color:#249fff;font-size:12px}.ref-prompt-preview img,.ref-prompt-preview video{display:block;width:100%;max-height:260px;object-fit:contain;background:#080808;border-radius:7px}.ref-prompt-preview audio{width:100%}.ref-prompt-preview small{font-size:11px;overflow-wrap:anywhere}
+
 /* Glass blue/violet cursor set based on the supplied visual reference. */
 @media (pointer: fine) {
 :root {
@@ -599,6 +605,48 @@ window.MagicDomain = (() => {
   const providerName=p=>p==='higgsfield'?'Higgsfield':p==='openrouter'?'OpenRouter':'BytePlus';
   return {higgsfieldModel,isFaceRejection,buildHiggsfieldRequest,byteplusTask,openRouterModel,buildOpenRouterRequest,validateCapabilities,contentUrl,providerName};
 });
+
+(function(root){
+  'use strict';
+  const attached=new Set(),states=new WeakMap();let popup=null,hideTimer=null,shown=null;
+  function tokens(text,references=[]){
+    const groups={image:[],video:[],audio:[]};for(const ref of references)if(ref&&groups[ref.kind])groups[ref.kind].push(ref);
+    return Array.from(String(text||'').matchAll(/@(image|video|audio)_?([1-9]\d*)\b/gi),match=>({text:match[0],start:match.index,end:match.index+match[0].length,asset:groups[match[1].toLowerCase()][Number(match[2])-1]||null}));
+  }
+  function hide(){clearTimeout(hideTimer);if(popup){popup.hidden=true;for(const video of popup.querySelectorAll('video,audio'))video.pause();}shown=null;}
+  function ensurePopup(){if(popup)return popup;popup=document.createElement('aside');popup.className='ref-prompt-preview';popup.setAttribute('role','tooltip');popup.hidden=true;document.body.append(popup);popup.onpointerenter=()=>clearTimeout(hideTimer);popup.onpointerleave=hide;return popup;}
+  function show(token,x,y){
+    clearTimeout(hideTimer);const box=ensurePopup(),asset=token.asset,key=token.text+'|'+(asset?.id||'missing')+'|'+(asset?.url||asset?.referenceUrl||'');
+    if(shown!==key){box.replaceChildren();const title=document.createElement('strong');title.textContent=token.text;box.append(title);
+      const url=asset?.url||asset?.referenceUrl;
+      const local=url&&typeof location!=='undefined'&&/^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?\//.test(url)&&new URL(url).origin===location.origin;
+      if(asset&&url&&(/^(?:https:|blob:|data:image\/)/.test(url)||local)){
+        const media=document.createElement(asset.kind==='image'?'img':asset.kind==='video'?'video':'audio');media.src=url;if(asset.kind==='image')media.alt=asset.name||token.text;else{media.muted=true;media.controls=true;media.preload='metadata';if(asset.kind==='video'){media.playsInline=true;media.loop=true;media.autoplay=true;media.play().catch(()=>{});}}box.append(media);
+      }
+      const name=document.createElement('small');name.textContent=asset?(url?asset.name||'Референс':'Файл недоступен: добавь его повторно.'):'Этот референс не подключён к генерации.';box.append(name);shown=key;
+    }
+    box.hidden=false;const width=box.offsetWidth,height=box.offsetHeight;box.style.left=Math.max(8,Math.min(innerWidth-width-8,x+14))+'px';box.style.top=Math.max(8,y-height-14>=8?y-height-14:Math.min(innerHeight-height-8,y+20))+'px';
+  }
+  function attach(field,getReferences){
+    if(!field||states.has(field))return;const parent=field.parentElement;if(getComputedStyle(parent).position==='static')parent.style.position='relative';
+    const mirror=document.createElement('div');mirror.className='ref-prompt-mirror';mirror.setAttribute('aria-hidden','true');parent.append(mirror);field.classList.add('ref-prompt-input');
+    const state={field,mirror,getReferences,marks:[],refresh:null,observer:null};states.set(field,state);attached.add(state);
+    state.refresh=()=>{
+      if(!field.isConnected)return;const cs=getComputedStyle(field);for(const key of ['fontFamily','fontSize','fontWeight','fontStyle','lineHeight','letterSpacing','textAlign','textIndent','textTransform','paddingTop','paddingRight','paddingBottom','paddingLeft','borderTopWidth','borderRightWidth','borderBottomWidth','borderLeftWidth','wordBreak','tabSize'])mirror.style[key]=cs[key];
+      mirror.style.left=field.offsetLeft+'px';mirror.style.top=field.offsetTop+'px';mirror.style.width=field.offsetWidth+'px';mirror.style.height=field.offsetHeight+'px';const gutter=Math.max(0,field.offsetWidth-field.clientWidth-parseFloat(cs.borderLeftWidth)-parseFloat(cs.borderRightWidth));mirror.style.paddingRight=(parseFloat(cs.paddingRight)+gutter)+'px';
+      const text=field.value||'',parts=tokens(text,getReferences()||[]);mirror.replaceChildren();state.marks=[];let index=0;
+      for(const token of parts){mirror.append(document.createTextNode(text.slice(index,token.start)));const mark=document.createElement('span');mark.className='ref-prompt-token'+(token.asset?'':' missing');mark.textContent=token.text;mirror.append(mark);state.marks.push({mark,token});index=token.end;}
+      mirror.append(document.createTextNode(text.slice(index)+(text.endsWith('\n')?'\n':'')));mirror.scrollTop=field.scrollTop;mirror.scrollLeft=field.scrollLeft;
+    };
+    field.addEventListener('input',()=>{hide();state.refresh();});field.addEventListener('scroll',()=>{mirror.scrollTop=field.scrollTop;mirror.scrollLeft=field.scrollLeft;hide();});
+    field.addEventListener('pointermove',event=>{const clip=field.getBoundingClientRect();if(event.clientX<clip.left||event.clientX>clip.right||event.clientY<clip.top||event.clientY>clip.bottom)return;for(const item of state.marks){if(Array.from(item.mark.getClientRects()).some(r=>event.clientX>=Math.max(r.left,clip.left)&&event.clientX<=Math.min(r.right,clip.right)&&event.clientY>=Math.max(r.top,clip.top)&&event.clientY<=Math.min(r.bottom,clip.bottom))){show(item.token,event.clientX,event.clientY);return;}}hide();});
+    field.addEventListener('pointerleave',()=>{hideTimer=setTimeout(hide,160);});field.addEventListener('keydown',hide);field.addEventListener('blur',hide);
+    if(typeof ResizeObserver!=='undefined'){state.observer=new ResizeObserver(state.refresh);state.observer.observe(field);}state.refresh();
+  }
+  function refresh(){for(const state of attached){if(!state.field.isConnected){state.observer?.disconnect();state.mirror.remove();attached.delete(state);}else state.refresh();}}
+  root.MagicReferencePrompts={tokens,attach,refresh,hide};
+  if(typeof window!=='undefined'&&typeof document!=='undefined'){window.addEventListener('resize',()=>{hide();refresh();});window.addEventListener('scroll',hide,true);}
+})(typeof window==='undefined'?globalThis:window);
 
 'use strict';
 // Binary media stays in IndexedDB; small snapshots and the outbox stay in localStorage.
@@ -968,8 +1016,12 @@ window.Studio=(()=>{
   const isSimpleSpace=id=>id===simpleSpaceId();
   function simpleSpace(){return {id:simpleSpaceId(),ownerUid:cache.user.uid,name:'Simple Mode',system:'simple',nodeCount:0,edgeCount:0,createdAt:0,updatedAt:0,canvasState:null};}
   async function ensureSimpleSpace(){
-    assertFirebase();const row=simpleSpace(),ref=api.fsM.doc(api.db,'spaces',row.id);let result=row;
-    await api.fsM.runTransaction(api.db,async tx=>{const snap=await tx.get(ref);if(snap.exists())result=own({...snap.data(),id:snap.id,name:'Simple Mode',system:'simple'});else{const {id,...data}=row;tx.set(ref,{...data,createdAt:now(),updatedAt:now()});}});
+    assertFirebase();const row=simpleSpace(),ref=api.fsM.doc(api.db,'spaces',row.id);
+    // Private-space rules deliberately deny reads of missing documents. Query our
+    // own collection first; a merge create never erases a concurrently saved draft.
+    const snap=await api.fsM.getDocs(api.fsM.query(api.fsM.collection(api.db,'spaces'),api.fsM.where('ownerUid','==',cache.user.uid))),found=snap.docs.find(d=>d.id===row.id);
+    const result=found?own({...found.data(),id:found.id,name:'Simple Mode',system:'simple'}):row;
+    if(!found){const {id,canvasState,...data}=row;await api.fsM.setDoc(ref,{...data,createdAt:now(),updatedAt:now()},{merge:true});}
     ownerCache.set(result.id,result);return result;
   }
   async function listSpaces(){
@@ -1941,7 +1993,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
       n.el.dataset.camera='true';$('.node-icon',n.el).textContent='◎';$('footer code',n.el).textContent='camera prompt';
       const clip=MagicCameraMovements.get(n.fields.cameraId),preview=$('.camera-node-preview',n.el);
       if(clip&&preview){const video=$('video',preview);preview.hidden=false;video.src=clip.url;video.setAttribute('aria-label','Camera movement · '+clip.name);video.onerror=()=>{$('.camera-node-error',preview).hidden=false;};}
-    }nodes.set(n.id,n);nodeLayer.append(n.el);moveNode(n,n.x,n.y);resizeObserver.observe(n.el);syncFields(n);
+    }nodes.set(n.id,n);nodeLayer.append(n.el);moveNode(n,n.x,n.y);resizeObserver.observe(n.el);syncFields(n);if(n.type==='generation')window.MagicReferencePrompts?.attach(n.el.querySelector('[data-field=prompt]'),()=>referenceIds(n).map(id=>assets.get(id)).filter(Boolean));
     n.el.querySelector('[data-add-url]')?.addEventListener('click',()=>addUrlReference(n));
     n.el.addEventListener('change',e=>{if(e.target.matches('[data-upload]')){const files=Array.from(e.target.files);mutate(`Добавлены медиа в ${n.id}`,()=>addFiles(n,files),files.map(f=>f.name).join(', '));e.target.value='';if(panel==='settings')renderPanel();}});
     $('.node-title',n.el).addEventListener('dblclick',()=>renameNode(n));
@@ -1958,7 +2010,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     n.el.addEventListener('drop',e=>{if(!['media','generation'].includes(n.type))return;e.preventDefault();e.stopPropagation();n.el.classList.remove('file-over');viewport.classList.remove('file-over');const files=Array.from(e.dataTransfer.files);mutate(`Добавлены медиа в ${n.id}`,()=>addFiles(n,files),files.map(f=>f.name).join(', '));if(panel==='settings')renderPanel();});
     return n;
   }
-  function syncFields(n,except=null){if(n.type==='preset'){$('.preset-heading',n.el).textContent=n.fields.heading||nodeName(n);$('.preset-excerpt',n.el).textContent=n.fields.text||'Нажми, чтобы добавить промпт пресета…';}$('.node-title',n.el).textContent=nodeName(n);n.el.setAttribute('aria-label',nodeName(n));for(const input of n.el.querySelectorAll('[data-field]'))if(input!==except)input.value=n.fields[input.dataset.field]??'';if(composerNode===n.id)for(const el of $('#generation-composer').querySelectorAll('[data-panel-field]'))if(el!==except&&el!==document.activeElement)el.value=n.fields[el.dataset.panelField]??'';}
+  function syncFields(n,except=null){if(n.type==='preset'){$('.preset-heading',n.el).textContent=n.fields.heading||nodeName(n);$('.preset-excerpt',n.el).textContent=n.fields.text||'Нажми, чтобы добавить промпт пресета…';}$('.node-title',n.el).textContent=nodeName(n);n.el.setAttribute('aria-label',nodeName(n));for(const input of n.el.querySelectorAll('[data-field]'))if(input!==except)input.value=n.fields[input.dataset.field]??'';if(composerNode===n.id)for(const el of $('#generation-composer').querySelectorAll('[data-panel-field]'))if(el!==except&&el!==document.activeElement)el.value=n.fields[el.dataset.panelField]??'';window.MagicReferencePrompts?.refresh();}
   function addNode(type,position,fields={},files=[]){
     const cameraNode=type==='generation'&&!position?[...nodes.values()].find(n=>n.fields.kind==='camera'):null;if(cameraNode)position={x:cameraNode.x+cameraNode.el.offsetWidth+100,y:cameraNode.y};
     const id=types[type].prefix+(++counters[type]),p=position||center();const n=buildNode({id,type,x:p.x,y:p.y,fields,assets:[]});
@@ -2000,7 +2052,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     if(n.type==='text'||n.type==='preset'){$('.node-state',n.el).textContent=n.type==='preset'?(n.fields.enabled==='false'?'Выключен':'Полный промпт подключён'):'Текст / промпт';syncFields(n);}
     if(n.type==='generation')$('.node-state',n.el).textContent='Seedance · Omni Reference';
     if(n.type==='output')paintOutput(n);
-  }updateLinkedText();updateGenerateButtons();refreshComposerAssets();}
+  }updateLinkedText();updateGenerateButtons();refreshComposerAssets();window.MagicReferencePrompts?.refresh();}
   function portPoint(id,direction){const n=nodes.get(id),p=n&&$(`.port.${direction}`,n.el);if(!p)return null;const r=p.getBoundingClientRect();return worldPoint(r.x+r.width/2,r.y+r.height/2);}
   function curve(a,b){const bend=Math.max(65,Math.abs(b.x-a.x)*.48);return `M ${a.x} ${a.y} C ${a.x+bend} ${a.y},${b.x-bend} ${b.y},${b.x} ${b.y}`;}
   function schedule(){if(frame)return;frame=requestAnimationFrame(()=>{frame=0;renderWires();drawMinimap();positionComposer();paintSelection();});}
@@ -2162,6 +2214,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     if(autoSize)$('#composer-settings-label').textContent=`${n.fields.resolution||'720p'} · ${autoLength?'Длина исходника':n.fields.duration+'s'} · Формат исходника`;
     const durationInput=host.querySelector('[data-panel-field="duration"]');if(durationInput)durationInput.disabled=autoLength;if(autoLength)$('#duration-label').textContent='Длина исходника (4–30s)';
     if(autoSize)for(const b of host.querySelectorAll('[data-setting="ratio"]')){b.disabled=true;b.title='Формат сохраняется из исходного видео';}
+    window.MagicReferencePrompts?.attach($('#composer-prompt'),()=>referenceIds(n).map(id=>assets.get(id)).filter(Boolean));window.MagicReferencePrompts?.refresh();
     const improveButton=$('#composer-improve');improveButton.disabled=improvingPrompts.has(n.id);improveButton.textContent=improveButton.disabled?'Улучшаю…':'✦ Улучшить промпт';updateGenerateButtons();refreshComposerAssets();updateLinkedText();positionComposer();
   }
   function refreshComposerAssets(){const n=nodes.get(composerNode);if(!n)return;const host=$('#generation-composer'),container=$('.composer-references',host);if(!container)return;container.replaceChildren();if(n.type==='generation'){const add=document.createElement('label');add.className='ref-upload';add.innerHTML='<span>+</span><small>Ref</small><input type="file" accept="image/*,video/*" multiple hidden aria-label="Добавить референсы">';$('input',add).onchange=e=>{const files=[...e.target.files];mutate('Добавлены референсы',()=>addFiles(n,files));};container.append(add);const link=document.createElement('button');link.className='ref-upload';link.textContent='По ссылке';link.onclick=()=>addUrlReference(n);container.append(link);const list=referenceIds(n).map(id=>({id}));const counts={image:0,video:0};for(const {id} of list){const a=assets.get(id);if(!a)continue;const alias='@'+a.kind+(++counts[a.kind]),chip=document.createElement('div');chip.className='composer-reference';chip.title=a.name;const visual=document.createElement(a.kind==='image'?'img':'video');if(a.url){visual.src=a.url;visual.muted=true;visual.draggable=false;visual.alt=a.name;chip.append(visual);}else{const lost=document.createElement('span');lost.textContent='!';lost.title='Добавь файл повторно';chip.append(lost);}const token=document.createElement('button');token.textContent=alias;token.title='Вставить '+alias+' в промпт';token.onclick=()=>{const field=n.type==='text'?'instruction':'prompt';mutate('Добавлена ссылка на медиа',()=>{n.fields[field]=(n.fields[field]||'')+' '+alias;syncFields(n);updateLinkedText();});};chip.append(token);if(a.kind==='image'&&selectedVideoProvider(n)==='byteplus')chip.append(portraitButton(a));{const remove=document.createElement('button');remove.className='remove-ref';remove.textContent='×';remove.setAttribute('aria-label','Убрать '+a.name);remove.onpointerdown=e=>{e.preventDefault();e.stopPropagation();};remove.onclick=e=>{e.stopPropagation();mutate('Убрано медиа из генерации',()=>removeReference(n,id));};chip.append(remove);}container.append(chip);}}

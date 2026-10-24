@@ -50,6 +50,14 @@ test('Simple Mode is one stable private Space per user, cannot be renamed/delete
  await assert.rejects(b.s.getSpace('first'),/владельцу/);
 });
 
+test('first Simple Mode creation works when private rules deny missing reads and never clears a concurrent draft',async()=>{
+ const a=app('user'),sdk=a.c.__test.api.fsM,read=sdk.getDoc;let missingReads=0;
+ sdk.getDoc=async ref=>{if(ref.path.startsWith('spaces/')&&!a.docs()[ref.path]){missingReads++;throw Object.assign(Error('Missing or insufficient permissions.'),{code:'permission-denied'});}return read(ref);};
+ const write=sdk.setDoc;sdk.setDoc=async(ref,data,options)=>{if(ref.path==='spaces/simple_alice'){const docs=a.docs();docs[ref.path]={ownerUid:'alice',canvasState:{state:{simpleDraft:{prompt:'Concurrent draft'}}}};a.c.__qa.put('docs',docs);}return write(ref,data,options);};
+ await a.s.ensureSimpleSpace();assert.equal(missingReads,0);assert.equal(a.docs()['spaces/simple_alice'].canvasState.state.simpleDraft.prompt,'Concurrent draft');
+ const restored=await a.s.ensureSimpleSpace();assert.equal(restored.canvasState.state.simpleDraft.prompt,'Concurrent draft');
+});
+
 test('Simple Mode explicitly routes text-only BytePlus without changing the global provider',async()=>{
  const {s,c}=app('user');c.localStorage.setItem('magic.credentials.alice.seedanceProvider','openrouter');let calls=0;
  c.fetch=async(url,init)=>{calls++;assert.match(String(url),/contents\/generations\/tasks$/);const body=JSON.parse(init.body);assert.equal(body.content.length,1);assert.equal('simpleMode' in body,false);return Response.json({id:'byte-simple'});};

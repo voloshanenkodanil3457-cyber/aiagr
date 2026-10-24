@@ -9,18 +9,23 @@
   const tracking=new Map(),rows=new Map(),controllers=new Map();
   let local=null;try{local=JSON.parse(localStorage.getItem(key)||'null');}catch{}
   const remote=space.canvasState;const saved=local&&(local.savedAt||0)>(remote?.savedAt||0)?local:remote;
-  if(saved?.state?.simpleDraft){draft={...defaults,...saved.state.simpleDraft};refs=await S.hydrateLocalAssets(saved.assets||[]);}
+  if(saved?.state?.simpleDraft){draft={...defaults,...saved.state.simpleDraft};refs=await S.hydrateLocalAssets((saved.assets||[]).map(a=>({...a,url:a.url||a.referenceUrl||null})));}
   const model=$('#sm-model'),prompt=$('#sm-prompt'),duration=$('#sm-duration'),ratio=$('#sm-ratio'),resolution=$('#sm-resolution'),bitrate=$('#sm-bitrate'),audio=$('#sm-audio');
   const isByte=()=>draft.model==='byteplus',isKling=()=>draft.model==='kling-video/v4.0';
   const name=()=>isByte()?'BytePlus · Seedance 2.5':isKling()?'Higgsfield · Kling 4.0':draft.model.endsWith('2.0')?'Higgsfield · Seedance 2.0':'Higgsfield · Seedance 2.5';
   const note=(text,error=false)=>{const n=$('#sm-status');n.textContent=text;n.classList.toggle('error-text',error);};
-  function payload(){return {version:1,savedAt:Date.now(),state:{nodes:refs.map(a=>({id:'ref-'+a.id,type:'media',assets:[a.id]})),edges:[],simpleDraft:{...draft}},assets:refs.map(a=>({...a,url:a.url?.startsWith('blob:')?null:a.url}))};}
+  function payload(){return {version:1,savedAt:Date.now(),state:{nodes:refs.map(a=>({id:'ref-'+a.id,type:'media',assets:[a.id]})),edges:[],simpleDraft:{...draft}},assets:refs.map(a=>({...a,url:a.url?.startsWith('blob:')?a.referenceUrl||null:a.url}))};}
   function save(){
     const value=payload();try{localStorage.setItem(key,JSON.stringify(value));}catch{note('Не удалось сохранить черновик на устройстве.',true);}
     $('#sm-save-state').textContent='Сохраняем…';clearTimeout(timer);
     timer=setTimeout(()=>{saveChain=saveChain.catch(()=>{}).then(()=>S.saveSpaceState(space.id,value)).then(()=>$('#sm-save-state').textContent='Личный Space · сохранено').catch(()=>$('#sm-save-state').textContent='Сохранено на устройстве · облако недоступно');},700);
   }
-  function options(field,values){const old=field.value;field.replaceChildren(...values.map(value=>{const o=E('option',value);o.value=value;return o;}));field.value=values.includes(old)?old:values[0];}
+  const panels=[...document.querySelectorAll('.sm-setting')];
+  function closeSettings(){for(const panel of panels)panel.open=false;}
+  function options(field,values){
+    const host=$('#'+field.id+'-choices'),setting=field.id.replace('sm-','');host.replaceChildren();
+    for(const value of values){const button=E('button',value==='high'?'High — меньше сжатия':value==='standard'?'Standard — меньше файл':value,'sm-choice');button.type='button';button.disabled=busy;button.setAttribute('aria-pressed',String(draft[setting]===value));button.onclick=()=>{if(busy)return;draft[setting]=value;closeSettings();update();save();};host.append(button);}
+  }
   function normalize(){
     if(!['bytedance/seedance-2.5','bytedance/seedance-2.0','kling-video/v4.0','byteplus'].includes(draft.model))draft.model=defaults.model;
     const kling=isKling(),max=draft.model.endsWith('2.0')?15:30;draft.duration=Math.max(4,Math.min(max,Math.round(Number(draft.duration)||5)));
@@ -30,10 +35,11 @@
     if(!['high','standard'].includes(draft.bitrate))draft.bitrate='high';
     draft.prompt=String(draft.prompt||'').slice(0,32000);
   }
+  MagicReferencePrompts.attach(prompt,()=>isByte()?[]:refs);
   function update(){
     normalize();model.value=draft.model;prompt.value=draft.prompt;duration.max=draft.model.endsWith('2.0')?'15':'30';duration.value=draft.duration;
     options(ratio,isKling()?['21:9','16:9','9:16','1:1']:['21:9','16:9','4:3','1:1','3:4','9:16']);ratio.value=draft.ratio;
-    options(resolution,isKling()?['720p','1080p']:['480p','720p','1080p']);resolution.value=draft.resolution;bitrate.value=draft.bitrate;
+    options(resolution,isKling()?['720p','1080p']:['480p','720p','1080p']);resolution.value=draft.resolution;options(bitrate,['high','standard']);bitrate.value=draft.bitrate;$('#sm-duration-number').max=duration.max;if(document.activeElement!==$('#sm-duration-number'))$('#sm-duration-number').value=draft.duration;
     $('#sm-duration-value').textContent=draft.duration+' сек.';$('#sm-duration-max').textContent=duration.max+'s';$('#sm-ratio-value').textContent=draft.ratio;$('#sm-resolution-value').textContent=draft.resolution;$('#sm-bitrate-value').textContent=draft.bitrate==='high'?'High':'Standard';
     audio.textContent=draft.audio?'♪ Звук включён':'♪ Без звука';audio.setAttribute('aria-pressed',String(draft.audio));audio.hidden=isKling();prompt.placeholder=isKling()?'Опиши сцену, движение и камеру. Референсы: @image_1, @video_1…':'Опиши сцену, движение и камеру. Референсы: @image1, @video1…';
     $('#sm-reference-section').hidden=isByte();$('#sm-bitrate-setting').hidden=draft.model!=='bytedance/seedance-2.5';
@@ -43,7 +49,7 @@
     const active=isByte()?[]:refs,vid=active.filter(a=>a.kind==='video'),known=vid.every(a=>Number(a.duration)>0);
     const cost=MagicDomain.estimateCost({provider:isByte()?'byteplus':'higgsfield',model:draft.model,seconds:draft.duration,resolution:draft.resolution,ratio:draft.ratio,videoReferenceCount:vid.length,inputVideoSeconds:known?vid.reduce((sum,a)=>sum+Number(a.duration),0):null});
     $('#sm-cost').textContent=cost==null?'Цена уточняется API перед запуском':MagicDomain.money(cost)+' ≈ · предварительная оценка, без скидки';
-    renderRefs();
+    renderRefs();MagicReferencePrompts.refresh();
   }
   function renderRefs(){
     const box=$('#sm-reference-list');box.replaceChildren();const counts={};
@@ -57,15 +63,20 @@
     if(busy||isByte())return;uploading++;update();
     try{for(const file of files){if(refs.length>=15)throw Error('Максимум 15 референсов.');if(isKling()&&file.type.startsWith('audio/'))throw Error('Kling 4.0 не принимает аудиореференсы.');
       let item=await S.storeLocalAsset(file,space.id);if(item.kind==='video'){item.duration=await new Promise(resolve=>{const video=document.createElement('video'),timeout=setTimeout(()=>{video.removeAttribute('src');resolve(null);},8000);video.preload='metadata';video.onloadedmetadata=()=>{clearTimeout(timeout);resolve(Number.isFinite(video.duration)?video.duration:null);};video.onerror=()=>{clearTimeout(timeout);resolve(null);};video.src=item.url;});}
-      const remote=await S.ensureRemoteAsset(item,{provider:'higgsfield'});refs.push({...item,url:remote.referenceUrl,referenceUrl:remote.referenceUrl});save();}
+      refs.push(item);update();save();}
       note('Референсы добавлены. Их можно удалить крестиком.');
     }catch(error){note(error.message,true);}finally{uploading--;$('#sm-files').value='';update();}
   }
   $('#sm-files').onchange=e=>addFiles([...e.target.files]);const drop=$('#sm-reference-drop');drop.ondragover=e=>{e.preventDefault();drop.classList.add('dragging');};drop.ondragleave=()=>drop.classList.remove('dragging');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('dragging');addFiles([...e.dataTransfer.files]);};
   $('#sm-add-url').onclick=async e=>{e.preventDefault();if(busy||isByte())return;try{if(refs.length>=15)throw Error('Максимум 15 референсов.');const item=await S.storeReferenceUrl($('#sm-ref-url').value.trim(),space.id);refs.push(item);$('#sm-ref-url').value='';update();save();}catch(error){note(error.message,true);}};
   model.onchange=()=>{draft.model=model.value;update();save();};prompt.oninput=()=>{draft.prompt=prompt.value;save();};
-  duration.oninput=()=>{draft.duration=Number(duration.value);update();save();};duration.onchange=()=>duration.closest('details').open=false;ratio.onchange=()=>{draft.ratio=ratio.value;update();save();ratio.closest('details').open=false;};resolution.onchange=()=>{draft.resolution=resolution.value;update();save();resolution.closest('details').open=false;};bitrate.onchange=()=>{draft.bitrate=bitrate.value;update();save();bitrate.closest('details').open=false;};audio.onclick=()=>{draft.audio=!draft.audio;update();save();};
-  document.querySelectorAll('.sm-setting').forEach(panel=>panel.addEventListener('toggle',()=>{if(panel.open)document.querySelectorAll('.sm-setting').forEach(other=>{if(other!==panel)other.open=false;});}));
+  function setDuration(value){const n=Number(value),max=Number(duration.max);if(Number.isInteger(n)&&n>=4&&n<=max){draft.duration=n;update();save();}}
+  duration.oninput=()=>setDuration(duration.value);duration.onchange=closeSettings;$('#sm-duration-number').oninput=()=>setDuration($('#sm-duration-number').value);$('#sm-duration-number').onchange=()=>{normalize();$('#sm-duration-number').value=draft.duration;closeSettings();};
+  audio.onclick=()=>{draft.audio=!draft.audio;update();save();};
+  // Close synchronously before native <details> toggles, rather than racing its
+  // deferred toggle events. Also close outside, on Escape and before Generate.
+  for(const panel of panels){panel.querySelector('summary').addEventListener('click',event=>{event.preventDefault();const opening=!panel.open;closeSettings();if(opening)panel.open=true;});}
+  document.addEventListener('pointerdown',event=>{if(!event.target.closest('.sm-setting'))closeSettings();});document.addEventListener('keydown',event=>{if(event.key==='Escape')closeSettings();});
   $('#sm-improve').onclick=async()=>{const original=prompt.value;if(!original.trim()){note('Добавь идею для промпта.',true);return;}const button=$('#sm-improve');button.disabled=true;button.textContent='Улучшаю…';
     try{const selected=draft.model,kling=isKling(),result=await S.higgsfieldRequest('improve-prompt',{prompt:kling?original.replace(/@(image|video)_(\d+)/g,'@$1$2'):original,references:(isByte()?[]:refs).map(a=>({kind:a.kind,name:a.name})),options:{model:selected,duration:draft.duration,resolution:draft.resolution,ratio:draft.ratio,audio:draft.audio}});if(prompt.value!==original||draft.model!==selected)throw Error('Промпт или модель изменились во время улучшения. Твой текст сохранён; нажми улучшение ещё раз.');if(typeof result.text!=='string'||!result.text.trim())throw Error('ИИ не вернул промпт.');const text=kling?result.text.replace(/@(image|video)(\d+)/g,'@$1_$2'):result.text;lastImprovement={original,improved:text};draft.prompt=text;update();save();$('#sm-undo-improve').hidden=false;note('Промпт улучшен. Генерация не запускалась.');}
     catch(error){note(error.message,true);}finally{button.disabled=false;button.textContent='✦ Улучшить промпт';}
@@ -91,13 +102,13 @@
   function confirmPaid(snapshot){return new Promise(resolve=>{const dialog=$('#sm-confirm'),label=$('#sm-confirm-description');label.textContent=name()+' · '+snapshot.duration+' сек. · '+snapshot.resolution+' · '+snapshot.ratio+'. Новая платная генерация через Higgsfield. Цена может быть выше BytePlus; модерация референсов действует. '+$('#sm-cost').textContent;dialog.returnValue='';dialog.onclose=()=>resolve(dialog.returnValue==='confirm');dialog.showModal();});}
   function lock(value){busy=value;for(const control of document.querySelectorAll('#sm-form input,#sm-form select,#sm-form textarea,#sm-form button'))control.disabled=value;update();}
   $('#sm-form').onsubmit=async event=>{
-    event.preventDefault();if(busy||uploading)return;draft.prompt=prompt.value.trim();if(!draft.prompt){note('Опиши видео в промпте.',true);return;}
+    event.preventDefault();closeSettings();if(busy||uploading)return;draft.prompt=prompt.value.trim();if(!draft.prompt){note('Опиши видео в промпте.',true);return;}
     const snapshot={...draft},provider=isByte()?'byteplus':'higgsfield',active=provider==='byteplus'?[]:refs.map(a=>({...a}));lock(true);let record=null;
     try{
       if(provider==='higgsfield'&&!await confirmPaid(snapshot))return;
       const credentials=await S.providerCredentials(provider);if(!credentials)throw Error('Подключи '+provider+' в My settings.');
       if(provider==='higgsfield'){const config=await S.higgsfieldRequest('config');if(!config.ready)throw Error('Higgsfield не подключён.');if(!config.models?.includes(snapshot.model))throw Error('Обнови Higgsfield Worker для выбранной модели.');}
-      const prepared=[];for(const item of active){if(!item.url)throw Error('Добавь повторно недоступный референс '+item.name);prepared.push(await S.ensureRemoteAsset(item,{provider}));}
+      const prepared=[];for(const item of active){if(!item.url)throw Error('Добавь повторно недоступный референс '+item.name);const ready=await S.ensureRemoteAsset(item,{provider});prepared.push(ready);const ownRef=refs.find(a=>a.id===item.id);if(ownRef)ownRef.referenceUrl=ready.referenceUrl;}
       const videos=prepared.filter(a=>a.kind==='video'),known=videos.every(a=>Number(a.duration)>0),options={model:provider==='byteplus'?MagicDomain.defaultVideoModel:snapshot.model,prompt:provider==='higgsfield'&&snapshot.model==='kling-video/v4.0'?snapshot.prompt.replace(/@(image|video)(\d+)/g,'@$1_$2'):snapshot.prompt,duration:snapshot.duration,resolution:snapshot.resolution,aspect_ratio:snapshot.ratio,generate_audio:snapshot.audio,taskMode:'reference',omni_reference_task_type:'reference',forceReference:true,reference_images:prepared.filter(a=>a.kind==='image').map(a=>a.referenceUrl),reference_videos:videos.map(a=>a.referenceUrl),reference_audio:prepared.filter(a=>a.kind==='audio').map(a=>a.referenceUrl),...(snapshot.model==='bytedance/seedance-2.5'?{bitrate_mode:snapshot.bitrate}:{})};
       options.simpleMode=true;if(provider==='higgsfield'){MagicProviders.buildHiggsfieldRequest(options);options.higgsfieldConfirmed=true;}else await S.prepareVideoRequest(provider,options);
       record=await S.createVideoRecord({spaceId:space.id,spaceName:'Simple Mode',provider,model:options.model,prompt:options.prompt,seconds:snapshot.duration,resolution:snapshot.resolution,ratio:snapshot.ratio,generateAudio:snapshot.audio,bitrateMode:options.bitrate_mode,taskMode:'reference',referenceCount:prepared.length,videoReferenceCount:videos.length,inputVideoSeconds:known?videos.reduce((sum,a)=>sum+Number(a.duration),0):null,hasRef:prepared.length>0,transport:credentials.mode,gatewayUrl:credentials.workerUrl||null});
