@@ -4,7 +4,7 @@
   "version": "0.13.1",
   "scripts": {
     "build": "python3 source/build.py",
-    "test": "node --test tests/dashboard-cost.test.mjs tests/prompt-improver.test.mjs tests/canvas-provider.test.cjs tests/domain.test.cjs tests/worker.test.mjs tests/portraits.test.mjs tests/providers.test.cjs tests/openrouter.test.mjs tests/assets.test.cjs tests/cost-ui.test.cjs tests/captions.test.cjs tests/captions-language.test.cjs tests/editor.test.cjs",
+    "test": "node --test tests/reference-prompts.test.cjs tests/dashboard-cost.test.mjs tests/prompt-improver.test.mjs tests/canvas-provider.test.cjs tests/domain.test.cjs tests/worker.test.mjs tests/portraits.test.mjs tests/providers.test.cjs tests/openrouter.test.mjs tests/assets.test.cjs tests/cost-ui.test.cjs tests/captions.test.cjs tests/captions-language.test.cjs tests/editor.test.cjs",
     "test:rules": "firebase emulators:exec --only firestore,storage --project demo-magic-tests \"node --test tests/firestore.test.cjs\"",
     "test:browser": "node tests/browser.test.mjs && node tests/portraits.browser.test.mjs && node tests/refresh.browser.test.mjs",
     "higgsfield:example": "tsx index.ts"
@@ -22,3 +22,4 @@
     "dotenv": "^18.0.8"
   }
 }
+

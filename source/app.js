@@ -336,8 +336,12 @@ window.Studio=(()=>{
   const isSimpleSpace=id=>id===simpleSpaceId();
   function simpleSpace(){return {id:simpleSpaceId(),ownerUid:cache.user.uid,name:'Simple Mode',system:'simple',nodeCount:0,edgeCount:0,createdAt:0,updatedAt:0,canvasState:null};}
   async function ensureSimpleSpace(){
-    assertFirebase();const row=simpleSpace(),ref=api.fsM.doc(api.db,'spaces',row.id);let result=row;
-    await api.fsM.runTransaction(api.db,async tx=>{const snap=await tx.get(ref);if(snap.exists())result=own({...snap.data(),id:snap.id,name:'Simple Mode',system:'simple'});else{const {id,...data}=row;tx.set(ref,{...data,createdAt:now(),updatedAt:now()});}});
+    assertFirebase();const row=simpleSpace(),ref=api.fsM.doc(api.db,'spaces',row.id);
+    // Private-space rules deliberately deny reads of missing documents. Query our
+    // own collection first; a merge create never erases a concurrently saved draft.
+    const snap=await api.fsM.getDocs(api.fsM.query(api.fsM.collection(api.db,'spaces'),api.fsM.where('ownerUid','==',cache.user.uid))),found=snap.docs.find(d=>d.id===row.id);
+    const result=found?own({...found.data(),id:found.id,name:'Simple Mode',system:'simple'}):row;
+    if(!found){const {id,canvasState,...data}=row;await api.fsM.setDoc(ref,{...data,createdAt:now(),updatedAt:now()},{merge:true});}
     ownerCache.set(result.id,result);return result;
   }
   async function listSpaces(){
