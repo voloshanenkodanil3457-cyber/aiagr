@@ -177,6 +177,13 @@ test('Higgsfield missing or unavailable estimate does not block an explicitly co
  }
 });
 
+test('a completed Higgsfield task without an API quote freezes a public tariff estimate',async()=>{
+ const {s,c}=app('user');s.setHiggsfieldGateway('https://hf.test');c.__test.api.auth={currentUser:{getIdToken:async()=>'firebase-only'}};
+ const record=await s.createVideoRecord({provider:'higgsfield',model:'bytedance/seedance-2.5',seconds:5,resolution:'720p',ratio:'16:9'});
+ await s.updateVideo(record.id,{requestId:'hf-result',taskToken:'receipt',gatewayUrl:'https://hf.test'});c.fetch=async()=>Response.json({status:'completed',video:{url:'https://cdn.test/result.mp4'}});
+ const done=await s.refreshGeneration(record.id);assert.equal(done.cost,2.3112);assert.equal(done.costSource,'higgsfield_tariff');assert.equal(done.pricingVersion,'hf-public-tokens-2026-10-24');assert.equal(c.MagicDomain.totals([done]).estimatedCostCount,1);
+});
+
 test('Higgsfield completed quote contributes to cost totals as an estimate, failed quotes do not',async()=>{
  const {s,c}=app('user');const D=c.MagicDomain;
  const rows=[{provider:'byteplus',status:'completed',cost:1,costSource:'api'},{provider:'higgsfield',status:'completed',cost:2.3456,costSource:'api_estimate'},{provider:'higgsfield',status:'failed',estimatedCost:9},{provider:'higgsfield',status:'completed',cost:null}];

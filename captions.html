@@ -79,6 +79,10 @@ dialog.studio-dialog{width:min(530px,calc(100vw - 30px));border:1px solid var(--
 
 .portrait-dialog{max-width:650px;width:calc(100vw - 40px);max-height:90vh;overflow:auto}.portrait-actions{display:flex;gap:8px;flex-wrap:wrap}.portrait-dialog .panel-note{white-space:normal}.portrait-ref-button{font-size:10px;padding:3px 6px;border:1px solid var(--border,#49494f);border-radius:6px;background:var(--surface,#26262a);color:inherit;cursor:pointer}.composer-reference>button.portrait-ref-button{position:absolute;top:3px;bottom:auto;left:3px;max-width:calc(100% - 18px);font-size:9px;line-height:1.2}.portrait-dialog a{color:inherit}
 
+.dashboard-grid>*,.dashboard-grid .panel-card,.recent-list,.recent-row{min-width:0;max-width:100%;box-sizing:border-box}.recent-row{width:100%;overflow:hidden}.recent-info{flex:1;min-width:0;overflow:hidden}.recent-info strong{max-width:100%}.recent-meta{flex:0 0 auto;display:flex;flex-direction:column;align-items:flex-end;gap:5px;max-width:40%}.recent-meta b{font-size:12px;white-space:nowrap}.recent-meta .status-pill{white-space:normal;overflow-wrap:anywhere;max-width:100%}.chart-tooltip{position:fixed;z-index:200;background:var(--panel);border:1px solid var(--line-strong);border-radius:10px;padding:12px;box-shadow:0 8px 28px #0008;width:min(350px,calc(100vw - 16px));max-height:65vh;overflow:auto;pointer-events:none}.chart-tooltip strong{display:block;margin-bottom:8px}.chart-tooltip table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}.chart-tooltip th,.chart-tooltip td{padding:6px 4px;text-align:left;overflow-wrap:anywhere}.chart-tooltip th:last-child,.chart-tooltip td:last-child{text-align:right}.chart-tooltip small{display:block;color:var(--muted);margin-top:8px}.chart-bar{flex-shrink:0;padding:0;border:0}.chart-summary{flex-wrap:wrap}.hf-calculator{margin-top:18px}.hf-calculator .calculator-controls{min-width:0}
+
+.hf-calculator .xp-result{display:block}.hf-calculator .xp-result output{font-size:42px;white-space:nowrap}.hf-calculator .xp-result span{display:block;margin-top:8px}
+
 /* Glass blue/violet cursor set based on the supplied visual reference. */
 @media (pointer: fine) {
 :root {
@@ -267,14 +271,24 @@ window.MagicDomain = (() => {
     return result;
   }
   function setVideoPrices(prices){videoPrices=validatePrices(prices);return {...videoPrices};}
-  function estimateCost({provider, seconds, resolution, videoReferenceCount = 0, pricingRates} = {}, rates = pricingRates || videoPrices) {
-    if(provider==='higgsfield')return null;
+  function higgsfieldCost({model,seconds,resolution,ratio='16:9',videoReferenceCount=0,inputVideoSeconds,discount=0,sourceSeconds,taskMode}={}){
+    const version=/seedance-2\.0(?:\/|$)/.test(model||'')?'2.0':/seedance-2\.5(?:\/|$)/.test(model||'')?'2.5':null;
+    const dims={'480p':{'16:9':[854,480],'4:3':[752,560],'1:1':[640,640],'21:9':[992,432]},'720p':{'16:9':[1280,720],'4:3':[1112,834],'1:1':[960,960],'21:9':[1470,630]},'1080p':{'16:9':[1920,1080],'4:3':[1664,1248],'1:1':[1440,1440],'21:9':[2206,946]}};
+    const aspect=ratio==='9:16'?'16:9':ratio==='3:4'?'4:3':ratio,dimensions=version==='2.0'&&resolution==='480p'&&aspect==='16:9'?[864,496]:dims[resolution]?.[aspect],hasVideo=Number(videoReferenceCount)>0;
+    const input=hasVideo?Number(inputVideoSeconds):0,duration=taskMode==='edit'?Number(sourceSeconds):Number(seconds),off=Number(discount);
+    if(!version||!dimensions||!Number.isFinite(duration)||duration<4||duration>(version==='2.0'?15:30)||!Number.isFinite(off)||off<0||off>100||hasVideo&&(inputVideoSeconds==null||!Number.isFinite(input)||input<=0||input>(version==='2.0'?15:30)))return null;
+    const tokens=Math.ceil(dimensions[0]*dimensions[1]*24*(duration+input)/1024),rate=version==='2.0'?.014:resolution==='1080p'?.0234:.0214;
+    return Math.round(tokens/1000*rate*(hasVideo?.6:1)*(1-off/100)*1000000)/1000000;
+  }
+  function estimateCost({provider, seconds, resolution, videoReferenceCount = 0, pricingRates,...rest} = {}, rates = pricingRates || videoPrices) {
+    if(provider==='higgsfield')return higgsfieldCost({...rest,seconds,resolution,videoReferenceCount});
     const duration = Number(seconds), price = rates[resolution];
     if (!Number.isFinite(duration) || duration < 4 || duration > 30 || !price || Number(videoReferenceCount) > 0) return null;
     return Math.round(price * 1000000 * duration) / 1000000;
   }
   function videoCost(video) {
     if (video.cost != null && Number.isFinite(Number(video.cost)) && Number(video.cost) >= 0) return Number(video.cost);
+    if(video.status==='completed'&&video.estimateSource==='api_estimate'&&video.estimatedCost!=null&&Number.isFinite(Number(video.estimatedCost))&&Number(video.estimatedCost)>=0)return Number(video.estimatedCost);
     return video.status === 'completed' ? estimateCost(video, video.pricingRates || defaultVideoPrices) : null;
   }
   const money = (value, precision=4) => '$' + Number(value || 0).toFixed(precision).replace(/(\.\d{2,}?)0+$/, '$1');
@@ -293,7 +307,7 @@ window.MagicDomain = (() => {
       const cost = videoCost(v);
       if (cost != null) {
         out.cost = Math.round((out.cost + cost) * 1000000) / 1000000;
-        if (v.cost == null || ['tariff','api_estimate'].includes(v.costSource)) out.estimatedCostCount++;
+        if (v.cost == null || ['tariff','higgsfield_tariff','api_estimate'].includes(v.costSource)) out.estimatedCostCount++;
       } else if (v.status === 'completed') out.unknownCost++;
       return out;
     }, { total: 0, completed: 0, failed: 0, running: 0, cost: 0, unknownCost: 0, xp: 0, estimatedCostCount: 0 });
@@ -302,7 +316,7 @@ window.MagicDomain = (() => {
     if (direction === 'in') return { generation: ['media', 'preset'], text: ['preset'], output: ['generation'] }[type] || [];
     return { generation: ['output'], media: ['generation'], camera: ['generation'], preset: ['generation', 'text'], text: ['generation'] }[type] || [];
   }
-  return { xp, totals, terminal, compatible, resolutions, defaultVideoModel, normalizeBytePlusModel, get videoPrices(){return {...videoPrices};}, defaultVideoPrices, pricingVersion, estimateCost, videoCost, money, validatePrices, setVideoPrices };
+  return { higgsfieldCost,xp, totals, terminal, compatible, resolutions, defaultVideoModel, normalizeBytePlusModel, get videoPrices(){return {...videoPrices};}, defaultVideoPrices, pricingVersion, estimateCost, videoCost, money, validatePrices, setVideoPrices };
 })();
 
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MagicProviders=api;})(typeof window==='object'?window:globalThis,()=>{
@@ -871,6 +885,7 @@ window.Studio=(()=>{
     const row={id:uid(),uid:me.uid,user:me.name,spaceId:data.spaceId||null,spaceName:data.spaceName||'',sourceNodeId:data.sourceNodeId||null,outputNodeId:data.outputNodeId||null,
       prompt:data.prompt||'',provider:data.provider||'byteplus',model:videoModelFor(data.provider,data.model),resolution:normalizeResolution(data.resolution),ratio:normalizeRatio(data.ratio),
       transport:data.transport||'direct',gatewayUrl:data.gatewayUrl||null,pricingRates:MagicDomain.videoPrices,
+      taskMode:data.taskMode||null,inputVideoSeconds:Number(data.inputVideoSeconds)>0?Number(data.inputVideoSeconds):null,sourceSeconds:Number(data.sourceSeconds)>0?Number(data.sourceSeconds):null,
       seconds:Math.max(4,Math.min(30,Number(data.seconds)||8)),referenceCount:Math.max(0,Math.min(15,Number(data.referenceCount)||0)),videoReferenceCount:Math.max(0,Math.min(15,Number(data.videoReferenceCount)||0)),hasRef:Boolean(data.hasRef),refMode:'reference',generateAudio:data.generateAudio!==false,
       status:'queued',pct:0,cost:null,error:null,requestId:null,videoUrl:null,remoteUrl:null,storagePath:null,createdAt:now(),updatedAt:now(),cloudSaved:false};
     return rememberVideo(row);
@@ -1064,7 +1079,7 @@ window.Studio=(()=>{
     if(actualDuration>=4&&actualDuration<=30)patch.seconds=actualDuration;
     if(['480p','720p','1080p'].includes(result?.resolution))patch.resolution=result.resolution;
     patch.costSource=patch.cost==null?null:reportedCost!=null?'api':record.costSource||(record.provider==='higgsfield'?'api_estimate':'api');
-    if(patch.cost==null&&record.provider!=='higgsfield'){patch.cost=MagicDomain.estimateCost({...record,...patch});if(patch.cost!=null){patch.costSource='tariff';patch.pricingVersion=MagicDomain.pricingVersion;}}
+    if(patch.cost==null){patch.cost=MagicDomain.estimateCost({...record,...patch});if(patch.cost!=null){patch.costSource=record.provider==='higgsfield'?'higgsfield_tariff':'tariff';patch.pricingVersion=record.provider==='higgsfield'?'hf-public-tokens-2026-10-24':MagicDomain.pricingVersion;}}
     return updateVideo(record.id,patch);
   }
   const playbackCache=new Map();
@@ -1438,7 +1453,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
   if(!await S.requireUser())return;S.bindShell();await S.mountProfileDrawer();const user=S.current();$$('[data-user-name]').forEach(x=>x.textContent=user.name);$$('[data-user-email]').forEach(x=>x.textContent=user.email);
   const fmtDate=v=>{const n=S.timestamp(v);return n?new Date(n).toLocaleString('ru-RU',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}):'—';};
   const esc=s=>String(s??'');
-  function statusLabel(s){return {completed:'READY',failed:'FAILED',queued:'QUEUED',running:'GENERATING',cancelled:'CANCELLED',submission_unknown:'ПРОВЕРЬ BYTEPLUS',processing:'GENERATING'}[String(s||'').toLowerCase()]||String(s||'').toUpperCase();}
+  function statusLabel(s){return {completed:'READY',failed:'FAILED',queued:'QUEUED',running:'GENERATING',cancelled:'CANCELLED',submission_unknown:'ПРОВЕРЬ ЗАПУСК',processing:'GENERATING'}[String(s||'').toLowerCase()]||String(s||'').toUpperCase();}
 
   if(page==='dashboard'){
     const [spaces,videos,users]=await Promise.all([S.listSpaces(),S.listVideos(),S.isAdmin()?S.listUsers():Promise.resolve([user])]);
@@ -1449,10 +1464,28 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
     $('#dashboard-cost').textContent=MagicDomain.money(stats.cost);
     $('#cost-note').textContent=`Расчётных видео: ${stats.estimatedCostCount}; без тарифа: ${stats.unknownCost}`;
     const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push(d);}
-    const counts=days.map(d=>videos.filter(v=>{const n=new Date(S.timestamp(v.createdAt));const end=new Date(d);end.setDate(end.getDate()+1);return n>=d&&n<end;}).length),max=Math.max(1,...counts);
-    $('#generation-chart').replaceChildren(...days.map((d,i)=>{const col=E('div',undefined,'chart-col'),bar=E('div',undefined,'chart-bar');bar.style.height=`${Math.max(5,counts[i]/max*100)}%`;bar.title=`${counts[i]} генераций`;col.append(bar,E('small',d.toLocaleDateString('ru-RU',{weekday:'short'})));return col;}));
-    const recent=$('#dashboard-recent');recent.replaceChildren();
-    for(const v of videos.slice(0,6)){const row=E('a',undefined,'recent-row');row.href=v.uid===user.uid&&v.spaceId?`nodes.html?space=${encodeURIComponent(v.spaceId)}`:'assets.html';const info=E('div');info.append(E('strong',(v.prompt||'Без промпта').slice(0,72)),E('small',`${v.user||'User'} · ${fmtDate(v.createdAt)}`));row.append(info,E('span',statusLabel(v.status),'status-pill '+String(v.status||'')));recent.append(row);}
+    const dayRows=days.map(d=>videos.filter(v=>{const n=new Date(S.timestamp(v.createdAt)),end=new Date(d);end.setDate(end.getDate()+1);return n>=d&&n<end;})),counts=dayRows.map(rows=>rows.length),max=Math.max(1,...counts),week=MagicDomain.totals(dayRows.flat());
+    $('#dashboard-running').textContent=week.running;$('#dashboard-failed').textContent=week.failed;$('#dashboard-cost').textContent=MagicDomain.money(week.cost);$('#cost-note').textContent=`Оценок: ${week.estimatedCostCount}; без цены: ${week.unknownCost}`;
+    const nicknames=new Map(users.map(u=>[u.uid||u.id,u.displayName||u.name||u.email]));
+    const tooltip=E('div',undefined,'chart-tooltip');tooltip.id='generation-tooltip';tooltip.setAttribute('role','tooltip');tooltip.hidden=true;document.body.append(tooltip);
+    function showDay(i,bar){
+      tooltip.replaceChildren(E('strong',days[i].toLocaleDateString('ru-RU',{day:'numeric',month:'long'})));
+      const table=E('table'),head=E('tr');for(const text of ['Ник','Видео','Стоимость'])head.append(E('th',text));table.append(head);
+      const groups=new Map();for(const v of dayRows[i]){if(!groups.has(v.uid))groups.set(v.uid,[]);groups.get(v.uid).push(v);}
+      for(const [uid,items] of groups){const stat=MagicDomain.totals(items),row=E('tr');row.append(E('td',nicknames.get(uid)||items[0].user||'User'),E('td',String(items.length)),E('td',(stat.unknownCost&&stat.cost===0?'—':MagicDomain.money(stat.cost))+(stat.estimatedCostCount?' ≈':'')));table.append(row);}
+      tooltip.append(table);if(!groups.size)tooltip.append(E('small','Нет генераций'));if(MagicDomain.totals(dayRows[i]).unknownCost)tooltip.append(E('small','Есть видео без известной цены.'));
+      tooltip.hidden=false;const r=bar.getBoundingClientRect();tooltip.style.left=Math.max(8,Math.min(innerWidth-tooltip.offsetWidth-8,r.left+r.width/2-tooltip.offsetWidth/2))+'px';tooltip.style.top=Math.max(8,Math.min(innerHeight-tooltip.offsetHeight-8,r.top-tooltip.offsetHeight-10))+'px';
+    }
+    $('#generation-chart').replaceChildren(...days.map((d,i)=>{const col=E('div',undefined,'chart-col'),bar=E('button',undefined,'chart-bar');bar.type='button';bar.style.height=`${Math.max(5,counts[i]/max*160)}px`;bar.setAttribute('aria-label',d.toLocaleDateString('ru-RU')+': '+counts[i]+' генераций');bar.setAttribute('aria-describedby',tooltip.id);bar.onmouseenter=bar.onfocus=()=>showDay(i,bar);bar.onmouseleave=bar.onblur=()=>tooltip.hidden=true;bar.onclick=()=>showDay(i,bar);col.append(bar,E('small',d.toLocaleDateString('ru-RU',{weekday:'short'})));return col;}));
+    const recent=$('#dashboard-recent');recent.replaceChildren();const pending=[],titleElements=new Map();
+    for(const v of videos.slice(0,6)){
+      const row=E('a',undefined,'recent-row');row.href=v.uid===user.uid&&v.spaceId?`nodes.html?space=${encodeURIComponent(v.spaceId)}`:'assets.html';
+      const info=E('div',undefined,'recent-info'),key='magic.ai-title.'+user.uid+'.'+v.id+'.'+String(v.prompt||'').split('').reduce((h,c)=>(Math.imul(h,31)+c.charCodeAt(0))|0,0);let cached=null;try{cached=JSON.parse(localStorage.getItem(key)||'null');}catch{}
+      const title=E('strong',cached?.title||'Название готовится');title.title=v.prompt||'Без промпта';info.append(title,E('small',`${nicknames.get(v.uid)||v.user||'User'} · ${fmtDate(v.createdAt)}`));
+      const meta=E('div',undefined,'recent-meta'),cost=MagicDomain.videoCost(v);meta.append(E('b',cost==null?'—':MagicDomain.money(cost)+(v.cost==null||['api_estimate','higgsfield_tariff','tariff'].includes(v.costSource)?' ≈':'')),E('span',statusLabel(v.status),'status-pill '+String(v.status||'')));row.append(info,meta);recent.append(row);
+      if(!cached?.title&&v.prompt){pending.push({id:v.id,prompt:v.prompt.slice(0,2500)});titleElements.set(v.id,{title,key});}else if(!v.prompt)title.textContent='Без промпта';
+    }
+    if(pending.length)S.higgsfieldRequest('titles',{items:pending}).then(data=>{for(const item of data.items||[]){const target=titleElements.get(item.id);if(target&&typeof item.title==='string'){target.title.textContent=item.title;try{localStorage.setItem(target.key,JSON.stringify({title:item.title}));}catch{}}}}).catch(()=>{for(const {title} of titleElements.values()){title.textContent='Видео без названия';title.title+=' · ИИ-название временно недоступно';}});
     if(!videos.length)recent.append(E('div','Создай Space и запусти первую генерацию.','empty-card'));
     $('#report-scope').textContent=S.isAdmin()?'Количество, результаты и суммы по каждому участнику. Неизвестная стоимость не считается нулём.':'Отчёт доступен только по твоему аккаунту.';
     const people=new Map(users.map(u=>[u.uid,{uid:u.uid,name:u.name||u.displayName||u.email}]));
@@ -1612,6 +1645,13 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
       }catch(error){$('#cost-result').textContent='—';$('#cost-formula').textContent=error.message;}
     }
     for(const control of [duration,resolution,input,...priceInputs])control.oninput=calculate;calculate();
+    const hfControls=['model','seconds','resolution','ratio','input','discount','quantity'].map(k=>$('#hf-cost-'+k));
+    function calculateHF(){
+      const [model,seconds,resolution,ratio,input,discount,quantity]=hfControls,cost=Number(input.value)<0||!Number.isInteger(Number(seconds.value))||!Number.isInteger(Number(quantity.value))||Number(quantity.value)<1||Number(quantity.value)>1000?null:MagicDomain.higgsfieldCost({model:model.value,seconds:seconds.value,resolution:resolution.value,ratio:ratio.value,videoReferenceCount:Number(input.value)>0?1:0,inputVideoSeconds:input.value,discount:discount.value});
+      $('#hf-cost-result').textContent=cost==null?'—':MagicDomain.money(cost*Math.max(1,Number(quantity.value)||1))+' ≈';
+      $('#hf-cost-formula').textContent=cost==null?'Проверь параметры: 2.0 — 4–15 сек., 2.5 — 4–30 сек.':'Оценка по публичному тарифу Higgsfield; скидка '+(Number(discount.value)||0)+'%. За 1 видео: '+MagicDomain.money(cost)+'. API-оценка или фактическая цена имеют приоритет.';
+    }
+    for(const control of hfControls)if(control)control.oninput=calculateHF;if($('#hf-cost-result'))calculateHF();
     function renderRank(target,rows,field){
       target.replaceChildren();for(const [index,row] of rows.entries()){
         const li=E('li',undefined,'rank-row'),name=E('div');name.append(E('strong',row.nickname||'User'),E('small',field==='cost'?`${row.completed} готовых видео · оценок: ${row.estimatedCostCount} · без цены: ${row.unknownCost}`:'Ошибок генерации'));
@@ -1626,7 +1666,7 @@ window.mountPresetLibrary=(root,{onAdd,compact=false}={})=>{
       $('#cost-scope').textContent=S.isAdmin()?'Стоимость сохранённых генераций всей команды':'Стоимость твоих сохранённых генераций';
       $('#cost-total').textContent=MagicDomain.money(stats.cost);$('#cost-completed').textContent=stats.completed;$('#cost-unknown').textContent=stats.unknownCost;
       const breakdown=$('#cost-provider-breakdown');if(breakdown){breakdown.replaceChildren();for(const provider of ['byteplus','higgsfield','openrouter']){const items=videos.filter(v=>(v.provider||'byteplus')===provider),part=MagicDomain.totals(items);if(!items.length)continue;const row=E('div',undefined,'team-row'),info=E('div');info.append(E('strong',MagicProviders.providerName(provider)),E('small',`${part.completed} готовых · оценок: ${part.estimatedCostCount} · без цены: ${part.unknownCost}`));row.append(info,E('b',part.completed&&part.unknownCost===part.completed?'—':MagicDomain.money(part.cost)+(part.estimatedCostCount?' ≈':'')));breakdown.append(row);}}
-      const details=$('#cost-video-details');if(details){details.replaceChildren();for(const v of videos.filter(v=>v.status==='completed').sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))){const row=E('div',undefined,'team-row'),info=E('div'),cost=MagicDomain.videoCost(v);info.append(E('strong',(names.get(v.uid)||v.user||'User')+' · '+MagicProviders.providerName(v.provider||'byteplus')),E('small',`${v.model||'Seedance'} · ${v.seconds}s · ${v.resolution} · ${cost==null?'цена не сохранена':v.costSource==='api_estimate'?'оценка API':v.costSource==='api'?'стоимость API':'расчёт по тарифу'}`));row.append(info,E('b',cost==null?'—':MagicDomain.money(cost)+(v.costSource==='api_estimate'?' ≈':'')));details.append(row);}}
+      const details=$('#cost-video-details');if(details){details.replaceChildren();for(const v of videos.filter(v=>v.status==='completed').sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))){const row=E('div',undefined,'team-row'),info=E('div'),cost=MagicDomain.videoCost(v);info.append(E('strong',(names.get(v.uid)||v.user||'User')+' · '+MagicProviders.providerName(v.provider||'byteplus')),E('small',`${v.model||'Seedance'} · ${v.seconds??'—'}s · ${v.resolution||'—'} · ${cost==null?'цена не сохранена':v.costSource==='api_estimate'?'оценка API':v.costSource==='api'?'стоимость API':'расчёт по тарифу'}`));row.append(info,E('b',cost==null?'—':MagicDomain.money(cost)+(v.cost==null||['api_estimate','higgsfield_tariff','tariff'].includes(v.costSource)?' ≈':'')));details.append(row);}}
       renderRank($('#cost-ranking'),rows.filter(r=>r.completed||r.cost>0).sort((a,b)=>b.cost-a.cost),'cost');renderRank($('#error-ranking'),rows.filter(r=>r.failed).sort((a,b)=>b.failed-a.failed),'failed');
     }
     $('#cost-refresh').onclick=()=>ranking().catch(error=>S.notify(error.message,'error'));
