@@ -231,6 +231,8 @@ dialog.studio-dialog{width:min(530px,calc(100vw - 30px));border:1px solid var(--
 
 .hf-calculator .xp-result{display:block}.hf-calculator .xp-result output{font-size:42px;white-space:nowrap}.hf-calculator .xp-result span{display:block;margin-top:8px}
 
+.billing-video{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;padding:16px 0;border-bottom:1px solid var(--border,#333);min-width:0}.billing-video small{display:block;overflow-wrap:anywhere}.billing-video>div{min-width:0}.billing-editor{grid-column:1/-1}.billing-editor form{display:grid;gap:12px;margin-top:12px;max-width:640px}.billing-editor label{display:grid;gap:6px}.billing-editor input{width:100%;min-width:0;padding:10px;border-radius:8px;background:var(--surface,#222);color:inherit;border:1px solid var(--border,#444)}#cost-total{overflow-wrap:anywhere;font-size:clamp(16px,2vw,28px)}
+
 /* Glass blue/violet cursor set based on the supplied visual reference. */
 @media (pointer: fine) {
 :root {
@@ -457,11 +459,22 @@ window.MagicDomain = (() => {
     if (!Number.isFinite(duration) || duration < 4 || duration > 30 || !price || Number(videoReferenceCount) > 0) return null;
     return Math.round(price * 1000000 * duration) / 1000000;
   }
-  function videoCost(video) {
-    if (video.cost != null && Number.isFinite(Number(video.cost)) && Number(video.cost) >= 0) return Number(video.cost);
-    if(video.status==='completed'&&video.estimateSource==='api_estimate'&&video.estimatedCost!=null&&Number.isFinite(Number(video.estimatedCost))&&Number(video.estimatedCost)>=0)return Number(video.estimatedCost);
-    return video.status === 'completed' ? estimateCost(video, video.pricingRates || defaultVideoPrices) : null;
+  const validCost = value => value !== null && value !== undefined && value !== '' && Number.isFinite(Number(value)) && Number(value)>=0;
+  function costInfo(video){
+    const correction=video.billingCorrection;
+    if(correction&&correction.requestId===video.requestId&&correction.uid===video.uid&&validCost(correction.amount))return {amount:Number(correction.amount),kind:'confirmed',source:'manual_billing'};
+    if(validCost(video.cost)){
+      // Legacy Higgsfield `cost` can be a quote. Never present it as a debit.
+      const estimated=['tariff','higgsfield_tariff','api_estimate'].includes(video.costSource)||video.provider==='higgsfield'&&video.costSource!=='billing_api';
+      return {amount:Number(video.cost),kind:estimated?'estimated':'confirmed',source:video.costSource||'api'};
+    }
+    if(video.status==='completed'&&video.estimateSource==='api_estimate'&&validCost(video.estimatedCost))return {amount:Number(video.estimatedCost),kind:'estimated',source:'api_estimate'};
+    const amount=video.status==='completed'?estimateCost(video,video.pricingRates||defaultVideoPrices):null;
+    return {amount,kind:amount==null?'unknown':'estimated',source:amount==null?null:'tariff'};
   }
+  function videoCost(video){return costInfo(video).amount;}
+  function costLabel(video){const info=costInfo(video);return info.amount==null?'Стоимость неизвестна':money(info.amount)+(info.kind==='estimated'?' ≈':'');}
+  function totalCostLabel(stats){return (stats.unknownCost&&stats.cost===0?'—':money(stats.cost)+(stats.estimatedCostCount?' ≈':''))+(stats.unknownCost?' · неполный итог':'');}
   const money = (value, precision=4) => '$' + Number(value || 0).toFixed(precision).replace(/(\.\d{2,}?)0+$/, '$1');
   function xp({ seconds = 4, resolution = '480p', referenceCount = 1 } = {}) {
     const duration = Math.max(4, Math.min(30, Number(seconds) || 4));
@@ -475,19 +488,19 @@ window.MagicDomain = (() => {
       if (v.status === 'completed') { out.completed++; out.xp += xp(v); }
       if (v.status === 'failed') out.failed++;
       if (!terminal(v.status)) out.running++;
-      const cost = videoCost(v);
+      const info=costInfo(v),cost=info.amount;
       if (cost != null) {
         out.cost = Math.round((out.cost + cost) * 1000000) / 1000000;
-        if (v.cost == null || ['tariff','higgsfield_tariff','api_estimate'].includes(v.costSource)) out.estimatedCostCount++;
+        if(info.kind==='estimated'){out.estimatedCostCount++;out.estimatedCost=Math.round((out.estimatedCost+cost)*1000000)/1000000;}else{out.confirmedCostCount++;out.confirmedCost=Math.round((out.confirmedCost+cost)*1000000)/1000000;}
       } else if (v.status === 'completed') out.unknownCost++;
       return out;
-    }, { total: 0, completed: 0, failed: 0, running: 0, cost: 0, unknownCost: 0, xp: 0, estimatedCostCount: 0 });
+    }, { total: 0, completed: 0, failed: 0, running: 0, cost: 0, unknownCost: 0, xp: 0, estimatedCostCount: 0, estimatedCost:0, confirmedCost:0, confirmedCostCount:0 });
   }
   function compatible(type, direction) {
     if (direction === 'in') return { generation: ['media', 'preset'], text: ['preset'], output: ['generation'] }[type] || [];
     return { generation: ['output'], media: ['generation'], camera: ['generation'], preset: ['generation', 'text'], text: ['generation'] }[type] || [];
   }
-  return { higgsfieldCost,xp, totals, terminal, compatible, resolutions, defaultVideoModel, normalizeBytePlusModel, get videoPrices(){return {...videoPrices};}, defaultVideoPrices, pricingVersion, estimateCost, videoCost, money, validatePrices, setVideoPrices };
+  return { costInfo,costLabel,totalCostLabel,higgsfieldCost,xp, totals, terminal, compatible, resolutions, defaultVideoModel, normalizeBytePlusModel, get videoPrices(){return {...videoPrices};}, defaultVideoPrices, pricingVersion, estimateCost, videoCost, money, validatePrices, setVideoPrices };
 })();
 
 (function(root,factory){const api=factory();if(typeof module==='object'&&module.exports)module.exports=api;else root.MagicProviders=api;})(typeof window==='object'?window:globalThis,()=>{
@@ -1133,7 +1146,12 @@ window.Studio=(()=>{
       catch(error){rememberVideo({...row,cloudSaved:false,syncError:error.code==='permission-denied'?'Firebase запрещает сохранение. Обновите Firestore rules.':error.message});}
     }
     for(const row of Object.values(localVideos()))if(row.uid===cache.user.uid&&!row.cloudSaved)byId.set(row.id,row);
-    return [...byId.values()].sort((a,b)=>timestamp(b.createdAt)-timestamp(a.createdAt));
+    const rows=[...byId.values()].sort((a,b)=>timestamp(b.createdAt)-timestamp(a.createdAt));
+    if(isAdmin()){
+      try{const billing=await api.fsM.getDoc(api.fsM.doc(api.db,'config','videoBilling'));const entries=billing.exists()?billing.data().entries||{}:{};for(const row of rows){const item=entries[row.id];if(item&&item.uid===row.uid&&item.requestId===row.requestId)row.billingCorrection=item;}}
+      catch(error){for(const row of rows)row.billingUnavailable=true;notify('Сверка Billing недоступна. Показаны только сохранённые цены и оценки.','error');}
+    }
+    return rows;
   }
   function pendingVideos(spaceId){return Object.values(localVideos()).filter(v=>v.uid===cache.user.uid&&(!spaceId||v.spaceId===spaceId)&&!MagicDomain.terminal(v.status));}
   async function deleteVideo(id){
@@ -1158,6 +1176,23 @@ window.Studio=(()=>{
     localStorage.removeItem(jobsPrefix()+id);
   }
   async function listLeaderboard(){const snap=await api.fsM.getDocs(api.fsM.collection(api.db,'leaderboard'));return snap.docs.map(d=>({...d.data(),uid:d.id}));}
+  async function saveBillingCorrection(id,{amount,reference,expectedRevision=0,requestId}={}){
+    assertFirebase();if(!isAdmin())throw new Error('Сверку Billing сохраняет только суперадмин.');
+    if(typeof id!=='string'||!/^[a-zA-Z0-9_-]{1,180}$/.test(id)||!requestId)throw new Error('Нужен ID сохранённой генерации и запроса Higgsfield.');
+    if(amount===null||amount===undefined||String(amount).trim()===''||!Number.isFinite(Number(amount))||Number(amount)<0||Number(amount)>100000)throw new Error('Укажи списание в USD от 0 до 100000.');
+    const clean=Math.round(Number(amount)*1000000)/1000000,note=String(reference||'').trim();
+    if(note.length<3||note.length>240)throw new Error('Укажи номер операции или описание записи Billing (3–240 символов).');
+    const ledger=api.fsM.doc(api.db,'config','videoBilling'),videoRef=api.fsM.doc(api.db,'videos',id);
+    return api.fsM.runTransaction(api.db,async tx=>{
+      const [video,snap]=await Promise.all([tx.get(videoRef),tx.get(ledger)]);
+      if(!video.exists()||video.data().status!=='completed'||video.data().provider!=='higgsfield'||video.data().requestId!==requestId)throw new Error('Видео или ID запроса изменились. Обнови расходы.');
+      const entries=snap.exists()?snap.data().entries||{}:{},previous=entries[id];
+      if((previous?.revision||0)!==expectedRevision)throw new Error('Сумму уже изменили. Обнови расходы и подтверди новое значение.');
+      const row={amount:clean,reference:note,requestId,uid:video.data().uid,updatedBy:cache.user.uid,updatedAt:now(),revision:expectedRevision+1,history:previous?[...(previous.history||[]),{amount:previous.amount,reference:previous.reference,updatedBy:previous.updatedBy,updatedAt:previous.updatedAt,revision:previous.revision}].slice(-20):[]};
+      const next={...entries,[id]:row};if(new Blob([JSON.stringify(next)]).size>750000)throw new Error('Журнал Billing заполнен. Нужен перенос истории перед сохранением.');
+      tx.set(ledger,{entries:next,updatedBy:cache.user.uid,updatedAt:now()});return row;
+    });
+  }
   async function loadVideoPricing(){
     try{const snap=await api.fsM.getDoc(api.fsM.doc(api.db,'config','videoPricing'));if(snap.exists())MagicDomain.setVideoPrices(snap.data().rates);else MagicDomain.setVideoPrices(MagicDomain.defaultVideoPrices);}
     catch(error){MagicDomain.setVideoPrices(MagicDomain.defaultVideoPrices);console.warn('Pricing defaults used',error);}
@@ -1409,7 +1444,7 @@ window.Studio=(()=>{
     higgsfieldGateway,setHiggsfieldGateway,higgsfieldRequest,portraitApi,portraitUpload,setPortraitGroup,getIntegration,saveIntegration,removeIntegration,testIntegration,integrationVerified,activeVideoProvider,setVideoProvider,videoModelFor,prepareVideoRequest,providerKey,providerCredentials,apiGatewayBase,openRouterGateway,
     listSpaces,createSpace,getSpace,renameSpace,duplicateSpace,deleteSpace,saveSpaceState,queueSpaceState,flushSpaceState,flushPendingWork,
     uploadAsset,storeLocalAsset,storeReferenceUrl,hydrateLocalAssets,ensureRemoteAsset,listInputAssets,createVideoRecord,updateVideo,getVideo,listVideos,deleteVideo,permanentlyDeleteVideo,submitGeneration,refreshGeneration,watchGeneration,resolveVideoSource,downloadVideo,extractMediaUrl,pendingVideos,listLeaderboard,rebuildLeaderboard,
-    loadVideoPricing,saveVideoPricing,getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
+    saveBillingCorrection,loadVideoPricing,saveVideoPricing,getTheme,applyTheme,toggleTheme,mountProfileDrawer,bindShell,proxy,profileMenu,recordUsage,interruptRuns};
 })();
 
 'use strict';

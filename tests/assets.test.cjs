@@ -18,6 +18,21 @@ function app(role='superuser',uid='alice',config={}){
   vm.runInContext(source,context);
   return {s:context.Studio,c:context,docs:()=>JSON.parse(JSON.stringify(context.__qa.get('docs',{})))};
 }
+
+test('Billing corrections preserve original video, require admin and matching request, retain revision history',async()=>{
+ const a=app(),d=a.docs();d['videos/bob-video']={...d['videos/bob-video'],provider:'higgsfield',requestId:'hf-bob',cost:.8224,costSource:'higgsfield_tariff'};a.c.__qa.put('docs',d);
+ await a.s.saveBillingCorrection('bob-video',{amount:'.70',reference:'Billing transaction A',requestId:'hf-bob'});
+ assert.equal(a.docs()['videos/bob-video'].cost,.8224);
+ let rows=await a.s.listVideos();assert.equal(a.c.MagicDomain.totals(rows).confirmedCost,.7);assert.equal(rows[0].billingCorrection.revision,1);
+ await assert.rejects(a.s.saveBillingCorrection('bob-video',{amount:1,reference:'Billing A',requestId:'hf-bob'}),/уже изменили/);
+ await a.s.saveBillingCorrection('bob-video',{amount:'.699',reference:'Billing exact debit',requestId:'hf-bob',expectedRevision:1});
+ const correction=a.docs()['config/videoBilling'].entries['bob-video'];assert.equal(correction.history[0].amount,.7);assert.equal(correction.amount,.699);assert.equal(correction.updatedBy,'alice');
+ await assert.rejects(a.s.saveBillingCorrection('bob-video',{amount:1,reference:'Billing A',requestId:'other',expectedRevision:2}),/ID запроса изменились/);
+ await assert.rejects(a.s.saveBillingCorrection('bob-video',{amount:'',reference:'Billing A',requestId:'hf-bob'}),/Укажи списание/);
+ await assert.rejects(a.s.saveBillingCorrection('bob-video',{amount:-1,reference:'Billing A',requestId:'hf-bob'}),/Укажи списание/);
+ const u=app('user','bob');await assert.rejects(u.s.saveBillingCorrection('bob-video',{amount:1}),/суперадмин/);
+ rows=await u.s.listVideos();assert.equal(rows[0].billingCorrection,undefined);
+});
 test('Assets queries all results for superuser and only owned results for user',async()=>{
   const boss=app(),user=app('user');
   assert.equal((await boss.s.listVideos()).length,1);

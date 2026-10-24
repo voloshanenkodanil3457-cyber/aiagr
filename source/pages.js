@@ -23,20 +23,20 @@
     const [spaces,videos,users]=await Promise.all([S.listSpaces(),S.listVideos(),S.isAdmin()?S.listUsers():Promise.resolve([user])]);
     const stats=MagicDomain.totals(videos);
     $('#dashboard-scope').textContent=S.isAdmin()?'Все генерации команды · Spaces остаются личными':'Твои генерации и личные Spaces';
-    $('#stat-generations').textContent=stats.total;$('#stat-spaces').textContent=spaces.length;$('#stat-cost').textContent=MagicDomain.money(stats.cost);$('#stat-completed').textContent=stats.completed;
+    $('#stat-generations').textContent=stats.total;$('#stat-spaces').textContent=spaces.length;$('#stat-cost').textContent=MagicDomain.totalCostLabel(stats);$('#stat-completed').textContent=stats.completed;
     $('#dashboard-running').textContent=stats.running;$('#dashboard-failed').textContent=stats.failed;
     $('#dashboard-cost').textContent=MagicDomain.money(stats.cost);
     $('#cost-note').textContent=`Расчётных видео: ${stats.estimatedCostCount}; без тарифа: ${stats.unknownCost}`;
     const days=[];for(let i=6;i>=0;i--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push(d);}
     const dayRows=days.map(d=>videos.filter(v=>{const n=new Date(S.timestamp(v.createdAt)),end=new Date(d);end.setDate(end.getDate()+1);return n>=d&&n<end;})),counts=dayRows.map(rows=>rows.length),max=Math.max(1,...counts),week=MagicDomain.totals(dayRows.flat());
-    $('#dashboard-running').textContent=week.running;$('#dashboard-failed').textContent=week.failed;$('#dashboard-cost').textContent=MagicDomain.money(week.cost);$('#cost-note').textContent=`Оценок: ${week.estimatedCostCount}; без цены: ${week.unknownCost}`;
+    $('#dashboard-running').textContent=week.running;$('#dashboard-failed').textContent=week.failed;$('#dashboard-cost').textContent=MagicDomain.totalCostLabel(week);$('#cost-note').textContent=`Оценок: ${week.estimatedCostCount}; без цены: ${week.unknownCost}`;
     const nicknames=new Map(users.map(u=>[u.uid||u.id,u.displayName||u.name||u.email]));
     const tooltip=E('div',undefined,'chart-tooltip');tooltip.id='generation-tooltip';tooltip.setAttribute('role','tooltip');tooltip.hidden=true;document.body.append(tooltip);
     function showDay(i,bar){
       tooltip.replaceChildren(E('strong',days[i].toLocaleDateString('ru-RU',{day:'numeric',month:'long'})));
       const table=E('table'),head=E('tr');for(const text of ['Ник','Видео','Стоимость'])head.append(E('th',text));table.append(head);
       const groups=new Map();for(const v of dayRows[i]){if(!groups.has(v.uid))groups.set(v.uid,[]);groups.get(v.uid).push(v);}
-      for(const [uid,items] of groups){const stat=MagicDomain.totals(items),row=E('tr');row.append(E('td',nicknames.get(uid)||items[0].user||'User'),E('td',String(items.length)),E('td',(stat.unknownCost&&stat.cost===0?'—':MagicDomain.money(stat.cost))+(stat.estimatedCostCount?' ≈':'')));table.append(row);}
+      for(const [uid,items] of groups){const stat=MagicDomain.totals(items),row=E('tr');row.append(E('td',nicknames.get(uid)||items[0].user||'User'),E('td',String(items.length)),E('td',MagicDomain.totalCostLabel(stat)));table.append(row);}
       tooltip.append(table);if(!groups.size)tooltip.append(E('small','Нет генераций'));if(MagicDomain.totals(dayRows[i]).unknownCost)tooltip.append(E('small','Есть видео без известной цены.'));
       tooltip.hidden=false;const r=bar.getBoundingClientRect();tooltip.style.left=Math.max(8,Math.min(innerWidth-tooltip.offsetWidth-8,r.left+r.width/2-tooltip.offsetWidth/2))+'px';tooltip.style.top=Math.max(8,Math.min(innerHeight-tooltip.offsetHeight-8,r.top-tooltip.offsetHeight-10))+'px';
     }
@@ -46,7 +46,7 @@
       const row=E('a',undefined,'recent-row');row.href=v.uid===user.uid&&v.spaceId?`nodes.html?space=${encodeURIComponent(v.spaceId)}`:'assets.html';
       const info=E('div',undefined,'recent-info'),key='magic.ai-title.'+user.uid+'.'+v.id+'.'+String(v.prompt||'').split('').reduce((h,c)=>(Math.imul(h,31)+c.charCodeAt(0))|0,0);let cached=null;try{cached=JSON.parse(localStorage.getItem(key)||'null');}catch{}
       const title=E('strong',cached?.title||'Название готовится');title.title=v.prompt||'Без промпта';info.append(title,E('small',`${nicknames.get(v.uid)||v.user||'User'} · ${fmtDate(v.createdAt)}`));
-      const meta=E('div',undefined,'recent-meta'),cost=MagicDomain.videoCost(v);meta.append(E('b',cost==null?'—':MagicDomain.money(cost)+(v.cost==null||['api_estimate','higgsfield_tariff','tariff'].includes(v.costSource)?' ≈':'')),E('span',statusLabel(v.status),'status-pill '+String(v.status||'')));row.append(info,meta);recent.append(row);
+      const meta=E('div',undefined,'recent-meta'),cost=MagicDomain.videoCost(v);meta.append(E('b',MagicDomain.costLabel(v)),E('span',statusLabel(v.status),'status-pill '+String(v.status||'')));row.append(info,meta);recent.append(row);
       if(!cached?.title&&v.prompt){pending.push({id:v.id,prompt:v.prompt.slice(0,2500)});titleElements.set(v.id,{title,key});}else if(!v.prompt)title.textContent='Без промпта';
     }
     if(pending.length)S.higgsfieldRequest('titles',{items:pending}).then(data=>{for(const item of data.items||[]){const target=titleElements.get(item.id);if(target&&typeof item.title==='string'){target.title.textContent=item.title;try{localStorage.setItem(target.key,JSON.stringify({title:item.title}));}catch{}}}}).catch(()=>{for(const {title} of titleElements.values()){title.textContent='Видео без названия';title.title+=' · ИИ-название временно недоступно';}});
@@ -106,7 +106,7 @@
         if(v.provider!=='openrouter'){const video=E('video');video.src=v.videoUrl;video.muted=true;video.playsInline=true;video.preload='metadata';trigger.append(video);}else trigger.append(E('span','READY','asset-placeholder completed'));
         trigger.append(E('span','▷','asset-preview-play'));media.append(trigger);
       }else media.append(E('div',statusLabel(v.status),'asset-placeholder '+String(v.status||'')));
-      const cost=MagicDomain.videoCost(v);if(cost!=null)media.append(E('span',MagicDomain.money(cost)+(v.cost==null||['tariff','api_estimate'].includes(v.costSource)?' ≈':''),'asset-cost'));
+      const cost=MagicDomain.videoCost(v);if(cost!=null)media.append(E('span',MagicDomain.costLabel(v),'asset-cost'));
       if(v.seconds>0)media.append(E('span',v.seconds+'s','asset-duration'));
       const body=E('div',undefined,'asset-body');body.append(E('p',(v.prompt||'Без промпта').slice(0,180)),E('small',`${v.model||'model'} · ${v.resolution||''} ${v.ratio||''}`));
       if(v.cloudSaved===false&&MagicDomain.terminal(v.status))body.append(E('small','Сохранено только на этом компьютере. '+(v.syncError||'Ожидает отправки в базу.'),'asset-warning'));
@@ -219,7 +219,7 @@
     function renderRank(target,rows,field){
       target.replaceChildren();for(const [index,row] of rows.entries()){
         const li=E('li',undefined,'rank-row'),name=E('div');name.append(E('strong',row.nickname||'User'),E('small',field==='cost'?`${row.completed} готовых видео · оценок: ${row.estimatedCostCount} · без цены: ${row.unknownCost}`:'Ошибок генерации'));
-        li.append(E('span',String(index+1),'rank-position'),name,E('b',field==='cost'?(row.unknownCost===row.completed&&row.completed&&row.cost===0?'—':MagicDomain.money(row.cost)):String(row.failed)));target.append(li);
+        li.append(E('span',String(index+1),'rank-position'),name,E('b',field==='cost'?MagicDomain.totalCostLabel(row):String(row.failed)));target.append(li);
       }
       if(!rows.length)target.append(E('li','Пока нет результатов.','empty-card'));
     }
@@ -228,9 +228,26 @@
       for(const video of videos){if(!groups.has(video.uid))groups.set(video.uid,[]);groups.get(video.uid).push(video);}
       const rows=[...groups].map(([uid,items])=>({uid,nickname:names.get(uid)||items[0].user||'User',...MagicDomain.totals(items)})),stats=MagicDomain.totals(videos);
       $('#cost-scope').textContent=S.isAdmin()?'Стоимость сохранённых генераций всей команды':'Стоимость твоих сохранённых генераций';
-      $('#cost-total').textContent=MagicDomain.money(stats.cost);$('#cost-completed').textContent=stats.completed;$('#cost-unknown').textContent=stats.unknownCost;
-      const breakdown=$('#cost-provider-breakdown');if(breakdown){breakdown.replaceChildren();for(const provider of ['byteplus','higgsfield','openrouter']){const items=videos.filter(v=>(v.provider||'byteplus')===provider),part=MagicDomain.totals(items);if(!items.length)continue;const row=E('div',undefined,'team-row'),info=E('div');info.append(E('strong',MagicProviders.providerName(provider)),E('small',`${part.completed} готовых · оценок: ${part.estimatedCostCount} · без цены: ${part.unknownCost}`));row.append(info,E('b',part.completed&&part.unknownCost===part.completed?'—':MagicDomain.money(part.cost)+(part.estimatedCostCount?' ≈':'')));breakdown.append(row);}}
-      const details=$('#cost-video-details');if(details){details.replaceChildren();for(const v of videos.filter(v=>v.status==='completed').sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))){const row=E('div',undefined,'team-row'),info=E('div'),cost=MagicDomain.videoCost(v);info.append(E('strong',(names.get(v.uid)||v.user||'User')+' · '+MagicProviders.providerName(v.provider||'byteplus')),E('small',`${v.model||'Seedance'} · ${v.seconds??'—'}s · ${v.resolution||'—'} · ${cost==null?'цена не сохранена':v.costSource==='api_estimate'?'оценка API':v.costSource==='api'?'стоимость API':'расчёт по тарифу'}`));row.append(info,E('b',cost==null?'—':MagicDomain.money(cost)+(v.cost==null||['api_estimate','higgsfield_tariff','tariff'].includes(v.costSource)?' ≈':'')));details.append(row);}}
+      $('#cost-total').textContent=MagicDomain.totalCostLabel(stats);$('#cost-confirmed').textContent=MagicDomain.money(stats.confirmedCost);$('#cost-estimated').textContent=MagicDomain.money(stats.estimatedCost)+' ≈';$('#cost-accounting-note').textContent=(S.isAdmin()?'Командная сверка Billing доступна только SuperAdmin. ':'Личный отчёт показывает сохранённые цены и оценки; сверка Billing — в командном отчёте SuperAdmin. ')+(videos.some(v=>v.billingUnavailable)?'Журнал сверки недоступен — итог не подтверждён. ':stats.unknownCost?'Итог неполный: есть видео без цены. ':'')+(stats.estimatedCostCount?'Есть предварительные оценки, это не итоговое списание.':'');$('#cost-completed').textContent=stats.completed;$('#cost-unknown').textContent=stats.unknownCost;
+      const breakdown=$('#cost-provider-breakdown');if(breakdown){breakdown.replaceChildren();for(const provider of ['byteplus','higgsfield','openrouter']){const items=videos.filter(v=>(v.provider||'byteplus')===provider),part=MagicDomain.totals(items);if(!items.length)continue;const row=E('div',undefined,'team-row'),info=E('div');info.append(E('strong',MagicProviders.providerName(provider)),E('small',`${part.completed} готовых · подтверждено: ${MagicDomain.money(part.confirmedCost)} · оценки: ${MagicDomain.money(part.estimatedCost)} · без цены: ${part.unknownCost}`));row.append(info,E('b',MagicDomain.totalCostLabel(part)));breakdown.append(row);}}
+      const details=$('#cost-video-details');if(details){details.replaceChildren();for(const v of videos.filter(v=>v.status==='completed').sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))){
+        const row=E('div',undefined,'billing-video'),info=E('div'),price=MagicDomain.costInfo(v);
+        info.append(E('strong',(names.get(v.uid)||v.user||'User')+' · '+MagicProviders.providerName(v.provider||'byteplus')),E('small',`${v.model||'Seedance'} · ${v.seconds??'—'}s · ${v.resolution||'—'} · ${price.kind==='confirmed'?(price.source==='manual_billing'?'Сверено SuperAdmin по Billing':'Стоимость API'):price.kind==='estimated'?'Предварительная оценка':'Стоимость неизвестна'}`),E('small','Request ID: '+(v.requestId||'не сохранён')));
+        row.append(info,E('b',MagicDomain.costLabel(v)));
+        if(v.billingCorrection)info.append(E('small','Billing: '+v.billingCorrection.reference+' · '+fmtDate(v.billingCorrection.updatedAt)));
+        if(S.isAdmin()&&v.provider==='higgsfield'&&v.requestId){
+          const editor=E('details',undefined,'billing-editor');editor.append(E('summary','Сверить с Billing'));
+          const form=E('form'),amount=E('input'),reference=E('input'),save=E('button','Подтвердить сумму','ui-button'),status=E('p');
+          amount.type='number';amount.min='0';amount.max='100000';amount.step='0.000001';amount.required=true;amount.placeholder='Фактически списано, USD';amount.value=v.billingCorrection?.amount??'';
+          reference.type='text';reference.required=true;reference.maxLength=240;reference.placeholder='Номер операции / запись Billing';reference.value=v.billingCorrection?.reference||'';save.type='submit';status.setAttribute('role','status');
+          const amountLabel=E('label','Списание, USD'),referenceLabel=E('label','Источник в Billing');amountLabel.append(amount);referenceLabel.append(reference);form.append(amountLabel,referenceLabel,E('small','Сверь сумму именно с Request ID выше. Общие расходы аккаунта нельзя приписывать одному видео.'),save,status);editor.append(form);row.append(editor);
+          form.onsubmit=async event=>{event.preventDefault();if(!S.isAdmin())return;const value=amount.value,note=reference.value.trim();if(value.trim()===''||!Number.isFinite(Number(value))||Number(value)<0||Number(value)>100000||note.length<3){status.textContent='Укажи корректную сумму и запись Billing.';return;}
+            if(!confirm('Подтвердить списание Higgsfield?\n\nRequest ID: '+v.requestId+'\n'+MagicDomain.costLabel(v)+' → '+MagicDomain.money(Number(value))+'\nBilling: '+note+'\n\nЭто ручная сверка, а не ответ API.'))return;
+            save.disabled=true;try{await S.saveBillingCorrection(v.id,{amount:value,reference:note,requestId:v.requestId,expectedRevision:v.billingCorrection?.revision||0});await ranking();S.notify('Списание сверено по Billing.');}catch(error){status.textContent=error.message;}finally{save.disabled=false;}
+          };
+        }
+        details.append(row);
+      }}
       renderRank($('#cost-ranking'),rows.filter(r=>r.completed||r.cost>0).sort((a,b)=>b.cost-a.cost),'cost');renderRank($('#error-ranking'),rows.filter(r=>r.failed).sort((a,b)=>b.failed-a.failed),'failed');
     }
     $('#cost-refresh').onclick=()=>ranking().catch(error=>S.notify(error.message,'error'));
