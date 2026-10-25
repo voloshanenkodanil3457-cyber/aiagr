@@ -1,0 +1,2 @@
+/* Keep full-body avatar previews visible without cropping. */
+.av-card img{object-fit:contain;background:#eeeeef}
