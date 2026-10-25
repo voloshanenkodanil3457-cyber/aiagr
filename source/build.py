@@ -13,7 +13,7 @@ favicon='''<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.
 
 NAV=[
  ('CREATE',[('dashboard','▦','Dashboard','index.html'),('spaces','⌘','Canvas','spaces.html'),('simple','▷','SM video','sm-video.html'),('assets','▧','Assets','assets.html'),('editor','✂','Editor','editor.html'),('captions','▣','Captions','captions.html')]),
- ('ORGANIZE',[('projects','□','Projects','projects.html'),('camera','☷','Camera movement','modifiers.html')]),
+ ('ORGANIZE',[('elements','⊞','Elements','elements.html'),('camera','☷','Camera movement','modifiers.html')]),
  ('RESULTS',[('cost','$','Cost','cost.html')]),
  ('ACCOUNT',[('integrations','⚙','My settings','integrations.html'),('users','♙','Users','users.html')])
 ]
@@ -37,7 +37,7 @@ def drawer():
     <aside id="profile-drawer" class="profile-drawer" aria-label="Профиль">
       <div class="drawer-title"><h2>Профиль</h2><button id="profile-close" class="icon-button" aria-label="Закрыть">×</button></div>
       <div class="profile-photo"><div class="profile-photo-view"><img class="profile-photo-img" hidden alt=""><span class="profile-photo-letters">M</span></div><div class="upload-photo"><label class="ui-button">⇧ Загрузить фото<input id="profile-photo-input" type="file" accept="image/png,image/jpeg,image/webp" hidden></label><small>PNG / JPG / WebP, до 5 MB</small></div></div>
-      <div class="profile-email"><span>Email</span><strong data-profile-email>—</strong></div>
+      <div class="profile-email"><span>Email</span><strong data-profile-email>—</strong></div><div class="profile-email"><span>UID аккаунта</span><strong data-profile-uid>—</strong></div>
       <form id="profile-form" class="stack"><label>ИМЯ<input name="displayName" required maxlength="80"></label><label>TELEGRAM<input name="telegram" maxlength="120" placeholder="@username"></label><div class="drawer-actions"><button type="button" class="ui-button" id="profile-cancel">Отмена</button><button class="ui-button primary" type="submit">Сохранить</button></div></form>
       <section id="drawer-admin" class="drawer-admin" hidden><h3>Суперадмин · пользователи</h3><form class="stack"><label>Email<input name="email" type="email" required></label><label>Имя<input name="name" required maxlength="80"></label><label>Временный пароль<input name="password" type="password" minlength="6" required></label><label>Роль<select name="role"><option value="user">Пользователь</option><option value="superuser">Суперадмин</option></select></label><button type="submit" class="ui-button primary">Создать пользователя</button></form><a href="users.html" class="ui-button">Управлять ролями →</a></section>
       <button data-logout class="ui-button danger ghost drawer-logout">Выйти</button>
@@ -64,7 +64,7 @@ def scripts(page_scripts=True):
 def save(name,title,page,active,body,module=None):
     mod=f' data-module="{module}"' if module else ''
     page_head=head(title)
-    if page=='simple': page_head=page_head.replace('</head>','<script src="assets/avatar-storage-config.js"></script></head>')
+    if page in ['simple','elements']: page_head=page_head.replace('</head>','<script src="assets/avatar-storage-config.js"></script></head>')
     extra=''
     if page in ['captions','editor']:
         page_head=page_head.replace('</style>',(root/(page+'.css')).read_text(encoding='utf-8')+'</style>')
@@ -142,3 +142,8 @@ canvas_html=canvas_html.replace('<!--SCRIPTS-->','<script>'+firebase+'\n'+app+'\
 (out/'nodes.html').write_text(canvas_html, encoding="utf-8")
 
 print('Built Magic pages:', ', '.join(p.name for p in out.glob('*.html')))
+
+# Shared Elements catalog; preserve the old Projects address as an alias.
+elements_body='<section class="elements-page"><div class="elements-title"><h1>Elements</h1><p>Твои персонажи для новых историй</p></div><div id="elements-library"></div></section>'
+save('elements.html','Elements','elements','elements',elements_body)
+save('projects.html','Elements','elements','elements',elements_body)
