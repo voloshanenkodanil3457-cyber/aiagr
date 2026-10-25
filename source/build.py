@@ -64,6 +64,7 @@ def scripts(page_scripts=True):
 def save(name,title,page,active,body,module=None):
     mod=f' data-module="{module}"' if module else ''
     page_head=head(title)
+    if page=='simple': page_head=page_head.replace('</head>','<script src="assets/avatar-storage-config.js"></script></head>')
     extra=''
     if page in ['captions','editor']:
         page_head=page_head.replace('</style>',(root/(page+'.css')).read_text(encoding='utf-8')+'</style>')
