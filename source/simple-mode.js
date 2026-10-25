@@ -76,7 +76,7 @@
     const previous=refs.find(a=>a.avatarId===avatar.id);
     const item=previous||await S.storeReferenceUrl(avatar.image_url,space.id);
     const imageRefs=refs.filter(a=>a.kind==='image'),oldIndex=previous?imageRefs.indexOf(previous)+1:0;
-    draft.prompt=draft.prompt.replace(/@(image)(_?)([1-9]\d*)\b/g,(full,kind,sep,n)=>{const index=Number(n);if(oldIndex&&index===oldIndex)return '@image'+sep+'1';return '@image'+sep+(oldIndex&&index>oldIndex?index:index+1);});
+    draft.prompt=draft.prompt.replace(/@(image)(_?)([1-9]\d*)\b/gi,(full,kind,sep,n)=>{const index=Number(n);if(oldIndex&&index===oldIndex)return '@image'+sep+'1';return '@image'+sep+(oldIndex&&index>oldIndex?index:index+1);});
     refs=[{...item,name:avatar.name,avatarId:avatar.id},...refs.filter(a=>a!==previous)];
     const alias=isKling()?'@image_1':'@image1';draft.prompt='use '+alias+'\n'+draft.prompt;
     update();save();note('Аватар добавлен в References.');
