@@ -69,7 +69,19 @@
   }
   $('#sm-files').onchange=e=>addFiles([...e.target.files]);const drop=$('#sm-reference-drop');drop.ondragover=e=>{e.preventDefault();drop.classList.add('dragging');};drop.ondragleave=()=>drop.classList.remove('dragging');drop.ondrop=e=>{e.preventDefault();drop.classList.remove('dragging');addFiles([...e.dataTransfer.files]);};
   $('#sm-add-url').onclick=async e=>{e.preventDefault();if(busy||isByte())return;try{if(refs.length>=15)throw Error('Максимум 15 референсов.');const item=await S.storeReferenceUrl($('#sm-ref-url').value.trim(),space.id);refs.push(item);$('#sm-ref-url').value='';update();save();}catch(error){note(error.message,true);}};
-  $('#sm-elements').onclick=()=>MagicAvatars.open({add:async avatar=>{if(busy||isByte())throw Error('Выбери модель с поддержкой референсов.');if(refs.length>=15)throw Error('Максимум 15 референсов.');const item=await S.storeReferenceUrl(avatar.image_url,space.id);refs.push({...item,name:avatar.name,avatarId:avatar.id});update();save();note('Аватар добавлен в References.');}});
+  async function applyAvatar(avatar){
+    if(busy)throw Error('Дождись завершения подготовки.');
+    if(refs.length>=15&&!refs.some(a=>a.avatarId===avatar.id))throw Error('Максимум 15 референсов.');
+    if(isByte())draft.model='bytedance/seedance-2.5';
+    const previous=refs.find(a=>a.avatarId===avatar.id);
+    const item=previous||await S.storeReferenceUrl(avatar.image_url,space.id);
+    const imageRefs=refs.filter(a=>a.kind==='image'),oldIndex=previous?imageRefs.indexOf(previous)+1:0;
+    draft.prompt=draft.prompt.replace(/@(image)(_?)([1-9]\d*)\b/g,(full,kind,sep,n)=>{const index=Number(n);if(oldIndex&&index===oldIndex)return '@image'+sep+'1';return '@image'+sep+(oldIndex&&index>oldIndex?index:index+1);});
+    refs=[{...item,name:avatar.name,avatarId:avatar.id},...refs.filter(a=>a!==previous)];
+    const alias=isKling()?'@image_1':'@image1';draft.prompt='use '+alias+'\n'+draft.prompt;
+    update();save();note('Аватар добавлен в References.');
+  }
+  $('#sm-elements').onclick=()=>MagicAvatars.open({add:applyAvatar});
   model.onchange=()=>{draft.model=model.value;update();save();};prompt.oninput=()=>{draft.prompt=prompt.value;save();};
   function setDuration(value){const n=Number(value),max=Number(duration.max);if(Number.isInteger(n)&&n>=4&&n<=max){draft.duration=n;update();save();}}
   duration.oninput=()=>setDuration(duration.value);duration.onchange=closeSettings;$('#sm-duration-number').oninput=()=>setDuration($('#sm-duration-number').value);$('#sm-duration-number').onchange=()=>{normalize();$('#sm-duration-number').value=draft.duration;closeSettings();};
@@ -117,5 +129,7 @@
     }catch(error){if(record){const failed=await S.updateVideo(record.id,{status:error.httpStatus>=400&&error.httpStatus<500?'failed':'submission_unknown',error:error.message});rows.set(record.id,failed);renderHistory();}note(error.message,true);}finally{lock(false);}
   };
   window.addEventListener('pagehide',()=>{clearTimeout(timer);for(const controller of controllers.values())controller.abort();S.queueSpaceState(space.id,payload());});
+  const pendingKey='magic.avatar.pending.'+me.uid,pending=sessionStorage.getItem(pendingKey);
+  if(pending){try{await applyAvatar(await MagicAvatars.get(pending));sessionStorage.removeItem(pendingKey);}catch(error){note(error.message,true);}}
   update();await history();
 })().catch(error=>Studio.notify(error.message||String(error),'error'));
