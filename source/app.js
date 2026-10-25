@@ -843,7 +843,13 @@ window.Studio=(()=>{
   function recordUsage(){/* compatibility: real generation records live in Firestore /videos */}
   function interruptRuns(){/* remote jobs survive navigation; task IDs are kept locally */}
 
+  window.MagicFirebaseAuthToken=async()=>{await ready();if(!api.auth.currentUser)throw Error('Войди в аккаунт Magic.');return api.auth.currentUser.getIdToken();};
   function bindShell(){
+    const toggle=document.querySelector('[data-sidebar-toggle]');
+    const collapse=value=>{document.body.classList.toggle('sidebar-collapsed',value);document.body.classList.toggle('sidebar-expanded',!value);if(toggle){toggle.setAttribute('aria-expanded',String(!value));toggle.setAttribute('aria-label',value?'Развернуть меню':'Свернуть меню');toggle.textContent=value?'›':'‹';}};
+    collapse(localStorage.getItem('magic.sidebar.collapsed')==='true'||(localStorage.getItem('magic.sidebar.collapsed')===null&&document.body.dataset.page==='editor'));
+    if(toggle)toggle.onclick=()=>{const value=!document.body.classList.contains('sidebar-collapsed');collapse(value);localStorage.setItem('magic.sidebar.collapsed',String(value));};
+
     document.querySelectorAll('[data-superuser-only]').forEach(node=>node.hidden=!isAdmin());
     const person=current();document.querySelectorAll('[data-user-email]').forEach(node=>node.textContent=person?.email||'');document.querySelectorAll('[data-user-name]').forEach(node=>node.textContent=person?.name||'');
     const avatar=document.querySelector('#shell-avatar'),drawer=document.querySelector('#profile-drawer'),backdrop=document.querySelector('#drawer-backdrop');const close=()=>{drawer?.classList.remove('open');backdrop?.classList.remove('show');};avatar?.addEventListener('click',async()=>{await mountProfileDrawer();drawer?.classList.add('open');backdrop?.classList.add('show');});document.querySelector('#profile-close')?.addEventListener('click',close);document.querySelector('#profile-cancel')?.addEventListener('click',close);backdrop?.addEventListener('click',close);document.querySelector('[data-logout]')?.addEventListener('click',logout);

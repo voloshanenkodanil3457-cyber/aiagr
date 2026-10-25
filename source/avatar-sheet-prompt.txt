@@ -1,0 +1,214 @@
+Create a photorealistic professional CHARACTER REFERENCE SHEET / CHARACTER TURNAROUND based strictly on ALL uploaded reference photos of the same person.
+
+IMPORTANT:
+All uploaded images represent the SAME character/person and must be analyzed together.
+Use them as the single source of truth for identity.
+
+Preserve exactly:
+- facial identity
+- age
+- face shape
+- skull proportions
+- eyes, eyebrows, nose, lips and ears
+- beard / facial hair if present
+- hairstyle, hairline and hair color
+- skin tone and natural skin texture
+- body type
+- height impression
+- shoulder width
+- arm and leg proportions
+- posture
+- clothing
+- shoes
+- glasses
+- jewelry, watch, hat and other visible accessories
+
+DO NOT beautify the person.
+DO NOT make the face more symmetrical.
+DO NOT change age.
+DO NOT change body proportions.
+DO NOT redesign the clothing.
+DO NOT replace accessories.
+DO NOT invent new visual elements.
+The final character must clearly look like exactly the same person shown in the uploaded photos.
+
+If different reference photos show slightly different expressions, lighting or perspective, reconstruct one consistent neutral version of the same person.
+
+STYLE:
+Photorealistic studio photography.
+Neutral expression.
+Natural human anatomy.
+Realistic skin pores and texture.
+Realistic fabric texture.
+Accurate clothing construction.
+Soft neutral studio lighting.
+Minimal shadows.
+Sharp photographic detail.
+White or very light neutral background.
+No cinematic grading.
+No artistic stylization.
+No illustration.
+No CGI appearance.
+
+--------------------------------------------------
+LAYOUT
+--------------------------------------------------
+
+Create ONE large horizontal landscape character sheet divided visually into two main sections.
+
+LEFT SECTION:
+Three large full-body turnaround views placed side by side.
+
+1. FULL BODY — FRONT VIEW
+Person standing naturally, directly facing camera.
+Arms relaxed beside body.
+Feet fully visible.
+Neutral symmetrical pose.
+
+2. FULL BODY — SIDE PROFILE
+Exact same person, clothing and scale.
+Perfect 90-degree side view.
+Full body visible from head to shoes.
+Neutral standing pose.
+
+3. FULL BODY — BACK VIEW
+Exact same person.
+Direct rear view.
+Show hairstyle from behind, shoulders, clothing construction, pants and shoes.
+
+The three full-body figures must have:
+- exactly the same body scale
+- same camera height
+- same focal length
+- same lighting
+- same clothing
+- same proportions
+
+--------------------------------------------------
+RIGHT SECTION — HEAD TURNAROUND
+--------------------------------------------------
+
+Create a clean 2 x 3 grid of head / upper-shoulder portraits.
+
+TOP ROW:
+
+1. FRONT
+Straight frontal facial view.
+Eyes toward camera.
+Neutral expression.
+
+2. TOP / SLIGHT DOWNWARD VIEW
+Head tilted forward enough to clearly show hairstyle, hairline or hat from above while still preserving facial identity.
+
+3. BACK
+Direct rear view of head and neck.
+Clearly show hairstyle / haircut / hat construction.
+
+BOTTOM ROW:
+
+4. LEFT PROFILE
+Perfect 90-degree profile.
+
+5. THREE-QUARTER VIEW
+Approximately 45-degree facial angle.
+
+6. OPPOSITE THREE-QUARTER VIEW
+Approximately 30–45 degrees from the opposite direction.
+
+Every head must represent EXACTLY the same person.
+Maintain identical:
+eye shape,
+nose structure,
+jaw,
+chin,
+ears,
+hairline,
+facial hair,
+glasses,
+skin tone,
+age,
+and facial proportions.
+
+Do not generate six slightly different people.
+
+--------------------------------------------------
+DETAIL REFERENCE SECTION
+--------------------------------------------------
+
+Below the head turnaround create several rectangular close-up reference panels.
+
+Include:
+
+1. UPPER GARMENT FABRIC
+Macro close-up of the actual shirt / jacket / upper clothing fabric.
+
+2. LOWER BODY / WAIST
+Close-up showing waistband, belt area, pockets and garment construction.
+
+3. SIDE / HIP DETAIL
+Close-up showing side seam, pockets and tailoring.
+
+4. SKIN TEXTURE
+Natural close-up of arm or leg skin.
+
+5. EYES / FACIAL DETAIL
+High-resolution crop of eyes, eyebrows, nose bridge and surrounding skin.
+Preserve glasses if the person wears them.
+
+6. FOOTWEAR
+Clean product-style close-up of the exact shoes worn by the character.
+
+If important accessories are visible in the references, optionally include additional detail panels for:
+watch,
+glasses,
+hat,
+jewelry,
+bag,
+tattoos,
+or other distinctive items.
+
+--------------------------------------------------
+REFERENCE ACCURACY
+--------------------------------------------------
+
+Cross-reference all uploaded photographs before generating the character.
+
+When one photograph provides a clearer view of a specific feature, use that photograph for that feature:
+- frontal photo → facial proportions
+- profile photo → nose, jaw and skull shape
+- rear photo → haircut and clothing back
+- full-body photo → body proportions
+- close-up → skin, eyes, beard and texture
+- clothing photos → garment construction
+
+Do not let one reference image overwrite information that is more clearly visible in another reference image.
+
+For areas not clearly visible in the uploaded photographs, make only the minimum physically plausible reconstruction necessary to complete the turnaround. Do not introduce distinctive details that are not supported by the references.
+
+--------------------------------------------------
+COMPOSITION
+--------------------------------------------------
+
+Professional character-design reference photography.
+Clean organized contact-sheet layout.
+Thin subtle light-gray grid lines are acceptable.
+Small simple labels underneath panels are acceptable.
+
+Suggested labels:
+FRONT
+SIDE
+BACK
+LEFT PROFILE
+3/4 VIEW
+OPPOSITE 3/4
+FABRIC
+WAIST DETAIL
+SIDE DETAIL
+SKIN
+FACE DETAIL
+SHOES
+
+The reference sheet must prioritize CHARACTER CONSISTENCY and IDENTITY ACCURACY over aesthetics.
+
+Final result:
+one coherent photorealistic character reference sheet showing one and only one consistent person from multiple angles, suitable as a master identity reference for future AI image and video generations.
